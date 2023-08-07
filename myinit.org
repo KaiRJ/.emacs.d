@@ -11,7 +11,10 @@
      (make-directory "~/.emacs.d/autosaves/" t)
 
      ;; Move cursor to the help window when one is open
-     (setq help-window-select t)    
+     (setq help-window-select t)
+
+     ;; Delete highlighted text by typing
+     (delete-selection-mode 1)
    #+end_src
    
 ** Interface
@@ -25,11 +28,12 @@
      ;; add line numbers to progam modes
      (add-hook 'prog-mode-hook 'display-line-numbers-mode)
      ;; Add line numbers to all modes
-     ; (when (version<= "26.0.50" emacs-version )
-     ;  (global-display-line-numbers-mode))
+     ;; (when (version<= "26.0.50" emacs-version )
+     ;; (global-display-line-numbers-mode))
 
      ;; Line Wrapping
-     (global-visual-line-mode t)
+     ;; (global-visual-line-mode t)
+     (add-hook 'text-mode-hook #'auto-fill-mode)
 
      ;; Stop cursor blinking
      (blink-cursor-mode 0)
@@ -37,7 +41,7 @@
      ;; highlight matching paren
      (show-paren-mode 1)
      ;; highlight entire expression
-     ; (setq show-paren-style 'expression)
+     ;; (setq show-paren-style 'expression)
 
      ;; highlights delimiters according to their depth
      (use-package rainbow-delimiters
@@ -47,21 +51,29 @@
 
 ** Key bindinga
    #+begin_src emacs-lisp
-     ; C-n adds new line if reaches end of buffer
+     ;; C-n adds new line if reaches end of buffer
      (setq next-line-add-newlines t)
 
      ;; Allow hash to be entered  
      (global-set-key (kbd "M-3") '(lambda () (interactive) (insert "#")))
 
-     ; bind revert-buffer to f5
-     ;(global-set-key (kbd "<f5>") 'revert-buffer)
+     ;; bind revert-buffer to f5
+     ;; (global-set-key (kbd "<f5>") 'revert-buffer)
 
      ;; Disable Mac keyboard commands.
-     ;; (s is for super)
+     ;; s is for super (cmd on mac)
      (define-key global-map [?\s-c] nil) ;; Disable copy
      (define-key global-map [?\s-v] nil) ;; Disable paste
      (define-key global-map [?\s-m] nil) ;; Disable minimize
      (define-key global-map [?\s-p] nil) ;; Disable print
+     (define-key global-map [?\s-o] nil) ;; Disable open
+
+     ;; Switch to new window on window split
+     (global-set-key "\C-x2" (lambda () (interactive)(split-window-vertically) (other-window 1)))
+     (global-set-key "\C-x3" (lambda () (interactive)(split-window-horizontally) (other-window 1)))
+
+     ;; bind comment-line to C-; instead of C-x C-;
+     (global-set-key (kbd "C-;") 'comment-line)
    #+end_src
 
 ** Modes
@@ -78,7 +90,6 @@
       #+END_SRC
 * General
 ** Try
-   
    #+BEGIN_SRC emacs-lisp
      (use-package try
        :ensure t)
@@ -91,7 +102,7 @@
        (which-key-mode))
    #+END_SRC
 
-** Ace windows
+** ace windows
    #+BEGIN_SRC emacs-lisp
      (use-package ace-window
        :ensure t
@@ -170,6 +181,25 @@
        :ensure t
        :bind ("M-s" . avy-goto-word-1)) ;; changed from char as per jcs
    #+END_SRC
+** yasnippet
+   #+begin_src emacs-lisp
+     (use-package yasnippet
+	    :ensure t
+	    :init
+	    (yas-global-mode 1)
+	     :bind (("C-s" . swiper)
+		    ("C-r" . swiper)
+		    ("C-c C-r" . ivy-resume)
+		    ("M-x" . counsel-M-x)
+		    ("C-x C-f" . counsel-find-file)))
+
+     ;; need to install the actual snippets
+     (use-package yasnippet-snippets
+       :ensure t
+       :after yasnippet
+       :config (yasnippet-snippets-initialize))
+   #+end_src
+   
 ** electric-pair
    #+begin_src emacs-lisp
      (electric-pair-mode t)
@@ -182,18 +212,6 @@
 	     (?\{ . ?\})))
    #+end_src
 
-** Autocomplete (not installed)
-   
-   commented out as elpy comes with company package (i think)
-   #+BEGIN_SRC emacs-lisp
- ;    (use-package auto-complete
- ;      :ensure t
- ;      :init
- ;      (progn
- ;	(ac-config-default)
- ;	(global-auto-complete-mode t)
- ;	))
-   #+END_SRC
 ** smartscan (not working)
    - [[https://github.com/mickeynp/smart-scan][smart-scan git]]
    - Quickly jumps between other symbols found at point in Emacs.
@@ -214,53 +232,64 @@
 	;; start python shells in directory of python file
 	(setq elpy-shell-starting-directory 'current-directory)
 	;; display the Python shell after sending something to it
-	; (setq elpy-shell-display-buffer-after-send '1)
-	)
+	(setq elpy-shell-display-buffer-after-send '1))
 
       ;; fix issue when running C-c C-c
       (setq python-shell-completion-native-disabled-interpreters '("python3"))
 
       ;; attaches a dedicated python shell to the current python buffer
       (add-hook 'elpy-mode-hook (lambda () (elpy-shell-toggle-dedicated-shell 1)))
-
-      ;; use flycheck instead of flymake
-      (when (load "flycheck" t t)
-	(setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
-	(add-hook 'elpy-mode-hook 'flycheck-mode))
     #+end_src
-
-** yasnippet
-   #+begin_src emacs-lisp
-     (use-package yasnippet
-	    :ensure t
-	    :init
-	    (yas-global-mode 1)
-	     :bind (("C-s" . swiper)
-		    ("C-r" . swiper)
-		    ("C-c C-r" . ivy-resume)
-		    ("M-x" . counsel-M-x)
-		    ("C-x C-f" . counsel-find-file)))
-
-     ;; need to install the actual snippets
-     (use-package yasnippet-snippets
-       :ensure t
-       :after yasnippet
-       :config (yasnippet-snippets-initialize))
-   #+end_src
-   
+    
 ** flycheck
    #+begin_src emacs-lisp
      (use-package flycheck
        :ensure t
        :init (global-flycheck-mode)
+       :config
+       (setq flycheck-python-flake8-executable "flake8") ;; Set the path to Flake8 executable
+       (setq flycheck-python-mypy-executable "mypy")     ;; Set the path to Mypy executable
+       (flycheck-add-next-checker 'python-flake8 'python-mypy) ;; Use Mypy after Flake8 for Python files
        :bind
        (:map flycheck-mode-map
 	     ("C-c C-n" . flycheck-next-error)
 	     ("C-c C-p" . flycheck-previous-error)
-	     ("C-c C-v" . flycheck-list-errors)))
-   #+end_src
+	     ("C-c C-v" . (lambda () (interactive)(flycheck-list-errors) (other-window 1)))))
 
-** treesitter
+     ;; with elpy use flycheck instead of flymake 
+     (when (load "flycheck" t t)
+       (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
+       (add-hook 'elpy-mode-hook 'flycheck-mode))
+
+     ;; Use org for notes so below  just overkill for me
+     ;; But below will be useful for latex
+
+     ;; Spell checker for normal words
+     ;; (use-package flycheck-aspell
+     ;;   :ensure t
+     ;;   :after flycheck)
+
+     ;; Configure flycheck-aspell for UK English
+     ;; (setq flycheck-aspell-dictionary "en_GB")
+     ;; (add-hook 'org-mode-hook 'flycheck-mode)
+
+     ;; Because Aspell does not support Org syntax, the user has
+     ;; to define a checker with the desired flags themselves.
+     ;; (flycheck-aspell-define-checker "org"
+     ;;   "Org" ("--add-filter" "url")
+     ;;   (org-mode))
+     ;; (add-to-list 'flycheck-checkers 'org-aspell-dynamic)
+
+     #+end_src
+
+*** flycheck test
+    ;#+begin_src emacs-lisp
+      (use-package flycheck
+	:ensure t
+	:init (global-flycheck-mode))
+    ;#+end_src
+
+** tree-sitter
    #+begin_src emacs-lisp
      (use-package tree-sitter
        :ensure t)
@@ -285,6 +314,22 @@
        (setq projectile-project-search-path '("~/git" . 1))
    #+end_src
 * Themes
+** emacs-dashboard
+   #+begin_src emacs-lisp
+     ;; optional dependancy of emacs-dashboard 
+     (use-package page-break-lines
+       :ensure t)
+
+     (use-package dashboard
+       :ensure t
+       :config
+       (dashboard-setup-startup-hook))
+
+     (setq dashboard-items '((projects . 5)
+			     (recents . 5)
+			     (agenda . 5)))
+   #+end_src
+
 ** Doom
    #+BEGIN_SRC emacs-lisp
      (use-package doom-themes
@@ -297,117 +342,148 @@
 
        ;; Enable flashing mode-line on errors
        (doom-themes-visual-bell-config)
-       
+
        ;; treemacs config
        (setq doom-themes-treemacs-theme "doom-colors") ; "doom-atom" or "doom-colors"
        (doom-themes-treemacs-config)
-       
+
        ;; Corrects (and improves) org-mode's native fontification.
        (doom-themes-org-config))
    #+END_SRC
 
-** treemacs
+** Doom-modeline
+   - not working
    #+begin_src emacs-lisp
-	  ;; required for treemacs
-	  (use-package all-the-icons
-	    :ensure t)
+     ;; will need to run nerd-icons-install-fonts as well
+     ;; (use-package nerd-icons
+     ;;   :ensure t)
 
-	  (use-package treemacs
-	    :ensure t
-	    :defer t
-	    :init
-	    (with-eval-after-load 'winum
-	      (define-key winum-keymap (kbd "M-0") #'treemacs-select-window))
-	    :config
-	    (progn
-	      (setq treemacs-collapse-dirs                   (if treemacs-python-executable 3 0)
-		    treemacs-deferred-git-apply-delay        0.5
-		    treemacs-directory-name-transformer      #'identity
-		    treemacs-display-in-side-window          t
-		    treemacs-eldoc-display                   'simple
-		    treemacs-file-event-delay                2000
-		    treemacs-file-extension-regex            treemacs-last-period-regex-value
-		    treemacs-file-follow-delay               0.2
-		    treemacs-file-name-transformer           #'identity
-		    treemacs-follow-after-init               t
-		    treemacs-expand-after-init               t
-		    treemacs-find-workspace-method           'find-for-file-or-pick-first
-		    treemacs-git-command-pipe                ""
-		    treemacs-goto-tag-strategy               'refetch-index
-		    treemacs-header-scroll-indicators        '(nil . "^^^^^^")
-		    treemacs-hide-dot-git-directory          t
-		    treemacs-indentation                     2
-		    treemacs-indentation-string              " "
-		    treemacs-is-never-other-window           nil
-		    treemacs-max-git-entries                 5000
-		    treemacs-missing-project-action          'ask
-		    treemacs-move-forward-on-expand          nil
-		    treemacs-no-png-images                   nil
-		    treemacs-no-delete-other-windows         t
-		    treemacs-project-follow-cleanup          nil
-		    treemacs-persist-file                    (expand-file-name ".cache/treemacs-persist" user-emacs-directory)
-		    treemacs-position                        'left
-		    treemacs-read-string-input               'from-child-frame
-		    treemacs-recenter-distance               0.1
-		    treemacs-recenter-after-file-follow      nil
-		    treemacs-recenter-after-tag-follow       nil
-		    treemacs-recenter-after-project-jump     'always
-		    treemacs-recenter-after-project-expand   'on-distance
-		    treemacs-litter-directories              '("/node_modules" "/.venv" "/.cask")
-		    treemacs-project-follow-into-home        nil
-		    treemacs-show-cursor                     nil
-		    treemacs-show-hidden-files               t
-		    treemacs-silent-filewatch                nil
-		    treemacs-silent-refresh                  nil
-		    treemacs-sorting                         'alphabetic-asc
-		    treemacs-select-when-already-in-treemacs 'move-back
-		    treemacs-space-between-root-nodes        t
-		    treemacs-tag-follow-cleanup              t
-		    treemacs-tag-follow-delay                1.0
-		    treemacs-text-scale                      nil
-		    treemacs-user-mode-line-format           nil
-		    treemacs-user-header-line-format         nil
-		    treemacs-wide-toggle-width               70
-		    treemacs-width                           35
-		    treemacs-width-increment                 1
-		    treemacs-width-is-initially-locked       t
-		    treemacs-workspace-switch-cleanup        nil)
-
-	      (treemacs-project-follow-mode t)
-	      ; (treemacs-tag-follow-mode t)
-	      ; (treemacs-follow-mode t)
-	      (treemacs-filewatch-mode t)
-	      (treemacs-fringe-indicator-mode 'always)
-	      (when treemacs-python-executable
-		(treemacs-git-commit-diff-mode t))
-
-	      (pcase (cons (not (null (executable-find "git")))
-			   (not (null treemacs-python-executable)))
-		(`(t . t)
-		 (treemacs-git-mode 'deferred))
-		(`(t . _)
-		 (treemacs-git-mode 'simple)))
-
-	      (treemacs-hide-gitignored-files-mode nil))
-	    :bind
-	    (:map global-map
-		  ("M-0"       . treemacs-select-window)
-		  ("C-x t 1"   . treemacs-delete-other-windows)
-		  ("C-x t t"   . treemacs)
-		  ("C-x t d"   . treemacs-select-directory)
-		  ("C-x t B"   . treemacs-bookmark)
-		  ("C-x t C-t" . treemacs-find-file)
-		  ("C-x t M-t" . treemacs-find-tag)))
-
-	  (use-package treemacs-projectile
-	    :after (treemacs projectile)
-	    :ensure t)
-
-	  (use-package treemacs-magit
-	    :after (treemacs magit)
-	    :ensure t)
+     ;; (use-package doom-modeline
+     ;;   :ensure t
+     ;;   :hook (after-init . doom-modeline-mode))
    #+end_src
 
+** treemacs
+   #+begin_src emacs-lisp
+     ;; required for treemacs
+     (use-package all-the-icons
+       :ensure t)
 
-   
+     (use-package treemacs
+       :ensure t
+       :defer t
+       :init
+       (with-eval-after-load 'winum
+	 (define-key winum-keymap (kbd "M-0") #'treemacs-select-window))
+       :config
+       (progn
+	 (setq treemacs-collapse-dirs                   (if treemacs-python-executable 3 0)
+	       treemacs-deferred-git-apply-delay        0.5
+	       treemacs-directory-name-transformer      #'identity
+	       treemacs-display-in-side-window          t
+	       treemacs-eldoc-display                   'simple
+	       treemacs-file-event-delay                2000
+	       treemacs-file-extension-regex            treemacs-last-period-regex-value
+	       treemacs-file-follow-delay               0.2
+	       treemacs-file-name-transformer           #'identity
+	       treemacs-follow-after-init               t
+	       treemacs-expand-after-init               t
+	       treemacs-find-workspace-method           'find-for-file-or-pick-first
+	       treemacs-git-command-pipe                ""
+	       treemacs-goto-tag-strategy               'refetch-index
+	       treemacs-header-scroll-indicators        '(nil . "^^^^^^")
+	       treemacs-hide-dot-git-directory          t
+	       treemacs-indentation                     2
+	       treemacs-indentation-string              " "
+	       treemacs-is-never-other-window           nil
+	       treemacs-max-git-entries                 5000
+	       treemacs-missing-project-action          'ask
+	       treemacs-move-forward-on-expand          nil
+	       treemacs-no-png-images                   nil
+	       treemacs-no-delete-other-windows         t
+	       treemacs-project-follow-cleanup          nil
+	       treemacs-persist-file                    (expand-file-name ".cache/treemacs-persist" user-emacs-directory)
+	       treemacs-position                        'left
+	       treemacs-read-string-input               'from-child-frame
+	       treemacs-recenter-distance               0.1
+	       treemacs-recenter-after-file-follow      nil
+	       treemacs-recenter-after-tag-follow       nil
+	       treemacs-recenter-after-project-jump     'always
+	       treemacs-recenter-after-project-expand   'on-distance
+	       treemacs-litter-directories              '("/node_modules" "/.venv" "/.cask")
+	       treemacs-project-follow-into-home        nil
+	       treemacs-show-cursor                     nil
+	       treemacs-show-hidden-files               t
+	       treemacs-silent-filewatch                nil
+	       treemacs-silent-refresh                  nil
+	       treemacs-sorting                         'alphabetic-asc
+	       treemacs-select-when-already-in-treemacs 'move-back
+	       treemacs-space-between-root-nodes        t
+	       treemacs-tag-follow-cleanup              t
+	       treemacs-tag-follow-delay                1.0
+	       treemacs-text-scale                      nil
+	       treemacs-user-mode-line-format           nil
+	       treemacs-user-header-line-format         nil
+	       treemacs-wide-toggle-width               70
+	       treemacs-width                           35
+	       treemacs-width-increment                 1
+	       treemacs-width-is-initially-locked       t
+	       treemacs-workspace-switch-cleanup        nil)
+
+	 (treemacs-project-follow-mode t)
+	 ; (treemacs-tag-follow-mode t)
+	 ; (treemacs-follow-mode t)
+	 (treemacs-filewatch-mode t)
+	 (treemacs-fringe-indicator-mode 'always)
+	 (when treemacs-python-executable
+	   (treemacs-git-commit-diff-mode t))
+
+	 (pcase (cons (not (null (executable-find "git")))
+		      (not (null treemacs-python-executable)))
+	   (`(t . t)
+	    (treemacs-git-mode 'deferred))
+	   (`(t . _)
+	    (treemacs-git-mode 'simple)))
+
+	 (treemacs-hide-gitignored-files-mode nil))
+       :bind
+       (:map global-map
+	     ("M-0"       . treemacs-select-window)
+	     ("C-x t 1"   . treemacs-delete-other-windows)
+	     ("C-x t t"   . treemacs)
+	     ("C-x t d"   . treemacs-select-directory)
+	     ("C-x t B"   . treemacs-bookmark)
+	     ("C-x t C-t" . treemacs-find-file)
+	     ("C-x t M-t" . treemacs-find-tag)))
+
+     (use-package treemacs-projectile
+       :after (treemacs projectile)
+       :ensure t)
+
+     (use-package treemacs-magit
+       :after (treemacs magit)
+       :ensure t)
+   #+end_src
+
+** git-gutter
+   #+begin_src emacs-lisp
+     (use-package git-gutter
+       :ensure t
+       :hook ((prog-mode . git-gutter-mode)
+	      (org-mode . git-gutter-mode))
+       :config
+       (setq git-gutter:update-interval 0.02))
+
+     (use-package git-gutter-fringe
+       :ensure t
+       :config
+       (define-fringe-bitmap 'git-gutter-fr:added [224] nil nil '(center repeated))
+       (define-fringe-bitmap 'git-gutter-fr:modified [224] nil nil '(center repeated))
+       (define-fringe-bitmap 'git-gutter-fr:deleted [128 192 224 240] nil nil 'bottom))
+
+     ;; Customize the git-gutter:modified face to use different colours
+     (set-face-foreground 'git-gutter-fr:modified "#2375B3")
+     ;; (set-face-foreground 'git-gutter-fr:added    "blue")
+     ;; (set-face-foreground 'git-gutter-fr:deleted  "white")
+   #+end_src
 
