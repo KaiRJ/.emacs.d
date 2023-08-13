@@ -1,6 +1,6 @@
 #+STARTUP: overview
 * Tweaks
-** Emacs
+** General
    #+begin_src emacs-lisp
      ;; Put autosave files (ie #foo#) and backup files (ie foo~) in ~/.emacs.d/.
      (custom-set-variables
@@ -13,35 +13,31 @@
      ;; Move cursor to the help window when one is open
      (setq help-window-select t)
 
+     ;; replace yes/no with y/n
+     (fset 'yes-or-no-p 'y-or-n-p)
+
      ;; Delete highlighted text by typing
      (delete-selection-mode 1)
+
+     ;; line Wrapping
+     ;; (global-visual-line-mode t)
+     ;; (add-hook 'text-mode-hook #'auto-fill-mode)
    #+end_src
-   
 ** Interface
    #+BEGIN_SRC emacs-lisp
      ;; misc
      (setq inhibit-startup-message t)
      (tool-bar-mode -1)
      (scroll-bar-mode -1)
-     (fset 'yes-or-no-p 'y-or-n-p)
 
      ;; add line numbers to progam modes
      (add-hook 'prog-mode-hook 'display-line-numbers-mode)
-     ;; Add line numbers to all modes
-     ;; (when (version<= "26.0.50" emacs-version )
-     ;; (global-display-line-numbers-mode))
 
-     ;; Line Wrapping
-     ;; (global-visual-line-mode t)
-     (add-hook 'text-mode-hook #'auto-fill-mode)
-
-     ;; Stop cursor blinking
+     ;; stop cursor blinking
      (blink-cursor-mode 0)
 
      ;; highlight matching paren
      (show-paren-mode 1)
-     ;; highlight entire expression
-     ;; (setq show-paren-style 'expression)
 
      ;; highlights delimiters according to their depth
      (use-package rainbow-delimiters
@@ -49,18 +45,15 @@
      (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
    #+END_SRC
 
-** Key bindinga
+** Key bindings
    #+begin_src emacs-lisp
      ;; C-n adds new line if reaches end of buffer
      (setq next-line-add-newlines t)
 
-     ;; Allow hash to be entered  
+     ;; allow hash to be entered  
      (global-set-key (kbd "M-3") '(lambda () (interactive) (insert "#")))
 
-     ;; bind revert-buffer to f5
-     ;; (global-set-key (kbd "<f5>") 'revert-buffer)
-
-     ;; Disable Mac keyboard commands.
+     ;; disable certain mac keyboard commands
      ;; s is for super (cmd on mac)
      (define-key global-map [?\s-c] nil) ;; Disable copy
      (define-key global-map [?\s-v] nil) ;; Disable paste
@@ -82,18 +75,18 @@
      (global-set-key (kbd "M-p") (kbd "C-u 1 M-v"))
    #+end_src
 
-** Modes
-*** Org mode
-    #+BEGIN_SRC emacs-lisp
-      ;; Org bullets makes things look pretty
-      (use-package org-bullets
-	:ensure t
-	:config
-	(add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+* Modes
+** Org mode
+   #+BEGIN_SRC emacs-lisp
+     ;; Org bullets makes things look pretty
+     (use-package org-bullets
+       :ensure t
+       :config
+       (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 
-      ;; Org indent under headings
-      (setq org-adapt-indentation t)
-      #+END_SRC
+     ;; Org indent under headings
+     (setq org-adapt-indentation t)
+     #+END_SRC
 * General Packages
 ** Try
    #+BEGIN_SRC emacs-lisp
@@ -143,6 +136,7 @@
 	:ensure t
 	)    
     #+end_src
+    
 *** swiper
     #+BEGIN_SRC emacs-lisp
       (use-package swiper
@@ -175,29 +169,22 @@
     #+begin_src emacs-lisp
       (global-set-key (kbd "C-x C-b") 'ibuffer)
       (setq ibuffer-default-sorting-mode 'major-mode)
-
-      ;; Hide all buffers starting with an asterisk
-      ; (require 'ibuf-ext)
-      ; (add-to-list 'ibuffer-never-show-predicates "^\\*")
   #+end_src
     
 ** Avy
    #+Begin_SRC emacs-lisp
      (use-package avy
        :ensure t
-       :bind ("M-s" . avy-goto-word-1)) ;; changed from char as per jcs
+       :bind
+       ("M-s" . avy-goto-word-1)
+       ( "M-g M-g" . 'avy-goto-line))
    #+END_SRC
 ** yasnippet
    #+begin_src emacs-lisp
      (use-package yasnippet
-	    :ensure t
-	    :init
-	    (yas-global-mode 1)
-	     :bind (("C-s" . swiper)
-		    ("C-r" . swiper)
-		    ("C-c C-r" . ivy-resume)
-		    ("M-x" . counsel-M-x)
-		    ("C-x C-f" . counsel-find-file)))
+       :ensure t
+       :init
+       (yas-global-mode 1))
 
      ;; need to install the actual snippets
      (use-package yasnippet-snippets
@@ -206,27 +193,6 @@
        :config (yasnippet-snippets-initialize))
    #+end_src
    
-** electric-pair
-   #+begin_src emacs-lisp
-     (electric-pair-mode t)
-
-     ;; make electric-pair-mode work on more brackets
-     (setq electric-pair-pairs
-	   '(
-	     (?\" . ?\")
-	     (?\' . ?\')
-	     (?\{ . ?\})))
-   #+end_src
-
-** smartscan (not working)
-   - [[https://github.com/mickeynp/smart-scan][smart-scan git]]
-   - Quickly jumps between other symbols found at point in Emacs.
-   - NOT WORKING
-   #+begin_src emacs-lisp
-     ;(use-package smartscan
-     ;  :ensure t)
-   #+end_src
-
 * Coding Packages
 ** Python
 *** elpy
@@ -256,24 +222,19 @@
        (setq flycheck-python-flake8-executable "flake8") ;; Set the path to Flake8 executable
        (setq flycheck-python-mypy-executable "mypy")     ;; Set the path to Mypy executable
        (flycheck-add-next-checker 'python-flake8 'python-mypy) ;; Use Mypy after Flake8 for Python files
+       :custom
+       (flycheck-display-errors-delay .5)
        :bind
        (:map flycheck-mode-map
 	     ("C-c C-n" . flycheck-next-error)
 	     ("C-c C-p" . flycheck-previous-error)
 	     ("C-c C-v" . (lambda () (interactive)(flycheck-list-errors) (other-window 1)))))
 
-     ;; with elpy use flycheck instead of flymake 
+     ;; make elpy use flycheck instead of flymake 
      (when (load "flycheck" t t)
        (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
        (add-hook 'elpy-mode-hook 'flycheck-mode))
      #+end_src
-
-*** flycheck test
-    ;#+begin_src emacs-lisp
-      (use-package flycheck
-	:ensure t
-	:init (global-flycheck-mode))
-    ;#+end_src
 
 ** tree-sitter
    #+begin_src emacs-lisp
@@ -316,8 +277,8 @@
 			     (agenda . 5)))
    #+end_src
 
-** Doom
-   #+BEGIN_SRC emacs-lisp
+** Doom (uninstalled)
+   !#+BEGIN_SRC emacs-lisp
      (use-package doom-themes
        :ensure t
        :config
@@ -335,10 +296,15 @@
 
        ;; Corrects (and improves) org-mode's native fontification.
        (doom-themes-org-config))
-   #+END_SRC
-
-** Doom-modeline
-   - not working
+   !#+END_SRC
+** zenburn
+   #+begin_src emacs-lisp
+     (use-package zenburn-theme
+       :ensure t
+       :config (load-theme 'zenburn t))
+   #+end_src
+   
+** Doom-modeline (not working)
    #+begin_src emacs-lisp
      ;; will need to run nerd-icons-install-fonts as well
      ;; (use-package nerd-icons
@@ -349,8 +315,8 @@
      ;;   :hook (after-init . doom-modeline-mode))
    #+end_src
 
-** treemacs
-   #+begin_src emacs-lisp
+** treemacs (uninstalled)
+   !#+begin_src emacs-lisp
      ;; required for treemacs
      (use-package all-the-icons
        :ensure t)
@@ -449,7 +415,7 @@
      (use-package treemacs-magit
        :after (treemacs magit)
        :ensure t)
-   #+end_src
+   !#+end_src
 
 ** git-gutter
    #+begin_src emacs-lisp
