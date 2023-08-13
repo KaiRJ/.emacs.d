@@ -196,7 +196,7 @@
 * Coding Packages
 ** Python
 *** elpy
-    #+begin_src emacs-lisp
+   #+begin_src emacs-lisp
       (use-package elpy
 	:ensure t
 	:init
@@ -211,7 +211,7 @@
 
       ;; attaches a dedicated python shell to the current python buffer
       (add-hook 'elpy-mode-hook (lambda () (elpy-shell-toggle-dedicated-shell 1)))
-    #+end_src
+   #+end_src
     
 ** flycheck
    #+begin_src emacs-lisp
@@ -234,7 +234,7 @@
      (when (load "flycheck" t t)
        (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
        (add-hook 'elpy-mode-hook 'flycheck-mode))
-     #+end_src
+   #+end_src
 
 ** tree-sitter
    #+begin_src emacs-lisp
@@ -424,7 +424,7 @@
        :hook ((prog-mode . git-gutter-mode)
 	      (org-mode . git-gutter-mode))
        :config
-       (setq git-gutter:update-interval 0.02))
+       (setq git-gutter:update-interval 1)) ;; too small caused lagging
 
      (use-package git-gutter-fringe
        :ensure t
