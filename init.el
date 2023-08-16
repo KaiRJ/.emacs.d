@@ -26,9 +26,10 @@
  '(backup-directory-alist '((".*" . "~/.emacs.d/backups/")))
  '(custom-safe-themes
    '("288482f5c627c1fe5a1d26fcc17ec6ca8837f36bf940db809895bf3f8e2e4edd" default))
+ '(lock-file-name-transforms '((".*" "~/.emacs.d/lockfiles/\\1" t)))
  '(neo-theme 'icons)
  '(package-selected-packages
-   '(flycheck-pos-tip diff-hl doom-modeline smart-mode-line jedi yasnippet-snippets neotree amx color-theme auto-complete zenburn-theme which-key use-package try org-bullets doom-themes counsel ace-window))
+   '(pdf-continuous-scroll-mode quelpa pdf-tools flycheck-pos-tip diff-hl doom-modeline smart-mode-line jedi yasnippet-snippets neotree amx color-theme auto-complete zenburn-theme which-key use-package try org-bullets doom-themes counsel ace-window))
  '(warning-suppress-types
    '((color-theme)
      (color-theme)
