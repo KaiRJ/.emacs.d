@@ -1,14 +1,16 @@
-#+STARTUP: overview
++STARTUP: overview
 * Tweaks
 ** General
    #+begin_src emacs-lisp
      ;; Put autosave files (ie #foo#) and backup files (ie foo~) in ~/.emacs.d/.
      (custom-set-variables
       '(auto-save-file-name-transforms '((".*" "~/.emacs.d/autosaves/\\1" t)))
-      '(backup-directory-alist '((".*" . "~/.emacs.d/backups/"))))
+      '(backup-directory-alist '((".*" . "~/.emacs.d/backups/")))
+      '(lock-file-name-transforms '((".*" "~/.emacs.d/lockfiles/\\1" t))))
 
-     ;; create the autosave dir if necessary, since emacs won't.
+     ;; create the autosave and lockfiles dir if necessary, since emacs won't.
      (make-directory "~/.emacs.d/autosaves/" t)
+     (make-directory "~/.emacs.d/lockfiles/" t)
 
      ;; Move cursor to the help window when one is open
      (setq help-window-select t)
@@ -20,8 +22,10 @@
      (delete-selection-mode 1)
 
      ;; line Wrapping
-     ;; (global-visual-line-mode t)
-     ;; (add-hook 'text-mode-hook #'auto-fill-mode)
+     ;; Disable truncate-lines in Org mode
+     (add-hook 'org-mode-hook (lambda () (setq truncate-lines nil)))
+     ;; Enable truncate-lines in programming modes
+     (add-hook 'prog-mode-hook (lambda () (setq truncate-lines t)))
    #+end_src
 ** Interface
    #+BEGIN_SRC emacs-lisp
@@ -96,7 +100,8 @@
 ** which key
    #+BEGIN_SRC emacs-lisp
      (use-package which-key
-       :ensure t 
+       :ensure t
+       :delight
        :config
        (which-key-mode))
    #+END_SRC
@@ -122,6 +127,7 @@
     #+begin_src emacs-lisp
       (use-package ivy
 	:ensure t
+	:delight
 	:diminish (ivy-mode)
 	:bind (("C-x b" . ivy-switch-buffer))
 	:config
@@ -197,20 +203,21 @@
 ** Python
 *** elpy
    #+begin_src emacs-lisp
-      (use-package elpy
-	:ensure t
-	:init
-	(elpy-enable)
-	;; start python shells in directory of python file
-	(setq elpy-shell-starting-directory 'current-directory)
-	;; display the Python shell after sending something to it
-	(setq elpy-shell-display-buffer-after-send '1))
+     (use-package elpy
+       :ensure t
+       :delight
+       :init
+       (elpy-enable)
+       ;; start python shells in directory of python file
+       (setq elpy-shell-starting-directory 'current-directory)
+       ;; display the Python shell after sending something to it
+       (setq elpy-shell-display-buffer-after-send '1))
 
-      ;; fix issue when running C-c C-c
-      (setq python-shell-completion-native-disabled-interpreters '("python3"))
+     ;; fix issue when running C-c C-c
+     (setq python-shell-completion-native-disabled-interpreters '("python3"))
 
-      ;; attaches a dedicated python shell to the current python buffer
-      (add-hook 'elpy-mode-hook (lambda () (elpy-shell-toggle-dedicated-shell 1)))
+     ;; attaches a dedicated python shell to the current python buffer
+     (add-hook 'elpy-mode-hook (lambda () (elpy-shell-toggle-dedicated-shell 1)))
    #+end_src
     
 ** flycheck
@@ -218,17 +225,22 @@
      (use-package flycheck
        :ensure t
        :init (global-flycheck-mode)
-       :config
-       (setq flycheck-python-flake8-executable "flake8") ;; Set the path to Flake8 executable
-       (setq flycheck-python-mypy-executable "mypy")     ;; Set the path to Mypy executable
-       (flycheck-add-next-checker 'python-flake8 'python-mypy) ;; Use Mypy after Flake8 for Python files
        :custom
-       (flycheck-display-errors-delay .5)
+       (flycheck-display-errors-delay 1)
        :bind
        (:map flycheck-mode-map
 	     ("C-c C-n" . flycheck-next-error)
 	     ("C-c C-p" . flycheck-previous-error)
-	     ("C-c C-v" . (lambda () (interactive)(flycheck-list-errors) (other-window 1)))))
+	     ("C-c C-v" . (lambda () ;; move point to flycheck buffer
+			    (interactive)
+			    (flycheck-list-errors)
+			    (select-window (get-buffer-window "*Flycheck errors*" t))))))
+
+     (use-package flycheck-pos-tip
+       :ensure t
+       :after flycheck
+       :config
+       (flycheck-pos-tip-mode))
 
      ;; make elpy use flycheck instead of flymake 
      (when (load "flycheck" t t)
@@ -239,7 +251,8 @@
 ** tree-sitter
    #+begin_src emacs-lisp
      (use-package tree-sitter
-       :ensure t)
+       :ensure t
+       :delight)
 
      (use-package tree-sitter-langs
        :ensure t)
@@ -252,6 +265,7 @@
    #+begin_src emacs-lisp
      (use-package projectile
        :ensure t
+       :delight '(:eval (concat " " (projectile-project-name)))
        :init
        (projectile-mode +1)
        :bind (:map projectile-mode-map
@@ -261,6 +275,49 @@
        (setq projectile-project-search-path '("~/git" . 1))
    #+end_src
 * Themes
+** Color theme
+*** zenburn
+    #+begin_src emacs-lisp
+      ;; (use-package zenburn-theme
+      ;;   :ensure t
+      ;;   :config (load-theme 'zenburn t))
+    #+end_src
+*** atom one dark
+    #+begin_src emacs-lisp
+      ;; (use-package atom-one-dark-theme
+      ;;   :ensure t
+      ;;   :config (load-theme 'atom-one-dark t))
+    #+end_src
+*** doom
+    #+begin_src emacs-lisp
+      (use-package doom-themes
+	:ensure t
+	:config
+	;; Global settings (defaults)
+	(setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+	      doom-themes-enable-italic t) ; if nil, italics is universally disabled
+	(load-theme 'doom-one t)
+
+	;; Enable flashing mode-line on errors
+	(doom-themes-visual-bell-config)
+	;; Custom treemacs tree
+	;; (setq doom-themes-treemacs-theme "doom-atom") ; use "doom-colors" for less minimal icon theme
+	;; (doom-themes-treemacs-config)
+	;; Corrects (and improves) org-mode's native fontification.
+	(doom-themes-org-config))
+    #+end_src
+** Modeline
+*** doom-modeline
+    #+begin_src emacs-lisp
+      (use-package doom-modeline
+	:ensure t
+	:init (doom-modeline-mode 1))
+    #+end_src
+   
+** Font
+   #+begin_src emacs-lisp
+   #+end_src
+
 ** emacs-dashboard
    #+begin_src emacs-lisp
      ;; optional dependancy of emacs-dashboard 
@@ -275,44 +332,6 @@
      (setq dashboard-items '((projects . 5)
 			     (recents . 5)
 			     (agenda . 5)))
-   #+end_src
-
-** Doom (uninstalled)
-   !#+BEGIN_SRC emacs-lisp
-     (use-package doom-themes
-       :ensure t
-       :config
-       ;; Global settings (defaults)
-       (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-	     doom-themes-enable-italic t) ; if nil, italics is universally disabled
-       (load-theme 'doom-one t)
-
-       ;; Enable flashing mode-line on errors
-       (doom-themes-visual-bell-config)
-
-       ;; treemacs config
-       (setq doom-themes-treemacs-theme "doom-colors") ; "doom-atom" or "doom-colors"
-       (doom-themes-treemacs-config)
-
-       ;; Corrects (and improves) org-mode's native fontification.
-       (doom-themes-org-config))
-   !#+END_SRC
-** zenburn
-   #+begin_src emacs-lisp
-     (use-package zenburn-theme
-       :ensure t
-       :config (load-theme 'zenburn t))
-   #+end_src
-   
-** Doom-modeline (not working)
-   #+begin_src emacs-lisp
-     ;; will need to run nerd-icons-install-fonts as well
-     ;; (use-package nerd-icons
-     ;;   :ensure t)
-
-     ;; (use-package doom-modeline
-     ;;   :ensure t
-     ;;   :hook (after-init . doom-modeline-mode))
    #+end_src
 
 ** treemacs (uninstalled)
@@ -421,10 +440,11 @@
    #+begin_src emacs-lisp
      (use-package git-gutter
        :ensure t
+       :delight
        :hook ((prog-mode . git-gutter-mode)
 	      (org-mode . git-gutter-mode))
        :config
-       (setq git-gutter:update-interval 1)) ;; too small caused lagging
+       (setq git-gutter:update-interval 1)) ;; if too small causes lagging
 
      (use-package git-gutter-fringe
        :ensure t
