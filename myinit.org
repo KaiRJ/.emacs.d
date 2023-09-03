@@ -2,6 +2,8 @@
 * Tweaks
 ** General
    #+begin_src emacs-lisp
+     ;; remove 'cl dpricated' warning on startup
+     (setq byte-compile-warnings '(cl-functions))
      ;; Put autosave files (ie #foo#) and backup files (ie foo~) in ~/.emacs.d/.
      (custom-set-variables
       '(auto-save-file-name-transforms '((".*" "~/.emacs.d/autosaves/\\1" t)))
@@ -21,11 +23,12 @@
      ;; Delete highlighted text by typing
      (delete-selection-mode 1)
 
-     ;; line Wrapping
-     ;; Disable truncate-lines in Org mode
-     (add-hook 'org-mode-hook (lambda () (setq truncate-lines nil)))
-     ;; Enable truncate-lines in programming modes
+     ;; line Wrappings
+     (add-hook 'text-mode-hook 'turn-on-visual-line-mode)
      (add-hook 'prog-mode-hook (lambda () (setq truncate-lines t)))
+
+     ;; Sort apropos results by relevency
+     (setq apropos-sort-by-scores t)
    #+end_src
 ** Interface
    #+BEGIN_SRC emacs-lisp
@@ -91,9 +94,16 @@
        :config
        (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 
-     ;; Org indent under headings
-     (setq org-adapt-indentation t)
+     ;; indent with tabs for better readability
+     (add-hook 'org-mode-hook #'org-indent-mode)
+     ;; (setq org-indent-indentation-per-level 4)
+
      #+END_SRC
+** Program Mode
+   #+begin_src emacs-lisp
+     ;; treat CamelCase as distinct words
+     ;; (global-subword-mode 1)
+   #+end_src
 * General Packages
 ** Try
    #+BEGIN_SRC emacs-lisp
@@ -162,6 +172,10 @@
 	  (setq ivy-display-style 'fancy)
 	  (define-key read-expression-map (kbd "C-r") 'counsel-expression-history)
 	  ))
+
+      ;; _should_ speed swiper up
+      (setq swiper-use-visual-line nil)
+      (setq swiper-use-visual-line-p (lambda (a) nil))
     #+END_SRC
 
 ** Amox
@@ -208,28 +222,97 @@
        :config
        (pdf-tools-install t))
    #+end_src
+** undo-tree
+   #+begin_src emacs-lisp
+     (use-package undo-tree
+       :ensure t
+       :init
+       (global-undo-tree-mode)
+       :config
+       (setq undo-tree-visualizer-diff t) ;; show difs
+       (setq undo-tree-auto-save-history t) ;; save history to file
+       
+       ;; Create the undo history directory if it doesn't exist
+       (let ((undo-history-dir (expand-file-name "undo-history" user-emacs-directory)))
+	 (unless (file-directory-p undo-history-dir)
+	   (make-directory undo-history-dir)))
+
+       ;; Set the directory for undo history files
+       (setq undo-tree-history-directory-alist
+	     `((".*" . ,(expand-file-name "undo-history" user-emacs-directory)))))
+
+    #+end_src
    
 * Coding Packages
 ** Python
 *** elpy
-   #+begin_src emacs-lisp
-     (use-package elpy
-       :ensure t
-       :delight
-       :init
-       (elpy-enable)
-       ;; start python shells in directory of python file
-       (setq elpy-shell-starting-directory 'current-directory)
-       ;; display the Python shell after sending something to it
-       (setq elpy-shell-display-buffer-after-send '1))
+#+begin_src emacs-lisp
+  (use-package elpy
+    :ensure t
+    :delight
+    :init
+    (elpy-enable)
+    ;; start python shells in directory of python file
+    (setq elpy-shell-starting-directory 'current-directory)
+    ;; display the Python shell after sending something to it
+    (setq elpy-shell-display-buffer-after-send '1))
 
-     ;; fix issue when running C-c C-c
-     (setq python-shell-completion-native-disabled-interpreters '("python3"))
+  ;; fix issue when running C-c C-c
+  (setq python-shell-completion-native-disabled-interpreters '("python3"))
 
-     ;; attaches a dedicated python shell to the current python buffer
-     (add-hook 'elpy-mode-hook (lambda () (elpy-shell-toggle-dedicated-shell 1)))
+  ;; attaches a dedicated python shell to the current python buffer
+  (add-hook 'elpy-mode-hook (lambda () (elpy-shell-toggle-dedicated-shell 1)))
    #+end_src
-    
+** C++
+*** General
+#+begin_src emacs-lisp
+  ;; make sure up to date
+  (require 'cc-mode)
+#+end_src
+*** company-irony
+#+begin_src emacs-lisp
+  (use-package irony
+    :ensure t
+    :config
+    (add-hook 'c++-mode-hook 'irony-mode)
+    (add-hook 'c-mode-hook 'irony-mode))
+
+  ;; if need to run irony-install-server
+  ;; make sure to add:
+  ;;      -DLIBCLANG_INCLUDE_DIR\=/usr/local/opt/llvm/include/
+  ;;      -DLIBCLANG_LIBRARY\=/usr/local/opt/llvm/lib/libclang.dylib
+  (use-package company-irony
+    :ensure t
+    :after (company irony)
+    :config
+    (eval-after-load 'company
+      '(add-to-list 'company-backends 'company-irony)))
+#+end_src
+*** syntax
+#+begin_src emacs-lisp
+  ;; (use-package modern-cpp-font-lock
+  ;;   :ensure t
+  ;;   :config
+  ;;   (modern-c++-font-lock-global-mode t))
+#+end_src
+*** ggtages
+    #+begin_src emacs-lisp
+      ;; tags for code navigation
+      (use-package ggtags
+        :ensure t
+        :bind
+        (:map ggtags-navigation-map
+              ("M-]" . nil)
+              ("C-M-." . nil)
+              ("M-s" . nil)
+              )
+        :config
+        (add-hook 'c-mode-common-hook
+                  (lambda ()
+                    (when (derived-mode-p 'c-mode 'c++-mode 'java-mode)
+                      (ggtags-mode 1))))
+        )
+    #+end_src
 ** flycheck
    #+begin_src emacs-lisp
      (use-package flycheck
@@ -239,12 +322,24 @@
        (flycheck-display-errors-delay 1)
        :bind
        (:map flycheck-mode-map
-	     ("C-c C-n" . flycheck-next-error)
-	     ("C-c C-p" . flycheck-previous-error)
-	     ("C-c C-v" . (lambda () ;; move point to flycheck buffer
-			    (interactive)
-			    (flycheck-list-errors)
-			    (select-window (get-buffer-window "*Flycheck errors*" t))))))
+             ("C-c C-n" . flycheck-next-error)
+             ("C-c C-p" . flycheck-previous-error)
+             ("C-c C-v" . (lambda () ;; move point to flycheck buffer
+                            (interactive)
+                            (flycheck-list-errors)
+                            (select-window (get-buffer-window "*Flycheck errors*" t))))))
+
+     (eval-after-load 'flycheck
+       '(setq-default flycheck-c/c++-header-file-regexp
+                      (concat "\\(?:"
+                              (regexp-opt '(".h" ".hpp" ".hh" ".hxx"))
+                              "\\)")))
+
+     ;; disable clang checker as its out of date
+     (add-hook 'c++-mode-hook
+               (lambda ()
+                 (setq flycheck-disabled-checkers '(c/c++-clang))))
+
 
      (use-package flycheck-pos-tip
        :ensure t
@@ -258,18 +353,13 @@
        (add-hook 'elpy-mode-hook 'flycheck-mode))
    #+end_src
 
-** tree-sitter
-   #+begin_src emacs-lisp
-     (use-package tree-sitter
-       :ensure t
-       :delight)
-
-     (use-package tree-sitter-langs
-       :ensure t)
-
-     (global-tree-sitter-mode)
-     (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
-   #+end_src
+** company-mode
+#+begin_src emacs-lisp
+  (use-package company
+     :ensure t
+     :config
+     (add-hook 'after-init-hook 'global-company-mode))
+#+end_src
 
 ** projectile
    #+begin_src emacs-lisp
@@ -284,6 +374,21 @@
        ;; automatically check for projects in git on startup
        (setq projectile-project-search-path '("~/git" . 1))
    #+end_src
+** aggressive-indent
+#+begin_src emacs-lisp
+  (use-package aggressive-indent
+    :ensure t
+    :config
+    (global-aggressive-indent-mode 1))
+
+  ;; wait until ';' to indent
+  (add-to-list
+   'aggressive-indent-dont-indent-if
+   '(and (derived-mode-p 'c++-mode)
+         (null (string-match "\\([;{}]\\|\\b\\(if\\|for\\|while\\)\\b\\)"
+                             (thing-at-point 'line)))))
+#+end_src   
+   
 * Themes
 ** Color theme
 *** zenburn
@@ -301,20 +406,20 @@
 *** doom
     #+begin_src emacs-lisp
       (use-package doom-themes
-	:ensure t
-	:config
-	;; Global settings (defaults)
-	(setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-	      doom-themes-enable-italic t) ; if nil, italics is universally disabled
-	(load-theme 'doom-one t)
+        :ensure t
+        :config
+        ;; Global settings (defaults)
+        (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+              doom-themes-enable-italic t) ; if nil, italics is universally disabled
+        (load-theme 'doom-one t)
 
-	;; Enable flashing mode-line on errors
-	(doom-themes-visual-bell-config)
-	;; Custom treemacs tree
-	(setq doom-themes-treemacs-theme "doom-atom") ; use "doom-colors" for less minimal icon theme
-	(doom-themes-treemacs-config)
-	;; Corrects (and improves) org-mode's native fontification.
-	(doom-themes-org-config))
+        ;; Enable flashing mode-line on errors
+        (doom-themes-visual-bell-config)
+        ;; Custom treemacs tree
+        (setq doom-themes-treemacs-theme "doom-atom") ; use "doom-colors" for less minimal icon theme
+        (doom-themes-treemacs-config)
+        ;; Corrects (and improves) org-mode's native fontification.
+        (doom-themes-org-config))
     #+end_src
 ** Modeline
 *** doom-modeline
@@ -374,7 +479,7 @@
    #+end_src
 
 ** git-gutter
-   #+begin_src emacs-lisp
+   !#+begin_src emacs-lisp
      (use-package git-gutter
        :ensure t
        :delight
@@ -394,5 +499,16 @@
      (set-face-foreground 'git-gutter-fr:modified "#2375B3")
      ;; (set-face-foreground 'git-gutter-fr:added    "blue")
      ;; (set-face-foreground 'git-gutter-fr:deleted  "white")
-   #+end_src
+   !#+end_src
 
+** tree-sitter
+   #+begin_src emacs-lisp
+     (use-package tree-sitter
+       :ensure t)
+
+     (use-package tree-sitter-langs
+       :ensure t)
+
+     (global-tree-sitter-mode)
+     (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
+   #+end_src

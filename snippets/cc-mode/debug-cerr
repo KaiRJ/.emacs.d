@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: debug cerr
+# key: db
+# --
+std::cerr << "(" << __FILE__ << ", "<< __FUNCTION__ << ", " << __LINE__ << ") $0" << std::endl;

@@ -29,7 +29,11 @@
  '(lock-file-name-transforms '((".*" "~/.emacs.d/lockfiles/\\1" t)))
  '(neo-theme 'icons)
  '(package-selected-packages
-   '(pdf-continuous-scroll-mode quelpa pdf-tools flycheck-pos-tip diff-hl doom-modeline smart-mode-line jedi yasnippet-snippets neotree amx color-theme auto-complete zenburn-theme which-key use-package try org-bullets doom-themes counsel ace-window))
+   '(company-mode modern-cpp-font-lock highlight-indent-guides ggtags undo-tree pdf-continuous-scroll-mode quelpa pdf-tools flycheck-pos-tip diff-hl doom-modeline smart-mode-line jedi yasnippet-snippets neotree amx color-theme auto-complete zenburn-theme which-key use-package try org-bullets doom-themes counsel ace-window))
+ '(safe-local-variable-values
+   '((flycheck-gcc-language-standard . "c++2a")
+     (flycheck-gcc-language-standard . c++2a)
+     (flycheck-gcc-language-standard . c++20)))
  '(warning-suppress-types
    '((color-theme)
      (color-theme)
