@@ -1,4 +1,4 @@
-+STARTUP: overview
+#+STARTUP: overview
 * Tweaks
 ** General
    #+begin_src emacs-lisp
@@ -70,6 +70,7 @@
      (define-key global-map [?\s-m] nil) ;; Disable minimize
      (define-key global-map [?\s-p] nil) ;; Disable print
      (define-key global-map [?\s-o] nil) ;; Disable open
+     (define-key global-map [?\C-z] nil) ;; Disable minimize
 
      ;; Switch to new window on window split
      (global-set-key "\C-x2" (lambda () (interactive)(split-window-vertically) (other-window 1)))
@@ -243,7 +244,13 @@
 
     #+end_src
    
-* Coding Packages
+* Coding
+** General tweaks
+#+begin_src emacs-lisp
+  ;; set as default
+  (setq gdb-many-windows t)
+  (setq gdb-show-main t)
+#+end_src
 ** Python
 *** elpy
 #+begin_src emacs-lisp
@@ -288,13 +295,7 @@
     (eval-after-load 'company
       '(add-to-list 'company-backends 'company-irony)))
 #+end_src
-*** syntax
-#+begin_src emacs-lisp
-  ;; (use-package modern-cpp-font-lock
-  ;;   :ensure t
-  ;;   :config
-  ;;   (modern-c++-font-lock-global-mode t))
-#+end_src
+
 *** ggtages
     #+begin_src emacs-lisp
       ;; tags for code navigation
@@ -479,14 +480,14 @@
    #+end_src
 
 ** git-gutter
-   !#+begin_src emacs-lisp
+   #+begin_src emacs-lisp
      (use-package git-gutter
        :ensure t
        :delight
        :hook ((prog-mode . git-gutter-mode)
-	      (org-mode . git-gutter-mode))
+              (org-mode . git-gutter-mode))
        :config
-       (setq git-gutter:update-interval 1)) ;; if too small causes lagging
+       (setq git-gutter:update-interval 0.5)) ;; if too small causes lagging
 
      (use-package git-gutter-fringe
        :ensure t
@@ -499,7 +500,7 @@
      (set-face-foreground 'git-gutter-fr:modified "#2375B3")
      ;; (set-face-foreground 'git-gutter-fr:added    "blue")
      ;; (set-face-foreground 'git-gutter-fr:deleted  "white")
-   !#+end_src
+   #+end_src
 
 ** tree-sitter
    #+begin_src emacs-lisp
