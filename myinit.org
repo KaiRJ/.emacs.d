@@ -247,9 +247,16 @@
 * Coding
 ** General tweaks
 #+begin_src emacs-lisp
-  ;; set as default
+  ;; set as default for debugging
   (setq gdb-many-windows t)
   (setq gdb-show-main t)
+
+  ;; Set tab width to 4 spaces
+  (setq-default tab-width 4) 
+  (add-hook 'c++-mode-hook (lambda () (setq-local c-basic-offset 4)))
+  (add-hook 'c-mode-hook (lambda () (setq-local c-basic-offset 4)))
+  (add-hook 'python-mode-hook (lambda () (setq-local python-indent-offset 4)))
+
 #+end_src
 ** Python
 *** elpy
@@ -389,7 +396,13 @@
          (null (string-match "\\([;{}]\\|\\b\\(if\\|for\\|while\\)\\b\\)"
                              (thing-at-point 'line)))))
 #+end_src   
-   
+** smartparens
+#+begin_src emacs-lisp
+  (use-package smartparens
+    :ensure t
+    :hook
+    ((prog-mode . smartparens-mode)))
+#+end_src
 * Themes
 ** Color theme
 *** zenburn
