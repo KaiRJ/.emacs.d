@@ -2,8 +2,10 @@
 * Tweaks
 ** General
 #+begin_src emacs-lisp
+
   ;; remove 'cl dpricated' warning on startup
   (setq byte-compile-warnings '(cl-functions))
+
   ;; Put autosave files (ie #foo#) and backup files (ie foo~) in ~/.emacs.d/.
   (custom-set-variables
    '(auto-save-file-name-transforms '((".*" "~/.emacs.d/autosaves/\\1" t)))
@@ -29,9 +31,11 @@
 
   ;; Sort apropos results by relevency
   (setq apropos-sort-by-scores t)
+  
  #+end_src
 ** Interface
 #+BEGIN_SRC emacs-lisp
+
   ;; misc
   (setq inhibit-startup-message t)
   (tool-bar-mode -1)
@@ -48,15 +52,12 @@
 
   ;; hightlight cursor line
   (global-hl-line-mode t)
-
-  ;; highlights delimiters according to their depth
-  (use-package rainbow-delimiters
-    :ensure t)
-  (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
+  
  #+END_SRC
 
 ** Key bindings
 #+begin_src emacs-lisp
+
   ;; C-n adds new line if reaches end of buffer
   (setq next-line-add-newlines t)
 
@@ -84,27 +85,213 @@
   ;; scroll window up/down by one line
   (global-set-key (kbd "M-n") (kbd "C-u 1 C-v"))
   (global-set-key (kbd "M-p") (kbd "C-u 1 M-v"))
+  
 #+end_src
 
-* Modes
-** Org mode
-   #+BEGIN_SRC emacs-lisp
-     ;; Org bullets makes things look pretty
-     (use-package org-bullets
-       :ensure t
-       :config
-       (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+* Org mode
+#+BEGIN_SRC emacs-lisp
+  
+  ;; Org bullets makes things look pretty
+  (use-package org-bullets
+    :ensure t
+    :config
+    (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 
-     ;; indent with tabs for better readability
-     (add-hook 'org-mode-hook #'org-indent-mode)
-     ;; (setq org-indent-indentation-per-level 4)
+  ;; indent with tabs for better readability
+  (add-hook 'org-mode-hook #'org-indent-mode)
+  ;; (setq org-indent-indentation-per-level 4)
 
-     #+END_SRC
-** Program Mode
-   #+begin_src emacs-lisp
-     ;; treat CamelCase as distinct words
-     ;; (global-subword-mode 1)
+#+END_SRC
+* Program Mode
+** General tweaks
+#+begin_src emacs-lisp
+  ;; treat CamelCase as distinct words
+  (global-subword-mode 1)
+
+  ;; set as default for debugging
+  (setq gdb-many-windows t)
+  (setq gdb-show-main t)
+
+  ;; Visualize trailing white space
+  ;; (global-whitespace-mode) ; Enable whitespace mode everywhere
+
+  ;; set .h files to use c++ mode instead
+  (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode))
+
+  (defvar my-indent-width 4
+    "The number of spaces to use for each indentation level.")
+
+  ;; Set tab width to my-indent-width spaces
+  (setq-default tab-width my-indent-width)
+  (setq python-indent-offset my-indent-width)
+  (setq-default c-basic-offset my-indent-width)
+
+  ;; change the c style for aggressive indent
+  (setq c-default-style "linux")
+
+  ;; Set indent-tabs-mode to nil (use spaces) for specific modes
+  (add-hook 'prog-mode-hook (lambda () (setq indent-tabs-mode nil)))
+
+  ;; Make the backspace properly erase the tab instead of removing 1 space at a time.
+  (setq backward-delete-char-untabify-method 'hungry)
+#+end_src
+** Python
+*** elpy
+#+begin_src emacs-lisp
+  (use-package elpy
+    :ensure t
+    :delight
+    :init
+    (elpy-enable)
+    ;; start python shells in directory of python file
+    (setq elpy-shell-starting-directory 'current-directory)
+    ;; display the Python shell after sending something to it
+    (setq elpy-shell-display-buffer-after-send '1))
+
+  ;; fix issue when running C-c C-c
+  (setq python-shell-completion-native-disabled-interpreters '("python3"))
+
+  ;; attaches a dedicated python shell to the current python buffer
+  (add-hook 'elpy-mode-hook (lambda () (elpy-shell-toggle-dedicated-shell 1)))
    #+end_src
+** C++
+*** General
+#+begin_src emacs-lisp
+  ;; make sure up to date
+  (require 'cc-mode)
+#+end_src
+*** company-irony
+#+begin_src emacs-lisp
+  (use-package irony
+    :ensure t
+    :config
+    (add-hook 'c++-mode-hook 'irony-mode)
+    (add-hook 'c-mode-hook 'irony-mode))
+
+  ;; if need to run irony-install-server
+  ;; make sure to add:
+  ;;      -DLIBCLANG_INCLUDE_DIR\=/usr/local/opt/llvm/include/
+  ;;      -DLIBCLANG_LIBRARY\=/usr/local/opt/llvm/lib/libclang.dylib
+  (use-package company-irony
+    :ensure t
+    :after (company irony)
+    :config
+    (eval-after-load 'company
+      '(add-to-list 'company-backends 'company-irony)))
+#+end_src
+
+*** ggtages
+    #+begin_src emacs-lisp
+      ;; tags for code navigation
+      (use-package ggtags
+        :ensure t
+        :bind
+        (:map ggtags-navigation-map
+              ("M-]" . nil)
+              ("C-M-." . nil)
+              ("M-s" . nil)
+              )
+        :config
+        (add-hook 'c-mode-common-hook
+                  (lambda ()
+                    (when (derived-mode-p 'c-mode 'c++-mode 'java-mode)
+                      (ggtags-mode 1))))
+        )
+    #+end_src
+*** aggressive-indent
+#+begin_src emacs-lisp
+  (use-package aggressive-indent
+    :ensure t
+    :config
+    (add-hook 'c++-mode-hook 'aggressive-indent-mode))
+#+end_src
+
+*** highlight-indentation
+#+begin_src emacs-lisp
+  (use-package highlight-indentation
+    :ensure t
+    :config
+    ;; Enable `highlight-indentation-mode` in c++ modes  modes only
+    (add-hook 'c++-mode-hook 'highlight-indentation-mode)
+
+    (setq highlight-indentation-offset my-indent-width)
+
+    ;; Enable highlighting of blank lines.
+    (setq highlight-indentation-blank-lines t)
+
+    ;; Customize the face for the indent guides (optional).
+    (custom-set-faces
+     (set-face-background 'highlight-indentation-face "#e3e3d3")
+     (set-face-background 'highlight-indentation-current-column-face "#c3b3b3")))
+#+end_src
+** flycheck
+   #+begin_src emacs-lisp
+     (use-package flycheck
+       :ensure t
+       :init (global-flycheck-mode)
+       :custom
+       (flycheck-display-errors-delay 0.5)
+       :bind
+       (:map flycheck-mode-map
+             ("C-c C-n" . flycheck-next-error)
+             ("C-c C-p" . flycheck-previous-error)
+             ("C-c C-v" . (lambda () ;; move point to flycheck buffer
+                            (interactive)
+                            (flycheck-list-errors)
+                            (select-window (get-buffer-window "*Flycheck errors*" t))))))
+
+     (eval-after-load 'flycheck
+       '(setq-default flycheck-c/c++-header-file-regexp
+                      (concat "\\(?:"
+                              (regexp-opt '(".h" ".hpp" ".hh" ".hxx"))
+                              "\\)")))
+
+     ;; disable clang checker as its out of date
+     (add-hook 'c++-mode-hook
+               (lambda ()
+                 (setq flycheck-disabled-checkers '(c/c++-clang))))
+
+
+     (use-package flycheck-pos-tip
+       :ensure t
+       :after flycheck
+       :config
+       (flycheck-pos-tip-mode))
+
+     ;; make elpy use flycheck instead of flymake 
+     (when (load "flycheck" t t)
+       (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
+       (add-hook 'elpy-mode-hook 'flycheck-mode))
+   #+end_src
+
+** company-mode
+#+begin_src emacs-lisp
+  (use-package company
+     :ensure t
+     :config
+     (add-hook 'after-init-hook 'global-company-mode))
+#+end_src
+
+** projectile
+   #+begin_src emacs-lisp
+     (use-package projectile
+       :ensure t
+       :delight '(:eval (concat " " (projectile-project-name)))
+       :init
+       (projectile-mode +1)
+       :bind (:map projectile-mode-map
+		   ("s-p" . projectile-command-map)))
+
+       ;; automatically check for projects in git on startup
+       (setq projectile-project-search-path '("~/git" . 1))
+   #+end_src
+** smartparens
+#+begin_src emacs-lisp
+  (use-package smartparens
+    :ensure t
+    :hook
+    ((prog-mode . smartparens-mode)))
+#+end_src
 * General Packages
 ** Try
    #+BEGIN_SRC emacs-lisp
@@ -244,194 +431,8 @@
 
     #+end_src
    
-* Coding
-** General tweaks
-#+begin_src emacs-lisp
-  ;; set as default for debugging
-  (setq gdb-many-windows t)
-  (setq gdb-show-main t)
-
-  ;; Visualize trailing white space
-  ;; (global-whitespace-mode) ; Enable whitespace mode everywhere
-
-  ;; set .h files to use c++ mode instead
-  (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode))
-
-  (defvar my-indent-width 4
-    "The number of spaces to use for each indentation level.")
-
-  ;; Set tab width to my-indent-width spaces
-  (setq-default tab-width my-indent-width)
-
-  (setq python-indent-offset my-indent-width)
-
-  (setq c-default-style "linux")
-  (setq-default c-basic-offset my-indent-width)
-
-  ;; Set indent-tabs-mode to nil (use spaces) for specific modes
-  (add-hook 'prog-mode-hook (lambda () (setq indent-tabs-mode nil)))
-
-    ;; Make the backspace properly erase the tab instead of
-  ;; removing 1 space at a time.
-  (setq backward-delete-char-untabify-method 'hungry)
-#+end_src
-** Python
-*** elpy
-#+begin_src emacs-lisp
-  (use-package elpy
-    :ensure t
-    :delight
-    :init
-    (elpy-enable)
-    ;; start python shells in directory of python file
-    (setq elpy-shell-starting-directory 'current-directory)
-    ;; display the Python shell after sending something to it
-    (setq elpy-shell-display-buffer-after-send '1))
-
-  ;; fix issue when running C-c C-c
-  (setq python-shell-completion-native-disabled-interpreters '("python3"))
-
-  ;; attaches a dedicated python shell to the current python buffer
-  (add-hook 'elpy-mode-hook (lambda () (elpy-shell-toggle-dedicated-shell 1)))
-   #+end_src
-** C++
-*** General
-#+begin_src emacs-lisp
-  ;; make sure up to date
-  (require 'cc-mode)
-#+end_src
-*** company-irony
-#+begin_src emacs-lisp
-  (use-package irony
-    :ensure t
-    :config
-    (add-hook 'c++-mode-hook 'irony-mode)
-    (add-hook 'c-mode-hook 'irony-mode))
-
-  ;; if need to run irony-install-server
-  ;; make sure to add:
-  ;;      -DLIBCLANG_INCLUDE_DIR\=/usr/local/opt/llvm/include/
-  ;;      -DLIBCLANG_LIBRARY\=/usr/local/opt/llvm/lib/libclang.dylib
-  (use-package company-irony
-    :ensure t
-    :after (company irony)
-    :config
-    (eval-after-load 'company
-      '(add-to-list 'company-backends 'company-irony)))
-#+end_src
-
-*** ggtages
-    #+begin_src emacs-lisp
-      ;; tags for code navigation
-      (use-package ggtags
-        :ensure t
-        :bind
-        (:map ggtags-navigation-map
-              ("M-]" . nil)
-              ("C-M-." . nil)
-              ("M-s" . nil)
-              )
-        :config
-        (add-hook 'c-mode-common-hook
-                  (lambda ()
-                    (when (derived-mode-p 'c-mode 'c++-mode 'java-mode)
-                      (ggtags-mode 1))))
-        )
-    #+end_src
-*** aggressive-indent
-#+begin_src emacs-lisp
-  (use-package aggressive-indent
-    :ensure t
-    :config
-    (add-hook 'c++-mode-hook 'aggressive-indent-mode))
-#+end_src
-
-*** highlight-indentation
-#+begin_src emacs-lisp
-  (use-package highlight-indentation
-    :ensure t
-    :config
-    ;; Enable `highlight-indentation-mode` in c++ modes  modes only
-    (add-hook 'c++-mode-hook 'highlight-indentation-mode)
-
-    (setq highlight-indentation-offset my-indent-width)
-
-    ;; Enable highlighting of blank lines.
-    (setq highlight-indentation-blank-lines t)
-
-    ;; Customize the face for the indent guides (optional).
-    (custom-set-faces
-     (set-face-background 'highlight-indentation-face "#e3e3d3")
-     (set-face-background 'highlight-indentation-current-column-face "#c3b3b3")))
-#+end_src
-** flycheck
-   #+begin_src emacs-lisp
-     (use-package flycheck
-       :ensure t
-       :init (global-flycheck-mode)
-       :custom
-       (flycheck-display-errors-delay 1)
-       :bind
-       (:map flycheck-mode-map
-             ("C-c C-n" . flycheck-next-error)
-             ("C-c C-p" . flycheck-previous-error)
-             ("C-c C-v" . (lambda () ;; move point to flycheck buffer
-                            (interactive)
-                            (flycheck-list-errors)
-                            (select-window (get-buffer-window "*Flycheck errors*" t))))))
-
-     (eval-after-load 'flycheck
-       '(setq-default flycheck-c/c++-header-file-regexp
-                      (concat "\\(?:"
-                              (regexp-opt '(".h" ".hpp" ".hh" ".hxx"))
-                              "\\)")))
-
-     ;; disable clang checker as its out of date
-     (add-hook 'c++-mode-hook
-               (lambda ()
-                 (setq flycheck-disabled-checkers '(c/c++-clang))))
 
 
-     (use-package flycheck-pos-tip
-       :ensure t
-       :after flycheck
-       :config
-       (flycheck-pos-tip-mode))
-
-     ;; make elpy use flycheck instead of flymake 
-     (when (load "flycheck" t t)
-       (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
-       (add-hook 'elpy-mode-hook 'flycheck-mode))
-   #+end_src
-
-** company-mode
-#+begin_src emacs-lisp
-  (use-package company
-     :ensure t
-     :config
-     (add-hook 'after-init-hook 'global-company-mode))
-#+end_src
-
-** projectile
-   #+begin_src emacs-lisp
-     (use-package projectile
-       :ensure t
-       :delight '(:eval (concat " " (projectile-project-name)))
-       :init
-       (projectile-mode +1)
-       :bind (:map projectile-mode-map
-		   ("s-p" . projectile-command-map)))
-
-       ;; automatically check for projects in git on startup
-       (setq projectile-project-search-path '("~/git" . 1))
-   #+end_src
-** smartparens
-#+begin_src emacs-lisp
-  (use-package smartparens
-    :ensure t
-    :hook
-    ((prog-mode . smartparens-mode)))
-#+end_src
 
 * Themes
 ** Color theme
@@ -562,3 +563,11 @@
      (global-tree-sitter-mode)
      (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
    #+end_src
+
+** rainbow-delimiters
+#+begin_src emacs-lisp
+  ;; highlights delimiters according to their depth
+  (use-package rainbow-delimiters
+    :ensure t)
+  (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
+#+end_src
