@@ -2,7 +2,6 @@
 * Tweaks
 ** General
 #+begin_src emacs-lisp
-
   ;; remove 'cl dpricated' warning on startup
   (setq byte-compile-warnings '(cl-functions))
 
@@ -31,11 +30,9 @@
 
   ;; Sort apropos results by relevency
   (setq apropos-sort-by-scores t)
-  
  #+end_src
 ** Interface
 #+BEGIN_SRC emacs-lisp
-
   ;; misc
   (setq inhibit-startup-message t)
   (tool-bar-mode -1)
@@ -52,12 +49,10 @@
 
   ;; hightlight cursor line
   (global-hl-line-mode t)
-  
  #+END_SRC
 
 ** Key bindings
 #+begin_src emacs-lisp
-
   ;; C-n adds new line if reaches end of buffer
   (setq next-line-add-newlines t)
 
@@ -85,12 +80,10 @@
   ;; scroll window up/down by one line
   (global-set-key (kbd "M-n") (kbd "C-u 1 C-v"))
   (global-set-key (kbd "M-p") (kbd "C-u 1 M-v"))
-  
 #+end_src
 
 * Org mode
 #+BEGIN_SRC emacs-lisp
-  
   ;; Org bullets makes things look pretty
   (use-package org-bullets
     :ensure t
@@ -100,7 +93,6 @@
   ;; indent with tabs for better readability
   (add-hook 'org-mode-hook #'org-indent-mode)
   ;; (setq org-indent-indentation-per-level 4)
-
 #+END_SRC
 * Program Mode
 ** General tweaks
@@ -294,77 +286,74 @@
 #+end_src
 * General Packages
 ** Try
-   #+BEGIN_SRC emacs-lisp
-     (use-package try
-       :ensure t)
-   #+END_SRC
+#+BEGIN_SRC emacs-lisp
+  (use-package try
+    :ensure t)
+#+END_SRC
 ** which key
-   #+BEGIN_SRC emacs-lisp
-     (use-package which-key
-       :ensure t
-       :delight
-       :config
-       (which-key-mode))
-   #+END_SRC
+#+BEGIN_SRC emacs-lisp
+  (use-package which-key
+    :ensure t
+    :config
+    (which-key-mode))
+#+END_SRC
 
 ** ace windows
-   #+BEGIN_SRC emacs-lisp
-     (use-package ace-window
-       :ensure t
-       :init
-       (progn
-	 ; bind to M-o
-	 (global-set-key (kbd "M-o") 'ace-window)
-	 ; set window lables to home row 
-	 (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
-	 (custom-set-faces
-	  '(aw-leading-char-face
-	    ((t (:inherit ace-jump-face-foreground :height 3.0))))) 
-	 ))
-   #+END_SRC
+#+BEGIN_SRC emacs-lisp
+  (use-package ace-window
+    :ensure t
+    :init
+    (progn
+      ;; bind ace-window to M-o
+      (global-set-key (kbd "M-o") 'ace-window)
+      ;; set window lables to home row 
+      (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
+      (custom-set-faces
+       '(aw-leading-char-face
+         ((t (:inherit ace-jump-face-foreground :height 3.0))))) 
+      ))
+#+END_SRC
 
 ** Ivy / Counsel / Swiper
-*** ivy
-    #+begin_src emacs-lisp
-      (use-package ivy
-	:ensure t
-	:delight
-	:diminish (ivy-mode)
-	:bind (("C-x b" . ivy-switch-buffer))
-	:config
-	(ivy-mode 1)
-	(setq ivy-use-virtual-buffers t)
-	(setq ivy-display-style 'fancy))    
-    #+end_src
+#+begin_src emacs-lisp
+    (use-package ivy
+      :ensure t)
 
-*** counsel
-    #+begin_src emacs-lisp
-      (use-package counsel
-	:ensure t
-	)    
-    #+end_src
-    
-*** swiper
-    #+BEGIN_SRC emacs-lisp
-      (use-package swiper
-	:ensure try
-	:bind (("C-s" . swiper)
-	       ("C-r" . swiper)
-	       ("C-c C-r" . ivy-resume)
-	       ("M-x" . counsel-M-x)
-	       ("C-x C-f" . counsel-find-file))
-	:config
-	(progn
-	  (ivy-mode 1)
-	  (setq ivy-use-virtual-buffers t)
-	  (setq ivy-display-style 'fancy)
-	  (define-key read-expression-map (kbd "C-r") 'counsel-expression-history)
-	  ))
+    (use-package counsel
+      :ensure t)    
 
-      ;; _should_ speed swiper up
-      (setq swiper-use-visual-line nil)
-      (setq swiper-use-visual-line-p (lambda (a) nil))
-    #+END_SRC
+    (use-package swiper
+      :ensure t)
+  #+end_src
+
+*** config
+#+begin_src emacs-lisp
+  (ivy-mode 1)
+  (setq ivy-use-virtual-buffers t)
+  (setq ivy-display-style 'fancy)
+  (setq ivy-wrap t)
+
+  ;; should_ speed swiper up
+  (setq swiper-use-visual-line nil)
+  (setq swiper-use-visual-line-p (lambda (a) nil))
+#+END_SRC
+
+
+*** keybinding
+#+begin_src emacs-lisp
+  (global-set-key (kbd "C-x b") 'ivy-switch-buffer)
+  (global-set-key (kbd "M-w") 'ivy-kill-ring-save)
+
+  (global-set-key (kbd "M-x") 'counsel-M-x)
+  (global-set-key (kbd "C-x C-f") 'counsel-find-file)
+  (global-set-key (kbd "M-y") 'counsel-yank-pop)
+  (global-set-key (kbd "C-h f") 'counsel-describe-function)
+  (global-set-key (kbd "C-h v") 'counsel-describe-variable)
+  (global-set-key (kbd "C-h l") 'counsel-find-library)
+
+  (global-set-key (kbd "C-s") 'swiper)
+  (global-set-key (kbd "C-r") 'swiper) 
+#+end_src
 
 ** Amox
 #+begin_src emacs-lisp
@@ -430,10 +419,6 @@
 	     `((".*" . ,(expand-file-name "undo-history" user-emacs-directory)))))
 
     #+end_src
-   
-
-
-
 * Themes
 ** Color theme
 *** zenburn
