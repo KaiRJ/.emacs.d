@@ -287,19 +287,31 @@
 * General Packages
 ** Try
 #+BEGIN_SRC emacs-lisp
+  ;; try different packages without having to install them
   (use-package try
     :ensure t)
 #+END_SRC
-** which key
+** which key / amx
 #+BEGIN_SRC emacs-lisp
+  ;; display possible key bindings following incomplete command
   (use-package which-key
     :ensure t
     :config
     (which-key-mode))
+
+  ;; Alternative interface for M-x.
+  ;; Prioritizes most used commands and shows keyboard shortcuts
+  (use-package amx
+    :ensure t
+    :custom
+    (amx-backend 'auto)
+    :config
+    (amx-mode 1))
 #+END_SRC
 
 ** ace windows
 #+BEGIN_SRC emacs-lisp
+  ;; for easy window switching between multiple windows
   (use-package ace-window
     :ensure t
     :init
@@ -315,16 +327,22 @@
 #+END_SRC
 
 ** Ivy / Counsel / Swiper
+*** install packages
 #+begin_src emacs-lisp
-    (use-package ivy
-      :ensure t)
+  
+  ;; Swiper gives us a really efficient incremental search with
+  ;; regular expressions and Ivy / Counsel replace a lot of ido
+  ;; or helms completion functionality
 
-    (use-package counsel
-      :ensure t)    
+  (use-package ivy
+    :ensure t)
 
-    (use-package swiper
-      :ensure t)
-  #+end_src
+  (use-package counsel
+    :ensure t)    
+
+  (use-package swiper
+    :ensure t)
+#+end_src
 
 *** config
 #+begin_src emacs-lisp
@@ -337,7 +355,6 @@
   (setq swiper-use-visual-line nil)
   (setq swiper-use-visual-line-p (lambda (a) nil))
 #+END_SRC
-
 
 *** keybinding
 #+begin_src emacs-lisp
@@ -355,29 +372,25 @@
   (global-set-key (kbd "C-r") 'swiper) 
 #+end_src
 
-** Amox
-#+begin_src emacs-lisp
-  (use-package amx
-    :ensure t
-    :custom
-    (amx-backend 'auto)
-    :config
-    (amx-mode 1))
-#+end_src
-
 ** Ibuffer
 #+begin_src emacs-lisp
+  ;; better buffer manager
   (global-set-key (kbd "C-x C-b") 'ibuffer)
   (setq ibuffer-default-sorting-mode 'major-mode)
+
+  ;; hide buffers starting *
+  (require 'ibuf-ext)
+  (add-to-list 'ibuffer-never-show-predicates "^\\*")
 #+end_src
     
 ** Avy
 #+Begin_SRC emacs-lisp
+  ;; for quicker navigation around windows
   (use-package avy
-         :ensure t
-         :bind
-         ("M-s" . avy-goto-word-1)
-         ( "M-g M-g" . 'avy-goto-line))
+    :ensure t
+    :bind
+    ("M-s" . avy-goto-word-1)
+    ( "M-g M-g" . 'avy-goto-line))
 #+END_SRC
 ** yasnippet
    #+begin_src emacs-lisp
