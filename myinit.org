@@ -109,7 +109,10 @@
 
   ;; set .h files to use c++ mode instead
   (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode))
+#+end_src
 
+*** tabs/indentation
+#+begin_src emacs-lisp
   (defvar my-indent-width 4
     "The number of spaces to use for each indentation level.")
 
@@ -127,6 +130,13 @@
   ;; Make the backspace properly erase the tab instead of removing 1 space at a time.
   (setq backward-delete-char-untabify-method 'hungry)
 #+end_src
+
+*** fill-column-indicator
+#+begin_src emacs-lisp
+  (setq fci-rule-column 80) ; Set the fill column
+  (add-hook 'prog-mode-hook 'display-fill-column-indicator-mode)
+#+end_src
+
 ** Python
 *** elpy
 #+begin_src emacs-lisp
@@ -392,175 +402,174 @@
     ("M-s" . avy-goto-word-1)
     ( "M-g M-g" . 'avy-goto-line))
 #+END_SRC
+
 ** yasnippet
-   #+begin_src emacs-lisp
-     (use-package yasnippet
-       :ensure t
-       :init
-       (yas-global-mode 1))
+#+begin_src emacs-lisp
+  (use-package yasnippet
+    :ensure t
+    :init
+    (yas-global-mode 1))
 
-     ;; need to install the actual snippets
-     (use-package yasnippet-snippets
-       :ensure t
-       :after yasnippet
-       :config (yasnippet-snippets-initialize))
-   #+end_src
-** pdf-tools
-   #+begin_src emacs-lisp
-     (use-package pdf-tools
-       :ensure t
-       :config
-       (pdf-tools-install t))
-   #+end_src
+  ;; needed to install the actual snippets
+  (use-package yasnippet-snippets
+    :ensure t
+    :after yasnippet
+    :config (yasnippet-snippets-initialize))
+#+end_src
+   
 ** undo-tree
-   #+begin_src emacs-lisp
-     (use-package undo-tree
-       :ensure t
-       :init
-       (global-undo-tree-mode)
-       :config
-       (setq undo-tree-visualizer-diff t) ;; show difs
-       (setq undo-tree-auto-save-history t) ;; save history to file
-       
-       ;; Create the undo history directory if it doesn't exist
-       (let ((undo-history-dir (expand-file-name "undo-history" user-emacs-directory)))
-	 (unless (file-directory-p undo-history-dir)
-	   (make-directory undo-history-dir)))
+#+begin_src emacs-lisp
+  (use-package undo-tree
+    :ensure t
+    :init
+    (global-undo-tree-mode)
+    :config
+    (setq undo-tree-visualizer-diff t) ;; show difs
+    (setq undo-tree-auto-save-history t) ;; save history to file
+    (setq undo-tree-visualizer-timestamps t) ;; show timestamps
 
-       ;; Set the directory for undo history files
-       (setq undo-tree-history-directory-alist
-	     `((".*" . ,(expand-file-name "undo-history" user-emacs-directory)))))
+    ;; Create the undo history directory if it doesn't exist
+    (let ((undo-history-dir (expand-file-name "undo-history" user-emacs-directory)))
+      (unless (file-directory-p undo-history-dir)
+        (make-directory undo-history-dir)))
 
-    #+end_src
+    ;; Set the directory for undo history files
+    (setq undo-tree-history-directory-alist
+          `((".*" . ,(expand-file-name "undo-history" user-emacs-directory)))))
+#+end_src
+
+** treemacs
+#+begin_src emacs-lisp
+  ;; required for treemacs
+  (use-package all-the-icons
+    :ensure t)
+
+  (use-package treemacs
+    :ensure t
+    :config
+    (treemacs-project-follow-mode t)
+    :bind
+    (:map global-map
+          ("M-0"       . treemacs-select-window)
+          ("C-x t 1"   . treemacs-delete-other-windows)
+          ("C-x t t"   . treemacs)
+          ("C-x t d"   . treemacs-select-directory)
+          ("C-x t B"   . treemacs-bookmark)
+          ("C-x t C-t" . treemacs-find-file)
+          ("C-x t M-t" . treemacs-find-tag)))
+
+  (use-package treemacs-projectile
+    :after (treemacs projectile)
+    :ensure t)
+
+  (use-package treemacs-magit
+    :after (treemacs magit)
+    :ensure t)
+#+end_src
+
 * Themes
 ** Color theme
 *** zenburn
-    #+begin_src emacs-lisp
-      ;; (use-package zenburn-theme
-      ;;   :ensure t
-      ;;   :config (load-theme 'zenburn t))
-    #+end_src
+#+begin_src emacs-lisp
+  ;; (use-package zenburn-theme
+  ;;   :ensure t
+  ;;   :config (load-theme 'zenburn t))
+#+end_src
 *** atom one dark
-    #+begin_src emacs-lisp
-      ;; (use-package atom-one-dark-theme
-      ;;   :ensure t
-      ;;   :config (load-theme 'atom-one-dark t))
-    #+end_src
+#+begin_src emacs-lisp
+  ;; (use-package atom-one-dark-theme
+  ;;   :ensure t
+  ;;   :config (load-theme 'atom-one-dark t))
+#+end_src
 *** doom
-    #+begin_src emacs-lisp
-      (use-package doom-themes
-        :ensure t
-        :config
-        ;; Global settings (defaults)
-        (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-              doom-themes-enable-italic t) ; if nil, italics is universally disabled
-        (load-theme 'doom-one t)
+#+begin_src emacs-lisp
+  (use-package doom-themes
+    :ensure t
+    :config
+    ;; Global settings (defaults)
+    (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+          doom-themes-enable-italic t) ; if nil, italics is universally disabled
+    (load-theme 'doom-one t)
 
-        ;; Enable flashing mode-line on errors
-        (doom-themes-visual-bell-config)
-        ;; Custom treemacs tree
-        (setq doom-themes-treemacs-theme "doom-atom") ; use "doom-colors" for less minimal icon theme
-        (doom-themes-treemacs-config)
-        ;; Corrects (and improves) org-mode's native fontification.
-        (doom-themes-org-config))
-    #+end_src
+    ;; Enable flashing mode-line on errors
+    (doom-themes-visual-bell-config)
+    ;; Custom treemacs tree
+    (setq doom-themes-treemacs-theme "doom-atom") ; use "doom-colors" for less minimal icon theme
+    (doom-themes-treemacs-config)
+    ;; Corrects (and improves) org-mode's native fontification.
+    (doom-themes-org-config))
+#+end_src
 ** Modeline
 *** doom-modeline
-    #+begin_src emacs-lisp
-      (use-package doom-modeline
-        :ensure t
-        :init (doom-modeline-mode 1))
+#+begin_src emacs-lisp
+  (use-package doom-modeline
+    :ensure t
+    :init (doom-modeline-mode 1))
 
-      (setq doom-modeline-buffer-modification-icon t) ; Show the buffer modification icon.
+  (setq doom-modeline-buffer-modification-icon t) ; Show the buffer modification icon.
 
-      (setq doom-modeline-vcs-max-length 12) ; Set the max length of the version control information.
+  (setq doom-modeline-vcs-max-length 12) ; Set the max length of the version control information.
 
-      (setq doom-modeline-checker-simple-format nil) ; Use a detailed format for checkers (e.g., Flycheck).
-    #+end_src
+  (setq doom-modeline-checker-simple-format nil) ; Use a detailed format for checkers (e.g., Flycheck).
+#+end_src
    
 ** Font
-   #+begin_src emacs-lisp
-   #+end_src
+#+begin_src emacs-lisp
+  
+#+end_src
 
 ** emacs-dashboard
-   #+begin_src emacs-lisp
-     ;; optional dependancy of emacs-dashboard 
-     (use-package page-break-lines
-       :ensure t)
+#+begin_src emacs-lisp
+  ;; optional dependancy of emacs-dashboard 
+  (use-package page-break-lines
+    :ensure t)
 
-     (use-package dashboard
-       :ensure t
-       :config
-       (dashboard-setup-startup-hook))
+  (use-package dashboard
+    :ensure t
+    :config
+    (dashboard-setup-startup-hook))
 
-     (setq dashboard-items '((projects . 5)
-			     (recents . 5)
-			     (agenda . 5)))
-   #+end_src
-
-** treemacs
-   #+begin_src emacs-lisp
-     ;; required for treemacs
-     (use-package all-the-icons
-       :ensure t)
-
-     (use-package treemacs
-       :ensure t
-       :config
-	 (treemacs-project-follow-mode t)
-       :bind
-       (:map global-map
-	     ("M-0"       . treemacs-select-window)
-	     ("C-x t 1"   . treemacs-delete-other-windows)
-	     ("C-x t t"   . treemacs)
-	     ("C-x t d"   . treemacs-select-directory)
-	     ("C-x t B"   . treemacs-bookmark)
-	     ("C-x t C-t" . treemacs-find-file)
-	     ("C-x t M-t" . treemacs-find-tag)))
-
-     (use-package treemacs-projectile
-       :after (treemacs projectile)
-       :ensure t)
-
-     (use-package treemacs-magit
-       :after (treemacs magit)
-       :ensure t)
-   #+end_src
+  (setq dashboard-items '((projects . 5)
+                          (recents . 5)))
+#+end_src
 
 ** git-gutter
-   #+begin_src emacs-lisp
-     (use-package git-gutter
-       :ensure t
-       :delight
-       :hook ((prog-mode . git-gutter-mode)
-              (org-mode . git-gutter-mode))
-       :config
-       (setq git-gutter:update-interval 0.5)) ;; if too small causes lagging
+#+begin_src emacs-lisp
+  (use-package git-gutter
+    :ensure t
+    :hook ((prog-mode . git-gutter-mode)
+           (org-mode . git-gutter-mode))
+    :config
+    (setq git-gutter:update-interval 0.5)) ;; if too small causes lagging
 
-     (use-package git-gutter-fringe
-       :ensure t
-       :config
-       (define-fringe-bitmap 'git-gutter-fr:added [224] nil nil '(center repeated))
-       (define-fringe-bitmap 'git-gutter-fr:modified [224] nil nil '(center repeated))
-       (define-fringe-bitmap 'git-gutter-fr:deleted [128 192 224 240] nil nil 'bottom))
+  ;; makes it prettier
+  (use-package git-gutter-fringe
+    :ensure t
+    :config
+    (define-fringe-bitmap 'git-gutter-fr:added [224] nil nil '(center repeated))
+    (define-fringe-bitmap 'git-gutter-fr:modified [224] nil nil '(center repeated))
+    (define-fringe-bitmap 'git-gutter-fr:deleted [128 192 224 240] nil nil 'bottom))
 
-     ;; Customize the git-gutter:modified face to use different colours
-     (set-face-foreground 'git-gutter-fr:modified "#2375B3")
-     ;; (set-face-foreground 'git-gutter-fr:added    "blue")
-     ;; (set-face-foreground 'git-gutter-fr:deleted  "white")
-   #+end_src
+  ;; Customize the git-gutter:modified face to use different colours
+  (set-face-foreground 'git-gutter-fr:modified "#2375B3")
+  ;; (set-face-foreground 'git-gutter-fr:added    "blue")
+  ;; (set-face-foreground 'git-gutter-fr:deleted  "white")
+#+end_src
 
 ** tree-sitter
-   #+begin_src emacs-lisp
-     (use-package tree-sitter
-       :ensure t)
+#+begin_src emacs-lisp
+  ;; this was app merged into master for emacs 29, so need to look into if theres a better way to enable it
 
-     (use-package tree-sitter-langs
-       :ensure t)
+  ;; for better syntax hightlighting
+  (use-package tree-sitter
+    :ensure t)
 
-     (global-tree-sitter-mode)
-     (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
-   #+end_src
+  (use-package tree-sitter-langs
+    :ensure t)
+
+  (global-tree-sitter-mode)
+  (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
+#+end_src
 
 ** rainbow-delimiters
 #+begin_src emacs-lisp
