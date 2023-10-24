@@ -56,8 +56,9 @@
   ;; C-n adds new line if reaches end of buffer
   (setq next-line-add-newlines t)
 
-  ;; allow hash to be entered  
-  (global-set-key (kbd "M-3") '(lambda () (interactive) (insert "#")))
+  ;; allow hash to be entered (changed keyboard to australian instead)
+  ;; (global-set-key (kbd "M-3") '(lambda () (interactive) (insert "#")))
+  
 
   ;; disable certain mac keyboard commands
   ;; s is for super (cmd on mac)
@@ -67,6 +68,7 @@
   (define-key global-map [?\s-p] nil) ;; Disable print
   (define-key global-map [?\s-o] nil) ;; Disable open
   (define-key global-map [?\C-z] nil) ;; Disable minimize
+  
 
   ;; Switch to new window on window split
   (global-set-key "\C-x2" (lambda () (interactive)(split-window-vertically) (other-window 1)))
@@ -466,7 +468,15 @@
     :after (treemacs magit)
     :ensure t)
 #+end_src
-
+** expand-region
+#+begin_src emacs-lisp
+  ;; expand the marked region in semantic increments
+  ;; (negative prefix to reduce region)
+  (use-package expand-region
+    :ensure t
+    :config
+    (global-set-key (kbd "C-=") 'er/expand-region))
+#+end_src
 * Themes
 ** Color theme
 *** zenburn
@@ -578,3 +588,12 @@
     :ensure t)
   (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
 #+end_src
+* Reveal.js
+#+begin_src emacs-lisp
+  ;; for makig presentationing in org mode 
+  (use-package ox-reveal
+    :ensure t)
+
+  (setq org-reveal-root "file:///Users/kaijenkins/git/reveal.js")
+#+end_src
+
