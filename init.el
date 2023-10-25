@@ -29,19 +29,19 @@
  '(lock-file-name-transforms '((".*" "~/.emacs.d/lockfiles/\\1" t)))
  '(neo-theme 'icons)
  '(package-selected-packages
-   '(ox-reveal expand-region hungry-delete beacon company-mode modern-cpp-font-lock highlight-indent-guides ggtags undo-tree pdf-continuous-scroll-mode quelpa pdf-tools flycheck-pos-tip diff-hl doom-modeline smart-mode-line jedi yasnippet-snippets neotree amx color-theme auto-complete zenburn-theme which-key use-package try org-bullets doom-themes counsel ace-window))
+   '(ox-beamer auctex ox-reveal expand-region hungry-delete beacon company-mode modern-cpp-font-lock highlight-indent-guides ggtags undo-tree pdf-continuous-scroll-mode quelpa pdf-tools flycheck-pos-tip diff-hl doom-modeline smart-mode-line jedi yasnippet-snippets neotree amx color-theme auto-complete zenburn-theme which-key use-package try org-bullets doom-themes counsel ace-window))
  '(safe-local-variable-values
    '((flycheck-gcc-language-standard . "c++2a")
-	 (flycheck-gcc-language-standard . c++2a)
-	 (flycheck-gcc-language-standard . c++20)))
+     (flycheck-gcc-language-standard . c++2a)
+     (flycheck-gcc-language-standard . c++20)))
  '(warning-suppress-types
    '((color-theme)
-	 (color-theme)
-	 (color-theme)
-	 (color-theme)
-	 (color-theme)
-	 (color-theme)
-	 (color-theme))))
+     (color-theme)
+     (color-theme)
+     (color-theme)
+     (color-theme)
+     (color-theme)
+     (color-theme))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

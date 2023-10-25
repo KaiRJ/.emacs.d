@@ -1,0 +1,54 @@
+/**
+ * A custom theme for reveal.js presentations, similar
+ * to the simple theme. Based on beamer
+ *
+ */
+
+// Default mixins and settings -----------------
+@import "../template/mixins";
+@import "../template/settings";
+// ---------------------------------------------
+
+// Include theme-specific fonts
+@import url(https://fonts.googleapis.com/css?family=News+Cycle:400,700);
+@import url(https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic);
+
+
+// Override theme settings (see ../template/settings.scss)
+$mainFont: 'Lato', sans-serif;
+$mainColor: #000;
+$headingFont: 'News Cycle', Impact, sans-serif;
+$headingColor: #004080;
+$headingTextShadow: none;
+$headingTextTransform: none;
+$backgroundColor: #fff;
+$linkColor: #00008B;
+$linkColorHover: lighten( $linkColor, 20% );
+$selectionBackgroundColor: rgba(0, 0, 0, 0.99);
+
+$overlayElementBgColor: 0, 0, 0;
+$overlayElementFgColor: 240, 240, 240;
+
+/* Style unordered list items with colored triangles */
+ul {
+    li {
+        list-style: none; /* Hide default bullets for unordered lists */
+        position: relative;
+
+        /* Style the triangles for unordered lists */
+        &::before {
+            content: "▶"; /* Use a triangle character (▶) */
+            color: #004080; /* Set to your desired blue color */
+            margin-right: 10px; /* Add spacing between the triangle and the text */
+            font-size: 0.7em; /* Adjust the font size if needed */
+        }
+    }
+}
+
+// Change text colors against dark slide backgrounds
+@include dark-bg-text-color(#fff);
+
+// Theme template ------------------------------
+@import "../template/theme";
+// ---------------------------------------------
+

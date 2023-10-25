@@ -84,18 +84,187 @@
   (global-set-key (kbd "M-p") (kbd "C-u 1 M-v"))
 #+end_src
 
-* Org mode
+* General Packages
+** Try
 #+BEGIN_SRC emacs-lisp
-  ;; Org bullets makes things look pretty
-  (use-package org-bullets
+  ;; try different packages without having to install them
+  (use-package try
+    :ensure t)
+#+END_SRC
+** which key / amx
+#+BEGIN_SRC emacs-lisp
+  ;; display possible key bindings following incomplete command
+  (use-package which-key
     :ensure t
     :config
-    (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+    (which-key-mode))
 
-  ;; indent with tabs for better readability
-  (add-hook 'org-mode-hook #'org-indent-mode)
-  ;; (setq org-indent-indentation-per-level 4)
+  ;; Alternative interface for M-x.
+  ;; Prioritizes most used commands and shows keyboard shortcuts
+  (use-package amx
+    :ensure t
+    :custom
+    (amx-backend 'auto)
+    :config
+    (amx-mode 1))
 #+END_SRC
+
+** ace windows
+#+BEGIN_SRC emacs-lisp
+  ;; for easy window switching between multiple windows
+  (use-package ace-window
+    :ensure t
+    :init
+    (progn
+      ;; bind ace-window to M-o
+      (global-set-key (kbd "M-o") 'ace-window)
+      ;; set window lables to home row 
+      (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
+      (custom-set-faces
+       '(aw-leading-char-face
+         ((t (:inherit ace-jump-face-foreground :height 3.0))))) 
+      ))
+#+END_SRC
+
+** Ivy / Counsel / Swiper
+*** install packages
+#+begin_src emacs-lisp
+  
+  ;; Swiper gives us a really efficient incremental search with
+  ;; regular expressions and Ivy / Counsel replace a lot of ido
+  ;; or helms completion functionality
+
+  (use-package ivy
+    :ensure t)
+
+  (use-package counsel
+    :ensure t)    
+
+  (use-package swiper
+    :ensure t)
+#+end_src
+
+*** config
+#+begin_src emacs-lisp
+  (ivy-mode 1)
+  (setq ivy-use-virtual-buffers t)
+  (setq ivy-display-style 'fancy)
+  (setq ivy-wrap t)
+
+  ;; should_ speed swiper up
+  (setq swiper-use-visual-line nil)
+  (setq swiper-use-visual-line-p (lambda (a) nil))
+#+END_SRC
+
+*** keybinding
+#+begin_src emacs-lisp
+  (global-set-key (kbd "C-x b") 'ivy-switch-buffer)
+  (global-set-key (kbd "M-w") 'ivy-kill-ring-save)
+
+  (global-set-key (kbd "M-x") 'counsel-M-x)
+  (global-set-key (kbd "C-x C-f") 'counsel-find-file)
+  (global-set-key (kbd "M-y") 'counsel-yank-pop)
+  (global-set-key (kbd "C-h f") 'counsel-describe-function)
+  (global-set-key (kbd "C-h v") 'counsel-describe-variable)
+  (global-set-key (kbd "C-h l") 'counsel-find-library)
+
+  (global-set-key (kbd "C-s") 'swiper)
+  (global-set-key (kbd "C-r") 'swiper) 
+#+end_src
+
+** Ibuffer
+#+begin_src emacs-lisp
+  ;; better buffer manager
+  (global-set-key (kbd "C-x C-b") 'ibuffer)
+  (setq ibuffer-default-sorting-mode 'major-mode)
+
+  ;; hide buffers starting *
+  (require 'ibuf-ext)
+  (add-to-list 'ibuffer-never-show-predicates "^\\*")
+#+end_src
+    
+** Avy
+#+Begin_SRC emacs-lisp
+  ;; for quicker navigation around windows
+  (use-package avy
+    :ensure t
+    :bind
+    ("M-s" . avy-goto-word-1)
+    ( "M-g M-g" . 'avy-goto-line))
+#+END_SRC
+
+** yasnippet
+#+begin_src emacs-lisp
+  (use-package yasnippet
+    :ensure t
+    :init
+    (yas-global-mode 1))
+
+  ;; needed to install the actual snippets
+  (use-package yasnippet-snippets
+    :ensure t
+    :after yasnippet
+    :config (yasnippet-snippets-initialize))
+#+end_src
+   
+** undo-tree
+#+begin_src emacs-lisp
+  (use-package undo-tree
+    :ensure t
+    :init
+    (global-undo-tree-mode)
+    :config
+    (setq undo-tree-visualizer-diff t) ;; show difs
+    (setq undo-tree-auto-save-history t) ;; save history to file
+    (setq undo-tree-visualizer-timestamps t) ;; show timestamps
+
+    ;; Create the undo history directory if it doesn't exist
+    (let ((undo-history-dir (expand-file-name "undo-history" user-emacs-directory)))
+      (unless (file-directory-p undo-history-dir)
+        (make-directory undo-history-dir)))
+
+    ;; Set the directory for undo history files
+    (setq undo-tree-history-directory-alist
+          `((".*" . ,(expand-file-name "undo-history" user-emacs-directory)))))
+#+end_src
+
+** treemacs
+#+begin_src emacs-lisp
+  ;; required for treemacs
+  (use-package all-the-icons
+    :ensure t)
+
+  (use-package treemacs
+    :ensure t
+    :config
+    (treemacs-project-follow-mode t)
+    :bind
+    (:map global-map
+          ("M-0"       . treemacs-select-window)
+          ("C-x t 1"   . treemacs-delete-other-windows)
+          ("C-x t t"   . treemacs)
+          ("C-x t d"   . treemacs-select-directory)
+          ("C-x t B"   . treemacs-bookmark)
+          ("C-x t C-t" . treemacs-find-file)
+          ("C-x t M-t" . treemacs-find-tag)))
+
+  (use-package treemacs-projectile
+    :after (treemacs projectile)
+    :ensure t)
+
+  (use-package treemacs-magit
+    :after (treemacs magit)
+    :ensure t)
+#+end_src
+** expand-region
+#+begin_src emacs-lisp
+  ;; expand the marked region in semantic increments
+  ;; (negative prefix to reduce region)
+  (use-package expand-region
+    :ensure t
+    :config
+    (global-set-key (kbd "C-=") 'er/expand-region))
+#+end_src
 * Program Mode
 ** General tweaks
 #+begin_src emacs-lisp
@@ -296,187 +465,51 @@
     :hook
     ((prog-mode . smartparens-mode)))
 #+end_src
-* General Packages
-** Try
+* Org mode
+** General tweaks
+#+begin_src emacs-lisp
+  ;; indent with tabs for better readability
+  (add-hook 'org-mode-hook #'org-indent-mode)
+  ;; (setq org-indent-indentation-per-level 4)
+
+  ;; When editing org-files with source-blocks, we want the source blocks to be themed as they would in their native mode.
+  (setq org-src-fontify-natively t
+        org-src-tab-acts-natively t
+        org-confirm-babel-evaluate nil
+        org-edit-src-content-indentation 0)
+#+end_src
+
+** Packages
 #+BEGIN_SRC emacs-lisp
-  ;; try different packages without having to install them
-  (use-package try
-    :ensure t)
-#+END_SRC
-** which key / amx
-#+BEGIN_SRC emacs-lisp
-  ;; display possible key bindings following incomplete command
-  (use-package which-key
+  ;; Org bullets makes things look pretty
+  (use-package org-bullets
     :ensure t
     :config
-    (which-key-mode))
-
-  ;; Alternative interface for M-x.
-  ;; Prioritizes most used commands and shows keyboard shortcuts
-  (use-package amx
-    :ensure t
-    :custom
-    (amx-backend 'auto)
-    :config
-    (amx-mode 1))
-#+END_SRC
-
-** ace windows
-#+BEGIN_SRC emacs-lisp
-  ;; for easy window switching between multiple windows
-  (use-package ace-window
-    :ensure t
-    :init
-    (progn
-      ;; bind ace-window to M-o
-      (global-set-key (kbd "M-o") 'ace-window)
-      ;; set window lables to home row 
-      (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
-      (custom-set-faces
-       '(aw-leading-char-face
-         ((t (:inherit ace-jump-face-foreground :height 3.0))))) 
-      ))
-#+END_SRC
-
-** Ivy / Counsel / Swiper
-*** install packages
+    (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+  #+END_SRC
+* LaTeX
+** AECTeX
 #+begin_src emacs-lisp
-  
-  ;; Swiper gives us a really efficient incremental search with
-  ;; regular expressions and Ivy / Counsel replace a lot of ido
-  ;; or helms completion functionality
+(use-package tex
+  :ensure auctex
+  :config
+  (setq TeX-parse-self t
+        TeX-auto-save t
+        TeX-master nil))
 
-  (use-package ivy
-    :ensure t)
+;; needed to get latexpdf working within emacs 
+(setenv "PATH" (concat (getenv "PATH") ":/usr/local/texlive/2023/bin/universal-darwin"))
 
-  (use-package counsel
-    :ensure t)    
-
-  (use-package swiper
-    :ensure t)
+;; code highlighting
+(require 'ox-latex)
+(setq org-latex-src-block-backend 'minted)
+(add-to-list 'org-latex-packages-alist '("newfloat" "minted"))
+(setq org-latex-pdf-process
+      '("pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
+        "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
+        "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"))
 #+end_src
 
-*** config
-#+begin_src emacs-lisp
-  (ivy-mode 1)
-  (setq ivy-use-virtual-buffers t)
-  (setq ivy-display-style 'fancy)
-  (setq ivy-wrap t)
-
-  ;; should_ speed swiper up
-  (setq swiper-use-visual-line nil)
-  (setq swiper-use-visual-line-p (lambda (a) nil))
-#+END_SRC
-
-*** keybinding
-#+begin_src emacs-lisp
-  (global-set-key (kbd "C-x b") 'ivy-switch-buffer)
-  (global-set-key (kbd "M-w") 'ivy-kill-ring-save)
-
-  (global-set-key (kbd "M-x") 'counsel-M-x)
-  (global-set-key (kbd "C-x C-f") 'counsel-find-file)
-  (global-set-key (kbd "M-y") 'counsel-yank-pop)
-  (global-set-key (kbd "C-h f") 'counsel-describe-function)
-  (global-set-key (kbd "C-h v") 'counsel-describe-variable)
-  (global-set-key (kbd "C-h l") 'counsel-find-library)
-
-  (global-set-key (kbd "C-s") 'swiper)
-  (global-set-key (kbd "C-r") 'swiper) 
-#+end_src
-
-** Ibuffer
-#+begin_src emacs-lisp
-  ;; better buffer manager
-  (global-set-key (kbd "C-x C-b") 'ibuffer)
-  (setq ibuffer-default-sorting-mode 'major-mode)
-
-  ;; hide buffers starting *
-  (require 'ibuf-ext)
-  (add-to-list 'ibuffer-never-show-predicates "^\\*")
-#+end_src
-    
-** Avy
-#+Begin_SRC emacs-lisp
-  ;; for quicker navigation around windows
-  (use-package avy
-    :ensure t
-    :bind
-    ("M-s" . avy-goto-word-1)
-    ( "M-g M-g" . 'avy-goto-line))
-#+END_SRC
-
-** yasnippet
-#+begin_src emacs-lisp
-  (use-package yasnippet
-    :ensure t
-    :init
-    (yas-global-mode 1))
-
-  ;; needed to install the actual snippets
-  (use-package yasnippet-snippets
-    :ensure t
-    :after yasnippet
-    :config (yasnippet-snippets-initialize))
-#+end_src
-   
-** undo-tree
-#+begin_src emacs-lisp
-  (use-package undo-tree
-    :ensure t
-    :init
-    (global-undo-tree-mode)
-    :config
-    (setq undo-tree-visualizer-diff t) ;; show difs
-    (setq undo-tree-auto-save-history t) ;; save history to file
-    (setq undo-tree-visualizer-timestamps t) ;; show timestamps
-
-    ;; Create the undo history directory if it doesn't exist
-    (let ((undo-history-dir (expand-file-name "undo-history" user-emacs-directory)))
-      (unless (file-directory-p undo-history-dir)
-        (make-directory undo-history-dir)))
-
-    ;; Set the directory for undo history files
-    (setq undo-tree-history-directory-alist
-          `((".*" . ,(expand-file-name "undo-history" user-emacs-directory)))))
-#+end_src
-
-** treemacs
-#+begin_src emacs-lisp
-  ;; required for treemacs
-  (use-package all-the-icons
-    :ensure t)
-
-  (use-package treemacs
-    :ensure t
-    :config
-    (treemacs-project-follow-mode t)
-    :bind
-    (:map global-map
-          ("M-0"       . treemacs-select-window)
-          ("C-x t 1"   . treemacs-delete-other-windows)
-          ("C-x t t"   . treemacs)
-          ("C-x t d"   . treemacs-select-directory)
-          ("C-x t B"   . treemacs-bookmark)
-          ("C-x t C-t" . treemacs-find-file)
-          ("C-x t M-t" . treemacs-find-tag)))
-
-  (use-package treemacs-projectile
-    :after (treemacs projectile)
-    :ensure t)
-
-  (use-package treemacs-magit
-    :after (treemacs magit)
-    :ensure t)
-#+end_src
-** expand-region
-#+begin_src emacs-lisp
-  ;; expand the marked region in semantic increments
-  ;; (negative prefix to reduce region)
-  (use-package expand-region
-    :ensure t
-    :config
-    (global-set-key (kbd "C-=") 'er/expand-region))
-#+end_src
 * Themes
 ** Color theme
 *** zenburn
@@ -588,12 +621,3 @@
     :ensure t)
   (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
 #+end_src
-* Reveal.js
-#+begin_src emacs-lisp
-  ;; for makig presentationing in org mode 
-  (use-package ox-reveal
-    :ensure t)
-
-  (setq org-reveal-root "file:///Users/kaijenkins/git/reveal.js")
-#+end_src
-
