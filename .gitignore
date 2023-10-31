@@ -11,7 +11,9 @@ backups
 elpa
 elpy
 eshell
+gdb-entitlement.xml
 ido.last
+irong
 myinit.el
 projectile-bookmarks.eld
 recentf
