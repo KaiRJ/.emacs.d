@@ -1,0 +1,377 @@
+#+STARTUP: overview
+* Resources
+** YouTube
+- [[https://www.youtube.com/@protesilaos/videos][Protesilaos Stavrou]]
+- [[https://www.youtube.com/@JakeBox0/videos][check this]] guy out
+** Blogs
+- [[https://protesilaos.com/codelog/][Protesilaos Stavrou]]
+** Reading
+- read master-emacs book
+- read the emacs manual (C-h r)
+* Emacs
+** Manuals
+- Manual/Info
+|-------------+-------------------+--------------------------------|
+| Key binding | Function          | Notes                          |
+|-------------+-------------------+--------------------------------|
+| C-h i       | info              |                                |
+| C-h r       | info-emacs-manual |                                |
+| ?           |                   | List commands (when in manual) |
+|-------------+-------------------+--------------------------------|
+
+- Describe
+|-------------+-------------------+-------------------------|
+| Key binding | Function          | Notes                   |
+|-------------+-------------------+-------------------------|
+| C-h m       | describe-mode     |                         |
+| C-h f       | describe-function |                         |
+| C-h v       | decribe-variable  |                         |
+| C-h k       | describe-key      |                         |
+| C-h o       | describe-symbol   |                         |
+| ... C-h     |                   | list all known bindings |
+|-------------+-------------------+-------------------------|
+
+- Apropos
+|-------------+-----------------+-----------------------------------------|
+| Key binding | Function        | Notes                                   |
+|-------------+-----------------+-----------------------------------------|
+| C-h a       | apropos-command | "word$" lists commands ending in "word" |
+|-------------+-----------------+-----------------------------------------|
+- Lot of others to look into (mastering emacs book has a section on this)
+
+** Movement
+- Moving by S-Expressions
+|-------------+----------+------------------------|
+| Key binding | Function | Notes                  |
+|-------------+----------+------------------------|
+| C-M-f/b     |          | Move for/back by s-exp |
+| C-M-u/d     |          | Move up/down a list    |
+| C-M-n/p     |          | Move fore/back a list  |
+| C-M-a/e     |          | Move by defun          |
+|-------------+----------+------------------------|
+
+- Other window
+|-------------+--------------------------+-------|
+| Key binding | Function                 | Notes |
+|-------------+--------------------------+-------|
+| C-M-v       | scroll-other-window      |       |
+| C-M-S-v     | scroll-other-window-down |       |
+|-------------+--------------------------+-------|
+
+** Editting
+|-------------+-----------------+----------------------|
+| Key binding | Function        | Notes                |
+|-------------+-----------------+----------------------|
+| M-c         | capitalize-word |                      |
+|             | align-regexp    | align area by regexp |
+|-------------+-----------------+----------------------|
+
+- these all depend on the selction
+- see [[http://xahlee.info/emacs/emacs/emacs_string-rectangle_ascii-art.html][link]] for examples
+|-------------+------------------------+-------|
+| Key binding | Function               | Notes |
+|-------------+------------------------+-------|
+| C-x r t     | string-rectangle       |       |
+|             | replace-rectangle      |       |
+|             |                        |       |
+| C-x r k     | kill-rectangle         |       |
+| C-x r y     | yank-rectangle         |       |
+| C-c r N     | rectangle-number-lines |       |
+|-------------+------------------------+-------|
+
+** Searching
+|-------------+----------------------+----------------|
+| Key binding | Function             | Notes          |
+|-------------+----------------------+----------------|
+| C-M-s       | regexp-aware isearch |                |
+| C-s C-s     |                      | repeat isearch |
+|-------------+----------------------+----------------|
+
+** Negitave argument
+|-------------+-------------------+-------|
+| Key binding | Function          | Notes |
+|-------------+-------------------+-------|
+| C-/M-/C-M-- | negative-argument |       |
+|-------------+-------------------+-------|
+
+** TODO Registers/Bookmarks
+need to look into these
+[[https://www.masteringemacs.org/article/fixing-mark-commands-transient-mark-mode][article]] on marks
+** TODO Macros
+- defs worth looking into
+- shortcut to open windows i need; ie. files on left, terminal on bottom
+-[[https://www.masteringemacs.org/article/keyboard-macros-are-misunderstood][article]]
+** TODO eshell
+   - [[https://www.gnu.org/software/emacs/manual/html_mono/eshell.html#Built_002dins][manual]]
+   |----------------+----------------+--------------|
+   | Key binding    | Function       | Notes        |
+   |----------------+----------------+--------------|
+   | C-u M-x eshell | open new shell | numbers them |
+   |----------------+----------------+--------------|
+** TODO Git
+*** magit
+- git interface
+- [[https://magit.vc/manual/magit/][Documentaion]]
+- Key bindings:
+|-------------+----------------+-------------------|
+| Key binding | Function       | Notes             |
+|-------------+----------------+-------------------|
+| C-x g       | magit-status   |                   |
+| ? or h      | magit-dispatch | List all commands |
+|-------------+----------------+-------------------|
+- [[https://magit.vc/screencasts/][Videos]] on magit
+- [[https://systemcrafters.net/mastering-git-with-magit/everyday-git-workflow/][another video]]
+** TODO imenu
+- look up extension to this, think i have one listed in the emacs todo
+  M-g i
+* Packages
+** General packages
+*** Try
+- Try different packages without having to install them
+- [[https://github.com/larstvei/Try][Git]]
+|-------------+----------+-------|
+| Key binding | Function | Notes |
+|-------------+----------+-------|
+| M-x Try     |          |       |
+|-------------+----------+-------|
+
+*** which-key / amx
+- which-key: Displays the key bindings following your currently entered incomplete command in a popup
+- [[https://github.com/justbur/emacs-which-key][Git]]
+
+- amx: Alternative interface for M-x. Prioritizes most used commands in
+  the completion list and shows keyboard shortcuts
+- [[https://github.com/DarwinAwardWinner/amx][Git]]
+
+*** ace-windows
+- For easy window switching between multiple windows
+- [[https://github.com/abo-abo/ace-window][Git]]
+|-------------+--------------+-------|
+| Key binding | Function     | Notes |
+|-------------+--------------+-------|
+| C-u M-o     | swap windows |       |
+|-------------+--------------+-------|
+
+- Note these only work with more that 2 windows
+- More [[https://github.com/abo-abo/ace-window#change-the-action-midway][here]]
+|-------------+-------------------------------+-------|
+| Key binding | Function                      | Notes |
+|-------------+-------------------------------+-------|
+| M-o x       | delete window                 |       |
+| M-o m       | swap window                   |       |
+| M-o n       | select previous window        |       |
+| M-o u       | select buffer in other window |       |
+| M-o ?       | show all commands             |       |
+|-------------+-------------------------------+-------|
+
+*** Ivy / Counsel / Swiper
+- Swiper gives us a really efficient incremental search with regular expressions and Ivy / Counsel replace a lot of ido or helms completion functionality
+- [[https://github.com/abo-abo/swiper][Git]]
+- [[https://oremacs.com/swiper/][Documentaion]] - there's still a lot that could be looked at
+
+- Look at set keybinding in init file
+- After finding a file with C-x C-f can use M-o for open options
+
+*** Ibuffer
+- Better buffer manager
+- [[https://www.emacswiki.org/emacs/IbufferMode][Documentation]]
+
+- Bunch of [[https://doc.endlessparentheses.com/Fun/ibuffer-mode.html][commands]] to enable quick killing etc. of buffers
+|-------------+--------------------------+-------------------------|
+| Key binding | Function                 | Notes                   |
+|-------------+--------------------------+-------------------------|
+| h           | list funcitons           |                         |
+| m           | mark buffer              |                         |
+| u           | unmark buffer            |                         |
+| O           | ibuffer-do-occur         | search selected buffers |
+| Q           | ibuffer-do-query-replace |                         |
+|             |                          |                         |
+| M-s a C-s   | ibuffer-do-isearch       | couldn't get working    |
+|-------------+--------------------------+-------------------------|
+
+*** Avy
+ - For quicker navigation around windows
+ - [[https://github.com/abo-abo/avy][Git]]
+ |-------------+-----------------+-------|
+ | Key binding | Function        | Notes |
+ |-------------+-----------------+-------|
+ | M-s         | avy-goto-word-1 |       |
+ | M-g M-g     | avy-goto-line   |       |
+ |-------------+-----------------+-------|
+
+*** yasnippet
+- [[https://github.com/joaotavora/yasnippet][Git]]
+- [[https://joaotavora.github.io/yasnippet/][Documentaion]]
+- [[https://github.com/AndreaCrotti/yasnippet-snippets/tree/master/snippets][snippets]]
+
+*** undo-tree
+- visual undo tree
+- [[Git]] - link to 'tutorial'
+
+- there is a lot of functionality, for now all i need to know is:
+- C-x u : opens the visual tree
+
+*** TODO treemacs
+- maybe leave until developing as never use, need to figure out how to create projects without it being a git repo, also not sure i like the look
+
+- Directory side window. Lots of custimization available.
+- [[https://github.com/Alexander-Miller/treemacs][Git]]
+- [[https://github.com/Alexander-Miller/treemacs#conveniently-editing-your-projects-and-workspaces][Edit projects and workspaces]]
+|-----------------------+------+------------------------|
+| Key binding           | Name | Function               |
+|-----------------------+------+------------------------|
+| M-0                   |      | Select treemacs window |
+| C-x t t               |      | Toggle treemacs window |
+| ? (while in treemacs) |      | Display all function   |
+|-----------------------+------+------------------------|
+
+*** expand-region
+- expand the marked region in semantic increments
+- [[https://github.com/magnars/expand-region.el][Git]]
+|-------------+------------------+--------------------------|
+| Key binding | Function         | Notes                    |
+|-------------+------------------+--------------------------|
+| C-=         | er/expand-region | Use neg prefix to reduce |
+|-------------+------------------+--------------------------|
+
+*** multiple-cursors
+- replacment for rectangle editing
+- [[https://github.com/magnars/multiple-cursors.el][Git]]
+- [[https://emacsrocks.com/e13.html][Blog post]]
+|-------------+----------+-------|
+| Key binding | Function | Notes |
+|-------------+----------+-------|
+|           |          |       |
+|-------------+----------+-------|
+
+*** pdf-tools
+- [[https://github.com/vedang/pdf-tools#features][Git]]
+- [[https://github.com/vedang/pdf-tools#features][Navigation keybindings]]
+
+** Program modes
+*** TODO Python
+**** TODO elpy
+     - [[https://github.com/jorgenschaefer/elpy][Git]]
+     - [[https://elpy.readthedocs.io/en/latest/index.html][Documentation]]
+
+***** TODO Executing
+      - [[https://elpy.readthedocs.io/en/latest/ide.html#evaluating-code-fragments][Evaluating code fragments]] (worth looking into these)
+    - Capital changes focus to python shell
+        - C-c C-y e : Send the current statement to the Python shell.
+|-------------+------+---------------------------------------------------------|
+| Key binding | Name | Function                                                |
+|-------------+------+---------------------------------------------------------|
+| C-c C-c     |      | Evaluate current script or region in an python shell    |
+| C-RET       |      | Evaluate the current statement (including nested lines) |
+|             |      |                                                         |
+|             |      |                                                         |
+
+***** TODO Searching/Documentation
+|-------------+-------------------+--------------------------------------------------|
+| Key binding | Function Name     | Function                                         |
+|-------------+-------------------+--------------------------------------------------|
+| C-c C-s     | elpy-rgrep-symbol | Search files in current project for a string     |
+| C-c C-d     | elpy-doc          | Display documentation for the thing under cursor |
+|             |                   |                                                  |
+| C-d         |                   | display documentation of a coomplition           |
+| C-w         |                   | display source code of a completion              |
+|-------------+-------------------+--------------------------------------------------|
+
+***** TODO Navigation
+      - change pop tag mark to M-, - so that its the same as c++
+|--------------+-----------------------------+-----------------------------------------|
+| Key bindings | Function name               | Funciton                                |
+|--------------+-----------------------------+-----------------------------------------|
+| M-.          | elpy-goto-definition        | Go to definition of identifier at point |
+| M-*          | pop-tag-mark                | Go to the last place  M-. was used      |
+|              |                             |                                         |
+| C-c C-n      | elpy-flymake-next-error     | Navigate to next error messages         |
+| C-c C-p      | elpy-flymake-previous-error | Navigate to previous error messages     |
+| C-c C-v      | elpy-check                  | Open error messages in seperate buffer  |
+|              |                             |                                         |
+| C-c C-o      | elpy-occur-definitions      | Open list of classes and functions      |
+| C-c C-j      | imenu                       | Same as above but not in new buffer     |
+|--------------+-----------------------------+-----------------------------------------|
+
+***** TODO Refactoring
+      - C-c C-e   : Edit all occurrences of the symbol at point at once.
+      - C-c C-r r : Same as above but if needed, rename occurences in other files as well.
+
+***** TODO Folding
+      - elpy uses [[https://www.emacswiki.org/emacs/HideShow#h5o-12][Hide Show]], look into this when i need it.
+      - it needs to be enabled
+***** TODO Debugging
+      - [[https://elpy.readthedocs.io/en/latest/ide.html#debugging][Documentation]]
+      - [[https://docs.python.org/3/library/pdb.html][Python Debugger]]
+      - Worth looking into this when i need it.
+*** TODO C++
+**** ggtags
+     need to look into this more
+*** flycheck
+    - For error managment
+    - [[https://github.com/flycheck/flycheck][Git]]
+    - [[https://www.flycheck.org/en/latest/index.html][Documentation]]
+    |-------------+--------------------------+-----------------|
+    | Key binding | Name                     | Notes           |
+    |-------------+--------------------------+-----------------|
+    | C-c C-n/p   | flycheck-next/prev-error |                 |
+    | C-c C-v     | flycheck-list-errors     | [[https://www.flycheck.org/en/latest/user/error-list.html][List all errors]] |
+    |-------------+--------------------------+-----------------|
+
+**** TODO flycheck-aspell
+     - Set up spell checking using flycheck and aspell
+     - [[https://github.com/leotaku/flycheck-aspell][Git]]
+     - [[Y][This]] page shows how to setup for latex
+     - Worth looking up the bext latex checker
+
+*** TODO projectile
+- For finding files in a project faster
+- [[https://github.com/bbatsov/projectile][Git]]
+- [[https://docs.projectile.mx/projectile/index.html][Documentation]]
+- Key bindings:
+|-------------+------+------------------------------|
+| Key binding | Name | Function                     |
+|-------------+------+------------------------------|
+| s-p f       |      | Find file in current project |
+| s-p p       |      | Switch project               |
+| s-p s g     |      | Grep in project              |
+| s-p ?       |      | Find references in project   |
+| s-p a       |      | Toggle between related files |
+|-------------+------+------------------------------|
+- A lot more commands in the documentation, defs worth doing a lot more research into how to use this properly
+
+*** smartparans
+- for dealing with parens
+- [[https://github.com/Fuco1/smartparens#smartparens][git]]
+- [[https://smartparens.readthedocs.io/en/latest/][documentaion]]
+*** C++
+** Writing modes
+*** Spell checking
+- using Aspell with Flycheck for highlighting
+- see set keybindings in myinit.org
+- note personal dictionary is in: ~/.aspell.en.pws
+*** writegood-mode
+This mode aids writings by checking for three fundamental problems:
+- Weasel Words
+- Passive Voice
+- Duplicates
+
+- Run M-x writegood-mode to use
+** Org mode
+** LaTeX
+*** LaTeX Preview Pane
+- [[https://emacswiki.org/emacs/LaTeXPreviewPane][Documentation]]
+- enable it on a per-buffer basis with the command:
+  M-x latex-preview-pane-mode
+
+** Themes
+* TODO Elisp
+- move this into Emacs section
+** Executing
+   |-------------+----------------+-------|
+   | Key binding | Function       | Notes |
+   |-------------+----------------+-------|
+   | C-x C-e     | eval-last-sexp |       |
+   | n/a         | eval-buffer    |       |
+   | n/a         | eval-region    |       |
+   |-------------+----------------+-------|
