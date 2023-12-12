@@ -44,6 +44,9 @@
   (tool-bar-mode -1)
   (scroll-bar-mode -1)
 
+  ;; set font size
+  (set-face-attribute 'default nil :height 160)
+
   ;; add line numbers to progam and tex modes
   (add-hook 'prog-mode-hook 'display-line-numbers-mode)
   (add-hook 'TeX-mode-hook 'display-line-numbers-mode)
@@ -66,6 +69,11 @@
   ;; allow hash to be entered (changed keyboard to australian instead)
   ;; (global-set-key (kbd "M-3") '(lambda () (interactive) (insert "#")))
 
+  ;; set keys for Apple keyboard, for emacs in OS X
+  (setq mac-command-modifier 'meta) ; make cmd key do Meta
+  (setq mac-option-modifier 'super) ; make opt key do Super
+  ;; (setq mac-control-modifier 'control) ; make Control key do Control
+  ;; (setq ns-function-modifier 'hyper)  ; make Fn key do Hyper
 
   ;; disable certain mac keyboard commands
   ;; s is for super (cmd on mac)
@@ -95,14 +103,14 @@
   (global-set-key (kbd "<f6>") 'compile-clean)
 
   (defun compile-build ()
-	"Compile using 'make build'."
-	(interactive)
-	(compile "make build"))
+    "Compile using 'make build'."
+    (interactive)
+    (compile "make build"))
 
   (defun compile-clean ()
-	"Clean using 'make clean'."
-	(interactive)
-	(compile "make clean"))
+    "Clean using 'make clean'."
+    (interactive)
+    (compile "make clean"))
 #+end_src
 
 * General packages
@@ -110,41 +118,41 @@
 #+BEGIN_SRC emacs-lisp
   ;; try different packages without having to install them
   (use-package try
-	:ensure t)
+    :ensure t)
 #+END_SRC
 ** which key / amx
 #+BEGIN_SRC emacs-lisp
   ;; display possible key bindings following incomplete command
   (use-package which-key
-	:ensure t
-	:config
-	(which-key-mode))
+    :ensure t
+    :config
+    (which-key-mode))
 
   ;; Alternative interface for M-x.
   ;; Prioritizes most used commands and shows keyboard shortcuts
   (use-package amx
-	:ensure t
-	:custom
-	(amx-backend 'auto)
-	:config
-	(amx-mode 1))
+    :ensure t
+    :custom
+    (amx-backend 'auto)
+    :config
+    (amx-mode 1))
 #+END_SRC
 
 ** ace windows
 #+BEGIN_SRC emacs-lisp
   ;; for easy window switching between multiple windows
   (use-package ace-window
-	:ensure t
-	:init
-	(progn
-	  ;; bind ace-window to M-o
-	  (global-set-key (kbd "M-o") 'ace-window)
-	  ;; set window lables to home row
-	  (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
-	  (custom-set-faces
-	   '(aw-leading-char-face
-	 ((t (:inherit ace-jump-face-foreground :height 3.0)))))
-	  ))
+    :ensure t
+    :init
+    (progn
+      ;; bind ace-window to M-o
+      (global-set-key (kbd "M-o") 'ace-window)
+      ;; set window lables to home row
+      (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
+      (custom-set-faces
+       '(aw-leading-char-face
+     ((t (:inherit ace-jump-face-foreground :height 3.0)))))
+      ))
 #+END_SRC
 
 ** Ivy / Counsel / Swiper
@@ -156,13 +164,13 @@
   ;; or helms completion functionality
 
   (use-package ivy
-	:ensure t)
+    :ensure t)
 
   (use-package counsel
-	:ensure t)
+    :ensure t)
 
   (use-package swiper
-	:ensure t)
+    :ensure t)
 #+end_src
 
 *** config
@@ -208,88 +216,88 @@
 #+Begin_SRC emacs-lisp
   ;; for quicker navigation around windows
   (use-package avy
-	:ensure t
-	:bind
-	("M-s" . avy-goto-word-1)
-	( "M-g M-g" . 'avy-goto-line))
+    :ensure t
+    :bind
+    ("M-s" . avy-goto-word-1)
+    ( "M-g M-g" . 'avy-goto-line))
 #+END_SRC
 
 ** yasnippet
 #+begin_src emacs-lisp
   (use-package yasnippet
-	:ensure t
-	:init
-	(yas-global-mode 1))
+    :ensure t
+    :init
+    (yas-global-mode 1))
 
   ;; needed to install the actual snippets
   (use-package yasnippet-snippets
-	:ensure t
-	:after yasnippet
-	:config (yasnippet-snippets-initialize))
+    :ensure t
+    :after yasnippet
+    :config (yasnippet-snippets-initialize))
 #+end_src
 
 ** undo-tree
 #+begin_src emacs-lisp
   (use-package undo-tree
-	:ensure t
-	:init
-	(global-undo-tree-mode)
-	:config
-	(setq undo-tree-visualizer-diff t) ;; show difs
-	(setq undo-tree-auto-save-history t) ;; save history to file
-	(setq undo-tree-visualizer-timestamps t) ;; show timestamps
+    :ensure t
+    :init
+    (global-undo-tree-mode)
+    :config
+    (setq undo-tree-visualizer-diff t) ;; show difs
+    (setq undo-tree-auto-save-history t) ;; save history to file
+    (setq undo-tree-visualizer-timestamps t) ;; show timestamps
 
-	;; Create the undo history directory if it doesn't exist
-	(let ((undo-history-dir (expand-file-name "undo-history" user-emacs-directory)))
-	  (unless (file-directory-p undo-history-dir)
-	(make-directory undo-history-dir)))
+    ;; Create the undo history directory if it doesn't exist
+    (let ((undo-history-dir (expand-file-name "undo-history" user-emacs-directory)))
+      (unless (file-directory-p undo-history-dir)
+    (make-directory undo-history-dir)))
 
-	;; Set the directory for undo history files
-	(setq undo-tree-history-directory-alist
-	  `((".*" . ,(expand-file-name "undo-history" user-emacs-directory)))))
+    ;; Set the directory for undo history files
+    (setq undo-tree-history-directory-alist
+      `((".*" . ,(expand-file-name "undo-history" user-emacs-directory)))))
 #+end_src
 
 ** treemacs
 #+begin_src emacs-lisp
   ;; required for treemacs
   (use-package all-the-icons
-	:ensure t)
+    :ensure t)
 
   (use-package treemacs
-	:ensure t
-	:config
-	(treemacs-project-follow-mode t)
-	:bind
-	(:map global-map
-	  ("M-0"       . treemacs-select-window)
-	  ("C-x t 1"   . treemacs-delete-other-windows)
-	  ("C-x t t"   . treemacs)
-	  ("C-x t d"   . treemacs-select-directory)
-	  ("C-x t B"   . treemacs-bookmark)
-	  ("C-x t C-t" . treemacs-find-file)
-	  ("C-x t M-t" . treemacs-find-tag)))
+    :ensure t
+    :config
+    (treemacs-project-follow-mode t)
+    :bind
+    (:map global-map
+      ("M-0"       . treemacs-select-window)
+      ("C-x t 1"   . treemacs-delete-other-windows)
+      ("C-x t t"   . treemacs)
+      ("C-x t d"   . treemacs-select-directory)
+      ("C-x t B"   . treemacs-bookmark)
+      ("C-x t C-t" . treemacs-find-file)
+      ("C-x t M-t" . treemacs-find-tag)))
 
   (use-package treemacs-projectile
-	:after (treemacs projectile)
-	:ensure t)
+    :after (treemacs projectile)
+    :ensure t)
 
   (use-package treemacs-magit
-	:after (treemacs magit)
-	:ensure t)
+    :after (treemacs magit)
+    :ensure t)
 #+end_src
 ** expand-region
 #+begin_src emacs-lisp
   ;; expand the marked region in semantic increments
   ;; (negative prefix to reduce region)
   (use-package expand-region
-	:ensure t
-	:config
-	(global-set-key (kbd "C-=") 'er/expand-region))
+    :ensure t
+    :config
+    (global-set-key (kbd "C-=") 'er/expand-region))
 #+end_src
 ** multiple-cursors
 #+begin_src emacs-lisp
   (use-package multiple-cursors
-	:ensure t)
+    :ensure t)
 
   (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
   (global-set-key (kbd "C->") 'mc/mark-next-like-this)
@@ -300,9 +308,9 @@
 #+begin_src emacs-lisp
   ;; Install pdf-tools if not already installed
   (use-package pdf-tools
-	:ensure t
-	:config
-	(pdf-tools-install))
+    :ensure t
+    :config
+    (pdf-tools-install))
 #+end_src
 * Program modes
 ** General tweaks
@@ -324,7 +332,7 @@
 *** tabs/indentation
 #+begin_src emacs-lisp
   (defvar my-indent-width 4
-	"The number of spaces to use for each indentation level.")
+    "The number of spaces to use for each indentation level.")
 
   ;; Set tab width to my-indent-width spaces
   (setq-default tab-width my-indent-width)
@@ -339,8 +347,8 @@
 
   ;; Enable tabs for indentation in Makefiles
   (add-hook 'makefile-mode-hook
-		  (lambda ()
-			(setq indent-tabs-mode t)))
+          (lambda ()
+            (setq indent-tabs-mode t)))
 
   ;; Make the backspace properly erase the tab instead of removing 1 space at a time.
   (setq backward-delete-char-untabify-method 'hungry)
@@ -355,13 +363,13 @@
 *** comment line
 #+begin_src emacs-lisp
   (defun comment-or-uncomment-region-or-line ()
-	"Comments or uncomments the region or the current line if there's no active region."
-	(interactive)
-	(let (beg end)
-	  (if (region-active-p)
-	  (setq beg (region-beginning) end (region-end))
-	(setq beg (line-beginning-position) end (line-end-position)))
-	  (comment-or-uncomment-region beg end)))
+    "Comments or uncomments the region or the current line if there's no active region."
+    (interactive)
+    (let (beg end)
+      (if (region-active-p)
+      (setq beg (region-beginning) end (region-end))
+    (setq beg (line-beginning-position) end (line-end-position)))
+      (comment-or-uncomment-region beg end)))
 
   (bind-key* "C-;" 'comment-or-uncomment-region-or-line)
 #+end_src
@@ -370,14 +378,14 @@
 *** elpy
 #+begin_src emacs-lisp
   (use-package elpy
-	:ensure t
-	:delight
-	:init
-	(elpy-enable)
-	;; start python shells in directory of python file
-	(setq elpy-shell-starting-directory 'current-directory)
-	;; display the Python shell after sending something to it
-	(setq elpy-shell-display-buffer-after-send '1))
+    :ensure t
+    :delight
+    :init
+    (elpy-enable)
+    ;; start python shells in directory of python file
+    (setq elpy-shell-starting-directory 'current-directory)
+    ;; display the Python shell after sending something to it
+    (setq elpy-shell-display-buffer-after-send '1))
 
   ;; fix issue when running C-c C-c
   (setq python-shell-completion-native-disabled-interpreters '("python3"))
@@ -394,141 +402,141 @@
 *** company-irony
 #+begin_src emacs-lisp
   (use-package irony
-	:ensure t
-	:config
-	(add-hook 'c++-mode-hook 'irony-mode)
-	(add-hook 'c-mode-hook 'irony-mode))
+    :ensure t
+    :config
+    (add-hook 'c++-mode-hook 'irony-mode)
+    (add-hook 'c-mode-hook 'irony-mode))
 
   ;; if need to run irony-install-server
   ;; make sure to add:
   ;;      -DLIBCLANG_INCLUDE_DIR\=/usr/local/opt/llvm/include/
   ;;      -DLIBCLANG_LIBRARY\=/usr/local/opt/llvm/lib/libclang.dylib
   (use-package company-irony
-	:ensure t
-	:after (company irony)
-	:config
-	(eval-after-load 'company
-	  '(add-to-list 'company-backends 'company-irony)))
+    :ensure t
+    :after (company irony)
+    :config
+    (eval-after-load 'company
+      '(add-to-list 'company-backends 'company-irony)))
 #+end_src
 
 *** ggtages
-	#+begin_src emacs-lisp
-	  ;; tags for code navigation
-	  (use-package ggtags
-	:ensure t
-	:bind
-	(:map ggtags-navigation-map
-		  ("M-]" . nil)
-		  ("C-M-." . nil)
-		  ("M-s" . nil)
-		  )
-	:config
-	(add-hook 'c-mode-common-hook
-		  (lambda ()
-			(when (derived-mode-p 'c-mode 'c++-mode 'java-mode)
-			  (ggtags-mode 1))))
-	)
-	#+end_src
+    #+begin_src emacs-lisp
+      ;; tags for code navigation
+      (use-package ggtags
+    :ensure t
+    :bind
+    (:map ggtags-navigation-map
+          ("M-]" . nil)
+          ("C-M-." . nil)
+          ("M-s" . nil)
+          )
+    :config
+    (add-hook 'c-mode-common-hook
+          (lambda ()
+            (when (derived-mode-p 'c-mode 'c++-mode 'java-mode)
+              (ggtags-mode 1))))
+    )
+    #+end_src
 *** aggressive-indent
 #+begin_src emacs-lisp
   (use-package aggressive-indent
-	:ensure t
-	:config
-	(add-hook 'c++-mode-hook 'aggressive-indent-mode))
+    :ensure t
+    :config
+    (add-hook 'c++-mode-hook 'aggressive-indent-mode))
 #+end_src
 
 *** highlight-indentation
 #+begin_src emacs-lisp
   (use-package highlight-indentation
-	:ensure t
-	:config
-	;; Enable `highlight-indentation-mode` in c++ modes  modes only
-	(add-hook 'c++-mode-hook 'highlight-indentation-mode)
+    :ensure t
+    :config
+    ;; Enable `highlight-indentation-mode` in c++ modes  modes only
+    (add-hook 'c++-mode-hook 'highlight-indentation-mode)
 
-	(setq highlight-indentation-offset my-indent-width)
+    (setq highlight-indentation-offset my-indent-width)
 
-	;; Enable highlighting of blank lines.
-	(setq highlight-indentation-blank-lines t)
+    ;; Enable highlighting of blank lines.
+    (setq highlight-indentation-blank-lines t)
 
-	;; Customize the face for the indent guides (optional).
-	(custom-set-faces
-	 (set-face-background 'highlight-indentation-face "#e3e3d3")
-	 (set-face-background 'highlight-indentation-current-column-face "#c3b3b3")))
+    ;; Customize the face for the indent guides (optional).
+    (custom-set-faces
+     (set-face-background 'highlight-indentation-face "#e3e3d3")
+     (set-face-background 'highlight-indentation-current-column-face "#c3b3b3")))
 #+end_src
 ** flycheck
    #+begin_src emacs-lisp
-	 (use-package flycheck
-	   :ensure t
-	   :init (global-flycheck-mode)
-	   :custom
-	   (flycheck-display-errors-delay 0.5)
-	   :bind
-	   (:map flycheck-mode-map
-		 ("C-c C-n" . flycheck-next-error)
-		 ("C-c C-p" . flycheck-previous-error)
-		 ("C-c C-v" . (lambda () ;; move point to flycheck buffer
-				(interactive)
-				(flycheck-list-errors)
-				(select-window (get-buffer-window "*Flycheck errors*" t))))))
+     (use-package flycheck
+       :ensure t
+       :init (global-flycheck-mode)
+       :custom
+       (flycheck-display-errors-delay 0.5)
+       :bind
+       (:map flycheck-mode-map
+         ("C-c C-n" . flycheck-next-error)
+         ("C-c C-p" . flycheck-previous-error)
+         ("C-c C-v" . (lambda () ;; move point to flycheck buffer
+                (interactive)
+                (flycheck-list-errors)
+                (select-window (get-buffer-window "*Flycheck errors*" t))))))
 
-	 (eval-after-load 'flycheck
-	   '(setq-default flycheck-c/c++-header-file-regexp
-			  (concat "\\(?:"
-				  (regexp-opt '(".h" ".hpp" ".hh" ".hxx"))
-				  "\\)")))
+     (eval-after-load 'flycheck
+       '(setq-default flycheck-c/c++-header-file-regexp
+              (concat "\\(?:"
+                  (regexp-opt '(".h" ".hpp" ".hh" ".hxx"))
+                  "\\)")))
 
-	 ;; disable clang checker as its out of date
-	 (add-hook 'c++-mode-hook
-		   (lambda ()
-		 (setq flycheck-disabled-checkers '(c/c++-clang))))
+     ;; disable clang checker as its out of date
+     (add-hook 'c++-mode-hook
+           (lambda ()
+         (setq flycheck-disabled-checkers '(c/c++-clang))))
 
 
-	 (use-package flycheck-pos-tip
-	   :ensure t
-	   :after flycheck
-	   :config
-	   (flycheck-pos-tip-mode))
+     (use-package flycheck-pos-tip
+       :ensure t
+       :after flycheck
+       :config
+       (flycheck-pos-tip-mode))
 
-	 ;; make elpy use flycheck instead of flymake
-	 (when (load "flycheck" t t)
-	   (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
-	   (add-hook 'elpy-mode-hook 'flycheck-mode))
+     ;; make elpy use flycheck instead of flymake
+     (when (load "flycheck" t t)
+       (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
+       (add-hook 'elpy-mode-hook 'flycheck-mode))
    #+end_src
 
 ** company-mode
 #+begin_src emacs-lisp
   (use-package company
-	 :ensure t
-	 :config
-	 (add-hook 'after-init-hook 'global-company-mode))
+     :ensure t
+     :config
+     (add-hook 'after-init-hook 'global-company-mode))
 #+end_src
 
 ** projectile
    #+begin_src emacs-lisp
-	 (use-package projectile
-	   :ensure t
-	   :delight '(:eval (concat " " (projectile-project-name)))
-	   :init
-	   (projectile-mode +1)
-	   :bind (:map projectile-mode-map
-	   ("s-p" . projectile-command-map)))
+     (use-package projectile
+       :ensure t
+       :delight '(:eval (concat " " (projectile-project-name)))
+       :init
+       (projectile-mode +1)
+       :bind (:map projectile-mode-map
+       ("s-p" . projectile-command-map)))
 
-	   ;; automatically check for projects in git on startup
-	   (setq projectile-project-search-path '("~/git" . 1))
+       ;; automatically check for projects in git on startup
+       (setq projectile-project-search-path '("~/git" . 1))
    #+end_src
 ** smartparens
 #+begin_src emacs-lisp
   (use-package smartparens
-	:ensure t
-	:hook
-	((prog-mode . smartparens-mode)))
+    :ensure t
+    :hook
+    ((prog-mode . smartparens-mode)))
 #+end_src
 * Writing modes
 ** Spell checking
 *** Ispell
 #+begin_src emacs-lisp
   (use-package ispell
-	:ensure t)
+    :ensure t)
 
   (setq ispell-program-name "aspell")
   (setq ispell-extra-args '("--sug-mode=ultra"))
@@ -538,11 +546,11 @@
 *** Flyspell
 #+begin_src emacs-lisp
   (use-package flyspell
-	:ensure t
-	:config
-	(setq ispell-program-name "aspell")  ; Use Aspell as the spell checker
-	(add-hook 'text-mode-hook 'flyspell-mode)
-	(add-hook 'prog-mode-hook 'flyspell-prog-mode))
+    :ensure t
+    :config
+    (setq ispell-program-name "aspell")  ; Use Aspell as the spell checker
+    (add-hook 'text-mode-hook 'flyspell-mode)
+    (add-hook 'prog-mode-hook 'flyspell-prog-mode))
 
   ;; recommended to speed up flycheck
   (setq flyspell-issue-message-flag nil)
@@ -553,11 +561,11 @@
   (global-set-key (kbd "C-M-<f8>") 'flyspell-buffer)
 
   (defun flyspell-check-next-highlighted-word ()
-	"Custom function to spell check next highlighted word"
-	(interactive)
-	(flyspell-goto-next-error)
-	(ispell-word)
-	)
+    "Custom function to spell check next highlighted word"
+    (interactive)
+    (flyspell-goto-next-error)
+    (ispell-word)
+    )
   (global-set-key (kbd "C-<f8>") 'flyspell-check-next-highlighted-word)
   (global-set-key (kbd "M-<f8>") 'flyspell-check-previous-highlighted-word)
 
@@ -565,7 +573,7 @@
 ** writegood-mode
 #+begin_src emacs-lisp
   (use-package writegood-mode
-	:ensure t)
+    :ensure t)
 
   (add-hook 'TeX-mode-hook 'writegood-mode)
 #+end_src
@@ -579,8 +587,8 @@
 
   ;; When editing org-files with source-blocks, we want the source blocks to be themed as they would in their native mode.
   (setq org-src-fontify-natively t
-	org-src-tab-acts-natively t
-	org-confirm-babel-evaluate nil)
+    org-src-tab-acts-natively t
+    org-confirm-babel-evaluate nil)
 #+end_src
 
 ** Packages
@@ -588,9 +596,9 @@
 #+BEGIN_SRC emacs-lisp
   ;; Org bullets makes things look pretty
   (use-package org-bullets
-	:ensure t
-	:config
-	(add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+    :ensure t
+    :config
+    (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
   #+END_SRC
 * LaTeX
 ** General Tweaks
@@ -600,11 +608,11 @@
 ** AECTeX
 #+begin_src emacs-lisp
   (use-package tex
-	:ensure auctex
-	:config
-	(setq TeX-parse-self t
-		  TeX-auto-save t
-		  TeX-master nil))
+    :ensure auctex
+    :config
+    (setq TeX-parse-self t
+          TeX-auto-save t
+          TeX-master nil))
 #+end_src
 
 ** Org mode
@@ -624,9 +632,9 @@
   (setq org-latex-src-block-backend 'minted)
   (add-to-list 'org-latex-packages-alist '("newfloat" "minted"))
   (setq org-latex-pdf-process
-	'("pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
-	  "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
-	  "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"))
+    '("pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
+      "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
+      "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"))
 #+end_src
 
 * Themes
@@ -646,27 +654,27 @@
 *** doom
 #+begin_src emacs-lisp
   (use-package doom-themes
-	:ensure t
-	:config
-	;; Global settings (defaults)
-	(setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-	  doom-themes-enable-italic t) ; if nil, italics is universally disabled
-	(load-theme 'doom-one t)
+    :ensure t
+    :config
+    ;; Global settings (defaults)
+    (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+      doom-themes-enable-italic t) ; if nil, italics is universally disabled
+    (load-theme 'doom-one t)
 
-	;; Enable flashing mode-line on errors
-	(doom-themes-visual-bell-config)
-	;; Custom treemacs tree
-	(setq doom-themes-treemacs-theme "doom-atom") ; use "doom-colors" for less minimal icon theme
-	(doom-themes-treemacs-config)
-	;; Corrects (and improves) org-mode's native fontification.
-	(doom-themes-org-config))
+    ;; Enable flashing mode-line on errors
+    (doom-themes-visual-bell-config)
+    ;; Custom treemacs tree
+    (setq doom-themes-treemacs-theme "doom-atom") ; use "doom-colors" for less minimal icon theme
+    (doom-themes-treemacs-config)
+    ;; Corrects (and improves) org-mode's native fontification.
+    (doom-themes-org-config))
 #+end_src
 ** Modeline
 *** doom-modeline
 #+begin_src emacs-lisp
   (use-package doom-modeline
-	:ensure t
-	:init (doom-modeline-mode 1))
+    :ensure t
+    :init (doom-modeline-mode 1))
 
   (setq doom-modeline-buffer-modification-icon t) ; Show the buffer modification icon.
 
@@ -684,33 +692,33 @@
 #+begin_src emacs-lisp
   ;; optional dependancy of emacs-dashboard
   (use-package page-break-lines
-	:ensure t)
+    :ensure t)
 
   (use-package dashboard
-	:ensure t
-	:config
-	(dashboard-setup-startup-hook))
+    :ensure t
+    :config
+    (dashboard-setup-startup-hook))
 
   (setq dashboard-items '((projects . 5)
-			  (recents . 5)))
+              (recents . 5)))
 #+end_src
 
 ** git-gutter
 #+begin_src emacs-lisp
   (use-package git-gutter
-	:ensure t
-	:hook ((prog-mode . git-gutter-mode)
-	   (org-mode . git-gutter-mode))
-	:config
-	(setq git-gutter:update-interval 0.5)) ;; if too small causes lagging
+    :ensure t
+    :hook ((prog-mode . git-gutter-mode)
+       (org-mode . git-gutter-mode))
+    :config
+    (setq git-gutter:update-interval 0.5)) ;; if too small causes lagging
 
   ;; makes it prettier
   (use-package git-gutter-fringe
-	:ensure t
-	:config
-	(define-fringe-bitmap 'git-gutter-fr:added [224] nil nil '(center repeated))
-	(define-fringe-bitmap 'git-gutter-fr:modified [224] nil nil '(center repeated))
-	(define-fringe-bitmap 'git-gutter-fr:deleted [128 192 224 240] nil nil 'bottom))
+    :ensure t
+    :config
+    (define-fringe-bitmap 'git-gutter-fr:added [224] nil nil '(center repeated))
+    (define-fringe-bitmap 'git-gutter-fr:modified [224] nil nil '(center repeated))
+    (define-fringe-bitmap 'git-gutter-fr:deleted [128 192 224 240] nil nil 'bottom))
 
   ;; Customize the git-gutter:modified face to use different colours
   (set-face-foreground 'git-gutter-fr:modified "#2375B3")
@@ -724,10 +732,10 @@
 
   ;; for better syntax hightlighting
   (use-package tree-sitter
-	:ensure t)
+    :ensure t)
 
   (use-package tree-sitter-langs
-	:ensure t)
+    :ensure t)
 
   (global-tree-sitter-mode)
   (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
@@ -737,6 +745,6 @@
 #+begin_src emacs-lisp
   ;; highlights delimiters according to their depth
   (use-package rainbow-delimiters
-	:ensure t)
+    :ensure t)
   (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
 #+end_src
