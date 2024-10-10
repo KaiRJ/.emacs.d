@@ -1,9 +1,9 @@
 (require 'package)
 (setq package-enable-at-startup nil)
 (add-to-list 'package-archives
-         '("melpa" . "https://melpa.org/packages/"))
+     '("melpa" . "https://melpa.org/packages/"))
 (add-to-list 'package-archives
-         '("gnu" . "https://elpa.gnu.org/packages/"))
+     '("gnu" . "https://elpa.gnu.org/packages/"))
 (package-initialize)
 
 
@@ -29,7 +29,7 @@
  '(lock-file-name-transforms '((".*" "~/.emacs.d/lockfiles/\\1" t)))
  '(neo-theme 'icons)
  '(package-selected-packages
-   '(writegood-mode tex latex-preview-pane multiple-cursors flyspell-correct-ivy flyspell-correct ox-beamer auctex ox-reveal expand-region hungry-delete beacon company-mode modern-cpp-font-lock highlight-indent-guides ggtags undo-tree pdf-continuous-scroll-mode quelpa pdf-tools flycheck-pos-tip diff-hl doom-modeline smart-mode-line jedi yasnippet-snippets neotree amx color-theme auto-complete zenburn-theme which-key use-package try org-bullets doom-themes counsel ace-window))
+   '(centaur-tabs treemacs-all-the-icons magit writegood-mode tex latex-preview-pane multiple-cursors flyspell-correct-ivy flyspell-correct ox-beamer auctex ox-reveal expand-region hungry-delete beacon company-mode modern-cpp-font-lock highlight-indent-guides ggtags undo-tree pdf-continuous-scroll-mode quelpa pdf-tools flycheck-pos-tip diff-hl doom-modeline smart-mode-line jedi yasnippet-snippets neotree amx color-theme auto-complete zenburn-theme which-key use-package try org-bullets doom-themes counsel ace-window))
  '(safe-local-variable-values
    '((flycheck-gcc-language-standard . "c++2a")
      (flycheck-gcc-language-standard . c++2a)

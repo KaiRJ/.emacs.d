@@ -46,7 +46,7 @@
 |-------------+----------+------------------------|
 | C-M-f/b     |          | Move for/back by s-exp |
 | C-M-u/d     |          | Move up/down a list    |
-| C-M-n/p     |          | Move fore/back a list  |
+| C-M-n/p     |          | Move for/back a list   |
 | C-M-a/e     |          | Move by defun          |
 |-------------+----------+------------------------|
 
@@ -306,7 +306,7 @@ need to look into these
       - Worth looking into this when i need it.
 *** TODO C++
 **** ggtags
-     need to look into this more
+need to look into this more
 *** flycheck
     - For error managment
     - [[https://github.com/flycheck/flycheck][Git]]
@@ -319,10 +319,9 @@ need to look into these
     |-------------+--------------------------+-----------------|
 
 **** TODO flycheck-aspell
-     - Set up spell checking using flycheck and aspell
-     - [[https://github.com/leotaku/flycheck-aspell][Git]]
-     - [[Y][This]] page shows how to setup for latex
-     - Worth looking up the bext latex checker
+- Set up spell checking using flycheck and aspell
+- [[https://github.com/leotaku/flycheck-aspell][Git]]
+- Worth looking up the bext latex checker
 
 *** TODO projectile
 - For finding files in a project faster

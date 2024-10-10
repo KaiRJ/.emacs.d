@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: qty
+# key: q
+# --
+\qty{${1:num}}{${2:unit}}$0

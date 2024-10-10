@@ -1,4 +1,5 @@
 #+STARTUP: overview
+
 * Tweaks
 ** General
 #+begin_src emacs-lisp
@@ -20,7 +21,6 @@
 
   ;; replace yes/no with y/n
   (fset 'yes-or-no-p 'y-or-n-p)
-
   ;; Delete highlighted text by typing
   (delete-selection-mode 1)
 
@@ -84,6 +84,8 @@
   (define-key global-map [?\s-o] nil) ;; Disable open
   (define-key global-map [?\C-z] nil) ;; Disable minimize
 
+  ;; remap quary replace so its not on M-% which is screenshot on mac
+  (global-set-key (kbd "C-r") 'query-replace)
 
   ;; Switch to new window on window split
   (global-set-key "\C-x2" (lambda () (interactive)(split-window-vertically) (other-window 1)))
@@ -159,7 +161,7 @@
 *** install packages
 #+begin_src emacs-lisp
 
-  ;; Swiper gives us a really efficient incremental search with
+;; Swiper gives us a really efficient incremental search with
   ;; regular expressions and Ivy / Counsel replace a lot of ido
   ;; or helms completion functionality
 
@@ -183,8 +185,13 @@
   ;; should_ speed swiper up
   (setq swiper-use-visual-line nil)
   (setq swiper-use-visual-line-p (lambda (a) nil))
-#+END_SRC
 
+  ;; ignore certain files in find-file
+  (setq counsel-find-file-ignore-regexp "\\(?:\\.DS_Store\\)")
+  (setq ivy-extra-directories nil) ;; /. and /..
+
+
+#+END_SRC
 *** keybinding
 #+begin_src emacs-lisp
   (global-set-key (kbd "C-x b") 'ivy-switch-buffer)
@@ -198,7 +205,9 @@
   (global-set-key (kbd "C-h l") 'counsel-find-library)
 
   (global-set-key (kbd "C-s") 'swiper)
-  (global-set-key (kbd "C-r") 'swiper)
+  ;; (global-set-key (kbd "C-r") 'swiper) ;; usin this for quary-replace
+
+  (global-set-key (kbd "M-i") 'counsel-imenu)
 #+end_src
 
 ** Ibuffer
@@ -257,32 +266,52 @@
       `((".*" . ,(expand-file-name "undo-history" user-emacs-directory)))))
 #+end_src
 
+** magit
+#+Begin_SRC emacs-lisp
+  (use-package magit
+    :ensure t)
+#+END_SRC
 ** treemacs
 #+begin_src emacs-lisp
   ;; required for treemacs
+  ;; might need to run M-x all-the-icons-install-fonts
+  ;; TODO move this somewhere else
   (use-package all-the-icons
     :ensure t)
 
   (use-package treemacs
     :ensure t
+
     :config
-    (treemacs-project-follow-mode t)
+    (progn
+      (setq treemacs-hide-dot-git-directory          t
+        treemacs-move-files-by-mouse-dragging    t
+        treemacs-sorting                         'alphabetic-asc
+        treemacs-width                           28)
+      (treemacs-project-follow-mode t)
+      (treemacs-resize-icons 24))
+
     :bind
     (:map global-map
       ("M-0"       . treemacs-select-window)
       ("C-x t 1"   . treemacs-delete-other-windows)
-      ("C-x t t"   . treemacs)
       ("C-x t d"   . treemacs-select-directory)
+      ("C-x t t"   . treemacs)
       ("C-x t B"   . treemacs-bookmark)
       ("C-x t C-t" . treemacs-find-file)
       ("C-x t M-t" . treemacs-find-tag)))
 
   (use-package treemacs-projectile
-    :after (treemacs projectile)
+    :after (treemacs)
     :ensure t)
 
   (use-package treemacs-magit
-    :after (treemacs magit)
+    :after (treemacs)
+    :ensure t)
+
+  (use-package treemacs-all-the-icons
+    :after treemacs all-the-icons
+    :config (treemacs-load-theme "all-the-icons")
     :ensure t)
 #+end_src
 ** expand-region
@@ -305,12 +334,26 @@
   (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
 #+end_src
 ** pdf-tools
-#+begin_src emacs-lisp
+# #+begin_src emacs-lisp
   ;; Install pdf-tools if not already installed
   (use-package pdf-tools
     :ensure t
-    :config
-    (pdf-tools-install))
+    ;; :config
+    ;; (pdf-tools-install)
+    )
+# #+end_src
+** imenu-list
+#+begin_src emacs-lisp
+  ;; Install pdf-tools if not already installed
+  (use-package imenu-list
+    :ensure t)
+
+  (global-set-key (kbd "s-i") #'imenu-list-smart-toggle)
+  (setq imenu-list-focus-after-activation t)
+  (setq imenu-list-auto-resize t)
+
+  (setq imenu-list-after-jump-hook nil)
+  (add-hook 'imenu-list-after-jump-hook #'top)
 #+end_src
 * Program modes
 ** General tweaks
@@ -347,8 +390,8 @@
 
   ;; Enable tabs for indentation in Makefiles
   (add-hook 'makefile-mode-hook
-          (lambda ()
-            (setq indent-tabs-mode t)))
+      (lambda ()
+        (setq indent-tabs-mode t)))
 
   ;; Make the backspace properly erase the tab instead of removing 1 space at a time.
   (setq backward-delete-char-untabify-method 'hungry)
@@ -407,8 +450,9 @@
     (add-hook 'c++-mode-hook 'irony-mode)
     (add-hook 'c-mode-hook 'irony-mode))
 
-  ;; if need to run irony-install-server
-  ;; make sure to add:
+  ;; if need to run M-x irony-install-server
+  ;; might need to install llvm
+  ;; and add the following to command:
   ;;      -DLIBCLANG_INCLUDE_DIR\=/usr/local/opt/llvm/include/
   ;;      -DLIBCLANG_LIBRARY\=/usr/local/opt/llvm/lib/libclang.dylib
   (use-package company-irony
@@ -472,30 +516,34 @@
        (flycheck-display-errors-delay 0.5)
        :bind
        (:map flycheck-mode-map
-         ("C-c C-n" . flycheck-next-error)
-         ("C-c C-p" . flycheck-previous-error)
-         ("C-c C-v" . (lambda () ;; move point to flycheck buffer
-                (interactive)
-                (flycheck-list-errors)
-                (select-window (get-buffer-window "*Flycheck errors*" t))))))
+     ("C-c C-n" . flycheck-next-error)
+     ("C-c C-p" . flycheck-previous-error)
+     ("C-c C-v" . (lambda () ;; move point to flycheck buffer
+        (interactive)
+        (flycheck-list-errors)
+        (select-window (get-buffer-window "*Flycheck errors*" t))))))
 
-     (eval-after-load 'flycheck
-       '(setq-default flycheck-c/c++-header-file-regexp
-              (concat "\\(?:"
-                  (regexp-opt '(".h" ".hpp" ".hh" ".hxx"))
-                  "\\)")))
-
-     ;; disable clang checker as its out of date
-     (add-hook 'c++-mode-hook
-           (lambda ()
-         (setq flycheck-disabled-checkers '(c/c++-clang))))
-
-
+     ;; shows errors under point
      (use-package flycheck-pos-tip
        :ensure t
        :after flycheck
        :config
        (flycheck-pos-tip-mode))
+
+     ;; use c++ checker in h files
+     (eval-after-load 'flycheck
+       '(setq-default flycheck-c/c++-header-file-regexp
+          (concat "\\(?:"
+          (regexp-opt '(".h" ".hpp" ".hh" ".hxx"))
+          "\\)")))
+
+     ;; set default c++ version - need to make a .dir-locals.el for change locally
+     (setq flycheck-gcc-args "-std=c++20")
+
+     ;; disable clang checker as its out of date
+     (add-hook 'c++-mode-hook
+       (lambda ()
+     (setq flycheck-disabled-checkers '(c/c++-clang))))
 
      ;; make elpy use flycheck instead of flymake
      (when (load "flycheck" t t)
@@ -512,24 +560,29 @@
 #+end_src
 
 ** projectile
-   #+begin_src emacs-lisp
-     (use-package projectile
-       :ensure t
-       :delight '(:eval (concat " " (projectile-project-name)))
-       :init
-       (projectile-mode +1)
-       :bind (:map projectile-mode-map
-       ("s-p" . projectile-command-map)))
+#+begin_src emacs-lisp
+  (use-package projectile
+    :ensure t
+    :delight '(:eval (concat " " (projectile-project-name)))
+    :init
+    (projectile-mode +1)
+    :bind (:map projectile-mode-map
+        ("s-p" . projectile-command-map)))
 
-       ;; automatically check for projects in git on startup
-       (setq projectile-project-search-path '("~/git" . 1))
-   #+end_src
+  ;; automatically check for projects in git on startup
+  (setq projectile-project-search-path '("~/git" . 1))
+
+#+end_src
 ** smartparens
 #+begin_src emacs-lisp
   (use-package smartparens
     :ensure t
     :hook
     ((prog-mode . smartparens-mode)))
+#+end_src
+** minimap
+#+begin_src emacs-lisp
+(minimap-mode -1)
 #+end_src
 * Writing modes
 ** Spell checking
@@ -538,6 +591,7 @@
   (use-package ispell
     :ensure t)
 
+  ;; can use homebrew to download aspell
   (setq ispell-program-name "aspell")
   (setq ispell-extra-args '("--sug-mode=ultra"))
   (setq ispell-dictionary "english")
@@ -551,6 +605,9 @@
     (setq ispell-program-name "aspell")  ; Use Aspell as the spell checker
     (add-hook 'text-mode-hook 'flyspell-mode)
     (add-hook 'prog-mode-hook 'flyspell-prog-mode))
+
+  ;; auto start flyspell mode
+  (setq flyspell-mode 1)
 
   ;; recommended to speed up flycheck
   (setq flyspell-issue-message-flag nil)
@@ -600,7 +657,7 @@
     :config
     (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
   #+END_SRC
-* LaTeX
+* LaTeX mode
 ** General Tweaks
 #+begin_src emacs-lisp
   (add-hook 'TeX-mode-hook 'prettify-symbols-mode)
@@ -611,8 +668,8 @@
     :ensure auctex
     :config
     (setq TeX-parse-self t
-          TeX-auto-save t
-          TeX-master nil))
+      TeX-auto-save t
+      TeX-master nil))
 #+end_src
 
 ** Org mode
@@ -638,7 +695,7 @@
 #+end_src
 
 * Themes
-** Color theme
+** color theme
 *** zenburn
 #+begin_src emacs-lisp
   ;; (use-package zenburn-theme
@@ -658,20 +715,23 @@
     :config
     ;; Global settings (defaults)
     (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-      doom-themes-enable-italic t) ; if nil, italics is universally disabled
+          doom-themes-enable-italic t) ; if nil, italics is universally disabled
     (load-theme 'doom-one t)
 
     ;; Enable flashing mode-line on errors
     (doom-themes-visual-bell-config)
+
     ;; Custom treemacs tree
-    (setq doom-themes-treemacs-theme "doom-atom") ; use "doom-colors" for less minimal icon theme
-    (doom-themes-treemacs-config)
+    ;; (setq doom-themes-treemacs-theme "doom-colors") ; use "doom-colors" or "doom-one"
+    ;; (doom-themes-treemacs-config)
+
     ;; Corrects (and improves) org-mode's native fontification.
     (doom-themes-org-config))
 #+end_src
-** Modeline
+** modeline
 *** doom-modeline
 #+begin_src emacs-lisp
+  ;; Run M-x nerd-icons-install-fonts to install the necessary fonts.
   (use-package doom-modeline
     :ensure t
     :init (doom-modeline-mode 1))
@@ -683,9 +743,11 @@
   (setq doom-modeline-checker-simple-format nil) ; Use a detailed format for checkers (e.g., Flycheck).
 #+end_src
 
-** Font
+** fonts
 #+begin_src emacs-lisp
-
+  ;; required for doom modeline
+  ;; (use-package nerd-icons
+  ;;   :ensure t)
 #+end_src
 
 ** emacs-dashboard
@@ -700,7 +762,7 @@
     (dashboard-setup-startup-hook))
 
   (setq dashboard-items '((projects . 5)
-              (recents . 5)))
+          (recents . 5)))
 #+end_src
 
 ** git-gutter
