@@ -85,7 +85,7 @@
   (define-key global-map [?\C-z] nil) ;; Disable minimize
 
   ;; remap quary replace so its not on M-% which is screenshot on mac
-  (global-set-key (kbd "C-r") 'query-replace)
+  (global-set-key (kbd "M-r") 'query-replace)
 
   ;; Switch to new window on window split
   (global-set-key "\C-x2" (lambda () (interactive)(split-window-vertically) (other-window 1)))
@@ -333,15 +333,6 @@
   (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
   (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
 #+end_src
-** pdf-tools
-# #+begin_src emacs-lisp
-  ;; Install pdf-tools if not already installed
-  (use-package pdf-tools
-    :ensure t
-    ;; :config
-    ;; (pdf-tools-install)
-    )
-# #+end_src
 ** imenu-list
 #+begin_src emacs-lisp
   ;; Install pdf-tools if not already installed
@@ -354,6 +345,16 @@
 
   (setq imenu-list-after-jump-hook nil)
   (add-hook 'imenu-list-after-jump-hook #'top)
+#+end_src
+** iedit
+#+begin_src emacs-lisp
+  (use-package iedit
+    :ensure t
+    :config
+    ;; Disable default "C-;" binding
+    (define-key iedit-mode-keymap (kbd "C-;") nil)
+    ;; Rebind "C-r" to iedit-mode
+    (global-set-key (kbd "C-r") 'iedit-mode))
 #+end_src
 * Program modes
 ** General tweaks
@@ -463,24 +464,6 @@
       '(add-to-list 'company-backends 'company-irony)))
 #+end_src
 
-*** ggtages
-    #+begin_src emacs-lisp
-      ;; tags for code navigation
-      (use-package ggtags
-    :ensure t
-    :bind
-    (:map ggtags-navigation-map
-          ("M-]" . nil)
-          ("C-M-." . nil)
-          ("M-s" . nil)
-          )
-    :config
-    (add-hook 'c-mode-common-hook
-          (lambda ()
-            (when (derived-mode-p 'c-mode 'c++-mode 'java-mode)
-              (ggtags-mode 1))))
-    )
-    #+end_src
 *** aggressive-indent
 #+begin_src emacs-lisp
   (use-package aggressive-indent
