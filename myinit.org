@@ -36,6 +36,10 @@
 
   ;; should fix issue with aspell and org mode headings getting stuck
   (setq org-fold-core-style 'overlays)
+
+  ;; Save whatever’s in the current (system) clipboard before
+  ;; replacing it with the Emacs’ text.
+  (setq save-interprogram-paste-before-kill t)
  #+end_src
 ** Interface
 #+BEGIN_SRC emacs-lisp
