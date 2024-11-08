@@ -209,7 +209,8 @@
   (global-set-key (kbd "C-h l") 'counsel-find-library)
 
   (global-set-key (kbd "C-s") 'swiper)
-  ;; (global-set-key (kbd "C-r") 'swiper) ;; usin this for quary-replace
+  ;; (global-set-key (kbd "C-r") 'swiper) ;; using this for quary-replace
+  (global-set-key (kbd "s-s") 'counsel-ag)
 
   (global-set-key (kbd "M-i") 'counsel-imenu)
 #+end_src
@@ -218,13 +219,49 @@
 #+begin_src emacs-lisp
   ;; better buffer manager
   (global-set-key (kbd "C-x C-b") 'ibuffer)
-  (setq ibuffer-default-sorting-mode 'major-mode)
+  ;; (setq ibuffer-default-sorting-mode 'major-mode)
+  (setq ibuffer-show-empty-filter-groups nil)
+  ;; (add-to-list 'ibuffer-never-show-predicates "^\\*")
+
+  (use-package ibuffer-vc
+    :ensure t)
+
+  (use-package ibuffer-tramp
+    :ensure t)
 
   ;; hide buffers starting *
   ;; (require 'ibuf-ext)
   ;; (add-to-list 'ibuffer-never-show-predicates "^\\*")
-#+end_src
 
+  (defun ibuffer-apply-filter-groups ()
+    "Combine my saved ibuffer filter groups with those generated
+       by `ibuffer-vc-generate-filter-groups-by-vc-root' and 'ibuffer-tramp-generate-filter-groups-by-tramp-connection' taken from `https://github.com/reinh/dotemacs/blob/master/conf/init.org#ido'"
+    (interactive)
+    (setq ibuffer-filter-groups
+          (append
+           ;; (ibuffer-tramp-generate-filter-groups-by-tramp-connection)
+           (ibuffer-vc-generate-filter-groups-by-vc-root)
+           ibuffer-saved-filter-groups))
+    (message "ibuffer-vc: groups set")
+    (let ((ibuf (get-buffer "*Ibuffer*")))
+      (when ibuf
+        (with-current-buffer ibuf
+          (pop-to-buffer ibuf)
+          (ibuffer-update nil t)))))
+
+  ;; '(("Group Title"
+  ;;   ("Label"   (type  . value))))
+  (setq ibuffer-saved-filter-groups
+        '(
+          ;; ("Unsaved" (modified))                ; All unsaved buffers
+          ("Starred" (starred-name))
+          ("Dired"   (mode         . dired-mode))
+          ("nersc"   (directory    . "/ssh:kairj@perlmutter.nersc.gov:*"))
+          ))
+
+  ;; Tell ibuffer to load the group automatically
+  (add-hook 'ibuffer-hook 'ibuffer-apply-filter-groups)
+#+end_src
 ** Avy
 #+Begin_SRC emacs-lisp
   ;; for quicker navigation around windows
@@ -289,9 +326,9 @@
     :config
     (progn
       (setq treemacs-hide-dot-git-directory          t
-        treemacs-move-files-by-mouse-dragging    t
-        treemacs-sorting                         'alphabetic-asc
-        treemacs-width                           28)
+    treemacs-move-files-by-mouse-dragging    t
+    treemacs-sorting                         'alphabetic-asc
+    treemacs-width                           28)
       (treemacs-project-follow-mode t)
       (treemacs-resize-icons 24))
 
@@ -360,6 +397,25 @@
     ;; Rebind "C-r" to iedit-mode
     (global-set-key (kbd "C-r") 'iedit-mode))
 #+end_src
+** tramp
+#+begin_src emacs-lisp
+  (setq remote-file-name-inhibit-cache nil)
+
+  ;; disable version control to avoid delays
+  (setq vc-ignore-dir-regexp
+    (format "\\(%s\\)\\|\\(%s\\)"
+    vc-ignore-dir-regexp
+    tramp-file-name-regexp))
+
+  (setq tramp-verbose 1)
+
+  (defun connect-nersc ()
+    (interactive)
+    (dired "/ssh:kairj@perlmutter.nersc.gov:/global/homes/k/kairj/")
+    ;; want to add make this a bookmark so easy to get to
+    )
+#+end_src
+
 * Program modes
 ** General tweaks
 #+begin_src emacs-lisp
@@ -396,7 +452,7 @@
   ;; Enable tabs for indentation in Makefiles
   (add-hook 'makefile-mode-hook
       (lambda ()
-        (setq indent-tabs-mode t)))
+    (setq indent-tabs-mode t)))
 
   ;; Make the backspace properly erase the tab instead of removing 1 space at a time.
   (setq backward-delete-char-untabify-method 'hungry)
@@ -422,8 +478,135 @@
   (bind-key* "C-;" 'comment-or-uncomment-region-or-line)
 #+end_src
 
-** Python
-*** elpy
+** Packages
+*** lsp-mode
+#+begin_src emacs-lisp
+  (use-package lsp-mode
+    :ensure t
+    :init
+    ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
+    (setq lsp-keymap-prefix "C-c l")
+    :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
+           (python-mode . lsp)
+           (c++-mode    . lsp)
+           ;; if you want which-key integration
+           (lsp-mode . lsp-enable-which-key-integration))
+    :commands lsp
+    :config
+    ;; Set path to clangd
+    (setq lsp-clients-clangd-executable "/usr/bin/clangd"))
+
+  ;; Optional: LSP UI for a better user experience
+  (use-package lsp-ui
+    :ensure t
+    :commands lsp-ui-mode
+    :hook (lsp-mode . lsp-ui-mode)
+    :config
+    (setq lsp-ui-sideline-enable t
+          lsp-ui-doc-enable t
+          lsp-ui-doc-position 'at-point))
+
+
+  (setq gc-cons-threshold (* 100 1024 1024)
+        read-process-output-max (* 1024 1024)
+        treemacs-space-between-root-nodes nil
+        company-idle-delay 0.0
+        company-minimum-prefix-length 1
+        lsp-idle-delay 0.1)  ;; clangd is fast
+
+  ;; (with-eval-after-load 'lsp-mode
+  ;;   (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)
+  ;;   (require 'dap-cpptools)
+  ;;   (yas-global-mode))
+#+end_src
+*** flycheck
+#+begin_src emacs-lisp
+  (use-package flycheck
+    :ensure t
+    :init (global-flycheck-mode)
+    :custom
+    (flycheck-display-errors-delay 0.5)
+    :bind
+    (:map flycheck-mode-map
+      ("C-c C-n" . flycheck-next-error)
+      ("C-c C-p" . flycheck-previous-error)
+      ("C-c C-v" . (lambda () ;; move point to flycheck buffer
+     (interactive)
+     (flycheck-list-errors)
+     (select-window (get-buffer-window "*Flycheck errors*" t))))))
+
+  ;; shows errors under point
+  (use-package flycheck-pos-tip
+    :ensure t
+    :after flycheck
+    :config
+    (flycheck-pos-tip-mode))
+
+  ;; use c++ checker in h files
+  (eval-after-load 'flycheck
+    '(setq-default flycheck-c/c++-header-file-regexp
+       (concat "\\(?:"
+       (regexp-opt '(".h" ".hpp" ".hh" ".hxx"))
+       "\\)")))
+
+  ;; set default c++ version - need to make a .dir-locals.el for change locally
+  (setq flycheck-gcc-args "-std=c++20")
+
+  ;; disable clang checker as its out of date
+  ;; (add-hook 'c++-mode-hook
+    ;; (lambda ()
+      ;; (setq flycheck-disabled-checkers '(c/c++-clang))))
+#+end_src
+
+*** company-mode
+#+begin_src emacs-lisp
+  (use-package company
+     :ensure t
+     :config
+     (add-hook 'after-init-hook 'global-company-mode))
+#+end_src
+
+*** projectile
+#+begin_src emacs-lisp
+  (use-package projectile
+    :ensure t
+    :delight '(:eval (concat " " (projectile-project-name)))
+    :init
+    (projectile-mode +1)
+    :bind (:map projectile-mode-map
+    ("s-p" . projectile-command-map)))
+
+  ;; automatically check for projects in git on startup
+  (setq projectile-project-search-path '("~/git" . 1))
+
+#+end_src
+*** smartparens
+#+begin_src emacs-lisp
+  (use-package smartparens
+    :ensure t
+    :hook
+    ((prog-mode . smartparens-strict-mode)
+     (markdown-mode-hook . turn-on-smartparens-mode)) ;; can use strict-mode also
+    :config
+    ;; load default config
+    (require 'smartparens-config)
+    :bind
+    ("C-M-a" . sp-beginning-of-sexp)
+    ("C-M-e" . sp-end-of-sexp)
+    ("C-<up>" . sp-up-sexp)
+    ("C-<down>" . sp-down-sexp)
+    ("M-<up>" . sp-backward-up-sexp)
+    ("M-<down>" . sp-backward-down-sexp)
+    ("M-[" . sp-backward-unwrap-sexp)
+    ("M-]" . sp-unwrap-sexp))
+#+end_src
+*** minimap
+#+begin_src emacs-lisp
+(minimap-mode -1)
+#+end_src
+** Languages
+*** Python
+**** elpy
 #+begin_src emacs-lisp
   (use-package elpy
     :ensure t
@@ -440,14 +623,19 @@
 
   ;; attaches a dedicated python shell to the current python buffer
   (add-hook 'elpy-mode-hook (lambda () (elpy-shell-toggle-dedicated-shell 1)))
+
+  ;; make elpy use flycheck instead of flymake
+  (when (load "flycheck" t t)
+    (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
+    (add-hook 'elpy-mode-hook 'flycheck-mode))
    #+end_src
-** C++
-*** General
+*** C++
+**** General tweaks
 #+begin_src emacs-lisp
   ;; make sure up to date
   (require 'cc-mode)
 #+end_src
-*** company-irony
+**** company-irony
 #+begin_src emacs-lisp
   (use-package irony
     :ensure t
@@ -468,15 +656,17 @@
       '(add-to-list 'company-backends 'company-irony)))
 #+end_src
 
-*** aggressive-indent
+**** aggressive-indent
 #+begin_src emacs-lisp
+  ;; disabled for now
   (use-package aggressive-indent
     :ensure t
     :config
-    (add-hook 'c++-mode-hook 'aggressive-indent-mode))
+    ;; (add-hook 'c++-mode-hook 'aggressive-indent-mode)
+    )
 #+end_src
 
-*** highlight-indentation
+**** highlight-indentation
 #+begin_src emacs-lisp
   (use-package highlight-indentation
     :ensure t
@@ -494,83 +684,20 @@
      (set-face-background 'highlight-indentation-face "#e3e3d3")
      (set-face-background 'highlight-indentation-current-column-face "#c3b3b3")))
 #+end_src
-** flycheck
-   #+begin_src emacs-lisp
-     (use-package flycheck
-       :ensure t
-       :init (global-flycheck-mode)
-       :custom
-       (flycheck-display-errors-delay 0.5)
-       :bind
-       (:map flycheck-mode-map
-     ("C-c C-n" . flycheck-next-error)
-     ("C-c C-p" . flycheck-previous-error)
-     ("C-c C-v" . (lambda () ;; move point to flycheck buffer
-        (interactive)
-        (flycheck-list-errors)
-        (select-window (get-buffer-window "*Flycheck errors*" t))))))
-
-     ;; shows errors under point
-     (use-package flycheck-pos-tip
-       :ensure t
-       :after flycheck
-       :config
-       (flycheck-pos-tip-mode))
-
-     ;; use c++ checker in h files
-     (eval-after-load 'flycheck
-       '(setq-default flycheck-c/c++-header-file-regexp
-          (concat "\\(?:"
-          (regexp-opt '(".h" ".hpp" ".hh" ".hxx"))
-          "\\)")))
-
-     ;; set default c++ version - need to make a .dir-locals.el for change locally
-     (setq flycheck-gcc-args "-std=c++20")
-
-     ;; disable clang checker as its out of date
-     (add-hook 'c++-mode-hook
-       (lambda ()
-     (setq flycheck-disabled-checkers '(c/c++-clang))))
-
-     ;; make elpy use flycheck instead of flymake
-     (when (load "flycheck" t t)
-       (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
-       (add-hook 'elpy-mode-hook 'flycheck-mode))
-   #+end_src
-
-** company-mode
+**** ggtags (disabled)
 #+begin_src emacs-lisp
-  (use-package company
-     :ensure t
-     :config
-     (add-hook 'after-init-hook 'global-company-mode))
+  ;; tags for code navigation
+  ;; (use-package ggtags
+  ;;   :ensure t
+  ;;   :config
+  ;;   (add-hook 'c-mode-common-hook
+  ;;     (lambda ()
+  ;;   (when (derived-mode-p 'c-mode 'c++-mode 'java-mode 'python-mode)
+  ;;     (ggtags-mode 1)))))
+
+  ;; (setenv "GTAGSTHROUGH" "true")
 #+end_src
 
-** projectile
-#+begin_src emacs-lisp
-  (use-package projectile
-    :ensure t
-    :delight '(:eval (concat " " (projectile-project-name)))
-    :init
-    (projectile-mode +1)
-    :bind (:map projectile-mode-map
-        ("s-p" . projectile-command-map)))
-
-  ;; automatically check for projects in git on startup
-  (setq projectile-project-search-path '("~/git" . 1))
-
-#+end_src
-** smartparens
-#+begin_src emacs-lisp
-  (use-package smartparens
-    :ensure t
-    :hook
-    ((prog-mode . smartparens-mode)))
-#+end_src
-** minimap
-#+begin_src emacs-lisp
-(minimap-mode -1)
-#+end_src
 * Writing modes
 ** Spell checking
 *** Ispell
@@ -702,7 +829,7 @@
     :config
     ;; Global settings (defaults)
     (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-          doom-themes-enable-italic t) ; if nil, italics is universally disabled
+      doom-themes-enable-italic t) ; if nil, italics is universally disabled
     (load-theme 'doom-one t)
 
     ;; Enable flashing mode-line on errors
@@ -749,7 +876,7 @@
     (dashboard-setup-startup-hook))
 
   (setq dashboard-items '((projects . 5)
-          (recents . 5)))
+      (recents . 5)))
 #+end_src
 
 ** git-gutter
