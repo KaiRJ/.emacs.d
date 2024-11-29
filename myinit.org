@@ -119,6 +119,27 @@
     (compile "make clean"))
 #+end_src
 
+** Custom commands
+#+begin_src emacs-lisp
+  (defun run-sync-git-tracked-script ()
+    "Run the sync_git_tracked.sh script to sync Git-tracked files to the remote server."
+    (interactive)
+    (let ((default-directory (locate-dominating-file default-directory ".git")))
+      (if default-directory
+          (progn
+            ;; Run the sysc script and pass the Git root directory
+            (let ((script (concat "~/git/scripts/sync_git_tracked.sh")))
+              (if (file-executable-p script)
+                  ;; (async-shell-command script& "*Messages*")
+                  (call-process-shell-command script nil "*Messages*")
+                (message "Error: sync_git_tracked.sh not found or not executable."))))
+        (message "Error: Not inside a Git repository!"))))
+
+  ;; Bind the function to a keyboard shortcut
+  (global-set-key (kbd "C-x s") 'run-sync-git-tracked-script)
+
+#+end_src
+
 * General packages
 ** Try
 #+BEGIN_SRC emacs-lisp
@@ -486,17 +507,21 @@
     :init
     ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
     (setq lsp-keymap-prefix "C-c l")
-    :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
+    :hook (;; replace XXX-mode with concrete major-mode(e.g. python-mode)
            (python-mode . lsp)
            (c++-mode    . lsp)
+           (c-mode      . lsp)
+           (rst-mode    . lsp)
            ;; if you want which-key integration
            (lsp-mode . lsp-enable-which-key-integration))
     :commands lsp
     :config
     ;; Set path to clangd
-    (setq lsp-clients-clangd-executable "/usr/bin/clangd"))
+    (setq lsp-clients-clangd-executable "/usr/bin/clangd")
+    )
 
-  ;; Optional: LSP UI for a better user experience
+
+  ;; LSP UI for a better user experience
   (use-package lsp-ui
     :ensure t
     :commands lsp-ui-mode
@@ -513,6 +538,7 @@
         company-idle-delay 0.0
         company-minimum-prefix-length 1
         lsp-idle-delay 0.1)  ;; clangd is fast
+
 
   ;; (with-eval-after-load 'lsp-mode
   ;;   (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)
@@ -566,26 +592,12 @@
      (add-hook 'after-init-hook 'global-company-mode))
 #+end_src
 
-*** projectile
-#+begin_src emacs-lisp
-  (use-package projectile
-    :ensure t
-    :delight '(:eval (concat " " (projectile-project-name)))
-    :init
-    (projectile-mode +1)
-    :bind (:map projectile-mode-map
-    ("s-p" . projectile-command-map)))
-
-  ;; automatically check for projects in git on startup
-  (setq projectile-project-search-path '("~/git" . 1))
-
-#+end_src
 *** smartparens
 #+begin_src emacs-lisp
   (use-package smartparens
     :ensure t
     :hook
-    ((prog-mode . smartparens-strict-mode)
+    ( ;; (prog-mode . smartparens-strict-mode)
      (markdown-mode-hook . turn-on-smartparens-mode)) ;; can use strict-mode also
     :config
     ;; load default config
@@ -600,7 +612,21 @@
     ("M-[" . sp-backward-unwrap-sexp)
     ("M-]" . sp-unwrap-sexp))
 #+end_src
-*** minimap
+*** projectile (disabled)
+#+begin_src emacs-lisp
+  ;; (use-package projectile
+  ;;   :ensure t
+  ;;   :delight '(:eval (concat " " (projectile-project-name)))
+  ;;   :init
+  ;;   (projectile-mode +1)
+  ;;   :bind (:map projectile-mode-map
+  ;;   ("s-p" . projectile-command-map)))
+
+  ;; ;; automatically check for projects in git on startup
+  ;; (setq projectile-project-search-path '("~/git" . 1))
+
+#+end_src
+*** minimap (disabled)
 #+begin_src emacs-lisp
 (minimap-mode -1)
 #+end_src
@@ -684,20 +710,6 @@
      (set-face-background 'highlight-indentation-face "#e3e3d3")
      (set-face-background 'highlight-indentation-current-column-face "#c3b3b3")))
 #+end_src
-**** ggtags (disabled)
-#+begin_src emacs-lisp
-  ;; tags for code navigation
-  ;; (use-package ggtags
-  ;;   :ensure t
-  ;;   :config
-  ;;   (add-hook 'c-mode-common-hook
-  ;;     (lambda ()
-  ;;   (when (derived-mode-p 'c-mode 'c++-mode 'java-mode 'python-mode)
-  ;;     (ggtags-mode 1)))))
-
-  ;; (setenv "GTAGSTHROUGH" "true")
-#+end_src
-
 * Writing modes
 ** Spell checking
 *** Ispell
@@ -750,6 +762,7 @@
 #+end_src
 
 * Org mode
+A lot of these changes are based of [[https://doc.norang.ca/org-mode.html#HowToUseThisDocument][this]].
 ** General tweaks
 #+begin_src emacs-lisp
   ;; indent with tabs for better readability
@@ -760,6 +773,52 @@
   (setq org-src-fontify-natively t
     org-src-tab-acts-natively t
     org-confirm-babel-evaluate nil)
+#+end_src
+
+** Keybindings
+#+begin_src emacs-lisp
+  ;; Standard key bindings
+  (global-set-key (kbd "\C-c l") 'org-store-link)
+  (global-set-key (kbd "\C-c a") 'org-agenda)
+  (global-set-key (kbd "\C-c c") 'org-capture)
+  (global-set-key (kbd "\C-c b") 'org-iswitchb)
+#+end_src
+
+** Agenda changes
+#+begin_src emacs-lisp
+  ;;
+  (setq org-agenda-files (quote ("~/git/agenda/phd/simulations.org"
+                                 "~/git/agenda/phd/prominence.org"
+                                 "~/git/agenda/personal/emacs.org")))
+
+  ;; Define the keywords for the agenda
+  (setq org-todo-keywords
+        '((sequence "TODO(t)"    "NEXT(n)" "|" "DONE(d)")
+          (sequence "WAITING(w)" "HOLD(h)" "|" "CANCELLED(c)")))
+
+  (setq org-log-done 'time)
+
+  ;; Set default column view headings: Task Total-Time Time-Stamp
+  (setq org-columns-default-format "%50ITEM(Task) %TIMESTAMP_IA")
+
+  ;; Colour the keywords
+  (setq org-todo-keyword-faces
+        (quote (("TODO"      :foreground "red"          :weight bold)
+                ("NEXT"      :foreground "blue"         :weight bold)
+                ("DONE"      :foreground "forest green" :weight bold)
+                ("WAITING"   :foreground "orange"       :weight bold)
+                ("HOLD"      :foreground "magenta"      :weight bold)
+                ("CANCELLED" :foreground "forest green" :weight bold))))
+
+  ;; Triggers to change tags on tasks
+  ;; (setq org-todo-state-tags-triggers
+  ;;       (quote (("CANCELLED" ("CANCELLED" . t))
+  ;;               ("WAITING" ("WAITING" . t))
+  ;;               ("HOLD" ("WAITING") ("HOLD" . t))
+  ;;               (done ("WAITING") ("HOLD"))
+  ;;               ("TODO" ("WAITING") ("CANCELLED") ("HOLD"))
+  ;;               ("NEXT" ("WAITING") ("CANCELLED") ("HOLD"))
+  ;;               ("DONE" ("WAITING") ("CANCELLED") ("HOLD")))))
 #+end_src
 
 ** Packages
@@ -850,11 +909,18 @@
     :ensure t
     :init (doom-modeline-mode 1))
 
+  ;; Don’t compact font caches during GC.
+  (setq inhibit-compacting-font-caches t)
+
   (setq doom-modeline-buffer-modification-icon t) ; Show the buffer modification icon.
 
   (setq doom-modeline-vcs-max-length 12) ; Set the max length of the version control information.
 
   (setq doom-modeline-checker-simple-format nil) ; Use a detailed format for checkers (e.g., Flycheck).
+
+  (setq doom-modeline-buffer-file-name-style 'file-name-with-project)
+
+  (setq doom-modeline-buffer-encoding nil)
 #+end_src
 
 ** fonts

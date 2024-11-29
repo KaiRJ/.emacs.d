@@ -25,3 +25,6 @@ transient/
 elpa/
 elpy/
 eshell/
+/.lsp-session-v1
+/bookmarks
+/tramp
