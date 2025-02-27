@@ -53,7 +53,7 @@
 
   ;; add line numbers to progam and tex modes
   (add-hook 'prog-mode-hook 'display-line-numbers-mode)
-  (add-hook 'TeX-mode-hook 'display-line-numbers-mode)
+  (add-hook 'TeX-mode-hook  'display-line-numbers-mode)
 
   ;; stop cursor blinking
   (blink-cursor-mode 0)
@@ -107,6 +107,9 @@
   ;; makefile keybindings (see custom commands tab)
   (global-set-key (kbd "<f5>") 'compile-build)
   (global-set-key (kbd "<f6>") 'compile-clean)
+
+  ;; Duplicate a line below
+  (global-set-key (kbd "s-d") (kbd "C-a C-SPC C-e M-w C-j C-y"))
 #+end_src
 ** Custom commands
 #+begin_src emacs-lisp
@@ -235,17 +238,15 @@
 #+end_src
 
 ** Ibuffer
+A better buffer manager.
+
 #+begin_src emacs-lisp
-  ;; better buffer manager
   (global-set-key (kbd "C-x C-b") 'ibuffer)
   ;; (setq ibuffer-default-sorting-mode 'major-mode)
   (setq ibuffer-show-empty-filter-groups nil)
   ;; (add-to-list 'ibuffer-never-show-predicates "^\\*")
 
   (use-package ibuffer-vc
-    :ensure t)
-
-  (use-package ibuffer-tramp
     :ensure t)
 
   ;; hide buffers starting *
@@ -283,6 +284,10 @@
   ;; Tell ibuffer to load the group automatically
   (add-hook 'ibuffer-hook 'ibuffer-apply-filter-groups)
 #+end_src
+
+#+RESULTS:
+| ibuffer-apply-filter-groups |
+
 ** Avy
 #+Begin_SRC emacs-lisp
   ;; for quicker navigation around windows
@@ -337,13 +342,12 @@
 #+begin_src emacs-lisp
   ;; required for treemacs
   ;; might need to run M-x all-the-icons-install-fonts
-  ;; TODO move this somewhere else
+  ;; TODO move this somewhere else, as used with a could packages
   (use-package all-the-icons
     :ensure t)
 
   (use-package treemacs
     :ensure t
-
     :config
     (progn
       (setq treemacs-hide-dot-git-directory          t
@@ -352,7 +356,6 @@
             treemacs-width                           28)
       (treemacs-project-follow-mode t)
       (treemacs-resize-icons 24))
-
     :bind
     (:map global-map
           ("M-0"       . treemacs-select-window)
@@ -364,11 +367,11 @@
           ("C-x t M-t" . treemacs-find-tag)))
 
   (use-package treemacs-projectile
-    :after (treemacs)
+    :after treemacs
     :ensure t)
 
   (use-package treemacs-magit
-    :after (treemacs)
+    :after treemacs
     :ensure t)
 
   (use-package treemacs-all-the-icons
@@ -418,7 +421,9 @@
     ;; Rebind "C-r" to iedit-mode
     (global-set-key (kbd "C-r") 'iedit-mode))
 #+end_src
-** tramp (doesn't work well)
+** tramp
+Doesn't work well, need to find alternative. Or don't use at all.
+
 #+begin_src emacs-lisp
   (setq remote-file-name-inhibit-cache nil)
 
@@ -436,17 +441,22 @@
     ;; want to add make this a bookmark so easy to get to
     )
 #+end_src
-
+** drag-stuff
+#+begin_src emacs-lisp
+  (use-package drag-stuff
+    :ensure t
+    :config
+    (drag-stuff-global-mode 1)
+    (global-set-key (kbd "s-<down>") 'drag-stuff-down)
+    (global-set-key (kbd "s-<up>") 'drag-stuff-up)
+    (global-set-key (kbd "s-<right>") 'drag-stuff-right)
+    (global-set-key (kbd "s-<left>") 'drag-stuff-left))
+#+end_src
 * Programming modes
 ** Tweaks
 #+begin_src emacs-lisp
   ;; treat CamelCase as distinct words
   (global-subword-mode 1)
-
-  ;; set as default for debugging
-  ;; make a debugging section?
-  (setq gdb-many-windows t)
-  (setq gdb-show-main t)
 
   ;; Visualize trailing white space
   ;; (global-whitespace-mode) ; Enable whitespace mode everywhere
@@ -470,8 +480,8 @@
 
   ;; Enable tabs for indentation in Makefiles
   (add-hook 'makefile-mode-hook
-      (lambda ()
-    (setq indent-tabs-mode t)))
+            (lambda ()
+              (setq indent-tabs-mode t)))
 
   ;; Make the backspace properly erase the tab instead of removing 1 space at a time.
   (setq backward-delete-char-untabify-method 'hungry)
@@ -479,7 +489,7 @@
 
 *** fill-column-indicator
 #+begin_src emacs-lisp
-  (setq fci-rule-column 80) ; Set the fill column
+  (setq fci-rule-column 100) ; Set the fill column
   (add-hook 'prog-mode-hook 'display-fill-column-indicator-mode)
 #+end_src
 
@@ -497,39 +507,55 @@
   (bind-key* "C-;" 'comment-or-uncomment-region-or-line)
 #+end_src
 
-** Syntax checkers
+** Syntax
+ checkers
 *** lsp-mode
+TODO split all these up into own headers
+
 #+begin_src emacs-lisp
-    (use-package lsp-mode
-      :ensure t
-      :init
-      ;; set prefix for lsp-command-keymap
-      (setq lsp-keymap-prefix "C-c l")
-      :hook ((prog-mode   . lsp)
-             ;; which-key integration
-             (lsp-mode    . lsp-enable-which-key-integration))
-      :commands lsp
-      :config
-      (setq lsp-prefer-capf t) ;; Use completion-at-point-functions
-      (setq lsp-headerline-breadcrumb-enable t)) ;; Show breadcrumbs
+  (use-package lsp-mode
+    :ensure t
+    :init
+    ;; set prefix for lsp-command-keymap
+    (setq lsp-keymap-prefix "C-c l")
+    :hook (;; modes set for lsp
+           (c++-mode     . lsp)
+           (c-mode     . lsp)
+           (python-mode     . lsp)
+           ;; which-key integration
+           (lsp-mode    . lsp-enable-which-key-integration))
+    :commands lsp
+    :config
+    (setq lsp-prefer-capf t) ;; Use completion-at-point-functions
+    (setq lsp-headerline-breadcrumb-enable t)) ;; Show breadcrumbs
 
-    ;; for better user experience
-    (use-package lsp-ui
-      :ensure t
-      :commands lsp-ui-mode
-      :hook (lsp-mode . lsp-ui-mode)
-      :config
-      (setq lsp-ui-sideline-enable t
-            lsp-ui-doc-enable t
-            lsp-ui-doc-position 'at-point))
+  ;; for better user experience
+  (use-package lsp-ui
+    :ensure t
+    :commands lsp-ui-mode
+    :hook (lsp-mode . lsp-ui-mode)
+    :config
+    (setq lsp-ui-sideline-enable t
+          lsp-ui-doc-enable t
+          lsp-ui-doc-position 'at-point))
 
-    ;; clangd is fast
-    (setq gc-cons-threshold (* 100 1024 1024)
-          read-process-output-max (* 1024 1024)
-          treemacs-space-between-root-nodes nil
-          company-idle-delay 0.0
-          company-minimum-prefix-length 1
-          lsp-idle-delay 0.1)  ;; clangd is fast
+  ;; for treemacs integrating with lsp-mode
+  (use-package lsp-treemacs
+    :ensure t
+    :after (lsp-mode treemacs)
+    :bind
+    ("C-c l l" . lsp-treemacs-errors-list) ; TODO move to hydra table
+    :config
+    (add-hook 'lsp-mode-hook #'lsp-treemacs-mode))
+
+  ;; clangd is fast
+  (setq gc-cons-threshold (* 100 1024 1024)
+        read-process-output-max (* 1024 1024)
+        treemacs-space-between-root-nodes nil
+        company-idle-delay 0.500
+        company-minimum-prefix-length 1
+        lsp-idle-delay 0.1)  ;; clangd is fast
+
 #+end_src
 
 *** company-mode
@@ -555,18 +581,46 @@
     :hook (prog-mode . flycheck-mode))
 #+end_src
 ** Packages
-*** projectile (disabled)
+*** dap-mode
+A one-time step is required to download the extension and set it up automatically - M-x dap-cpptools-setup - then you are good start debugging.
 #+begin_src emacs-lisp
-  ;; (use-package projectile
-  ;;   :ensure t
-  ;;   :delight '(:eval (concat " " (projectile-project-name)))
-  ;;   :init
-  ;;   (projectile-mode +1)
-  ;;   :bind (:map projectile-mode-map
-  ;;   ("s-p" . projectile-command-map)))
+  (use-package dap-mode
+    :ensure t
+    :after lsp-mode
+    :config
+    (dap-auto-configure-mode)  ;; Automatically configures dap-mode
+    (require 'dap-cpptools)
 
-  ;; ;; automatically check for projects in git on startup
-  ;; (setq projectile-project-search-path '("~/git" . 1))
+    (dap-register-debug-template
+     "cpptools::main"
+     (list :type "cppdbg"
+           :request "launch"
+           :MIMode "lldb"
+           :program "${workspaceFolder}/build/main"
+           :cwd "${workspaceFolder}"))
+
+    (dap-register-debug-template
+     "cpptools::main-input"
+     (list :name "cpptools::main-input"
+           :type "cppdbg"
+           :request "launch"
+           :MIMode "lldb"
+           :program "${workspaceFolder}/build/main"
+           :cwd "${workspaceFolder}"
+           :externalConsole t)))
+#+end_src
+
+*** Projectile
+#+begin_src emacs-lisp
+  (use-package projectile
+    :ensure t
+    :init
+    (projectile-mode +1)
+    :bind (:map projectile-mode-map
+                ("s-p" . projectile-command-map)
+                ("C-c p" . projectile-command-map)))
+
+  (setq projectile-project-search-path '("~/git/"))
 
 #+end_src
 *** smartparens
@@ -617,6 +671,7 @@
     :config
     ;; Enable `highlight-indentation-mode` in c++ modes  modes only
     (add-hook 'c++-mode-hook 'highlight-indentation-mode)
+    (add-hook 'c-mode-hook 'highlight-indentation-mode)
 
     (setq highlight-indentation-offset my-indent-width)
 
@@ -633,11 +688,15 @@
   (use-package cmake-mode
     :ensure t
     :mode ("CMakeLists.txt" . cmake-mode))
+
+  ;; for better sytax colours
+  (use-package cmake-font-lock
+    :hook (cmake-mode . cmake-font-lock-activate))
 #+end_src
 *** make
 #+begin_src emacs-lisp
   ;; use makefile-mode for MakeFiles
-  (add-to-list 'auto-mode-alist '("Makefile\\." . makefile-mode))
+  (add-to-list 'auto-mode-alist '("Makefile" . makefile-mode))
 #+end_src
 * Org mode
 A lot of these changes are based of [[https://doc.norang.ca/org-mode.html#HowToUseThisDocument][this]].
@@ -829,17 +888,11 @@ combine with writing modes?
     :ensure t
     :init (doom-modeline-mode 1))
 
-  ;; Don’t compact font caches during GC.
-  (setq inhibit-compacting-font-caches t)
-
-  (setq doom-modeline-buffer-modification-icon t) ; Show the buffer modification icon.
-
-  (setq doom-modeline-vcs-max-length 12) ; Set the max length of the version control information.
-
-  (setq doom-modeline-checker-simple-format nil) ; Use a detailed format for checkers (e.g., Flycheck).
-
+  (setq inhibit-compacting-font-caches t)         ; don’t compact font caches during GC.
+  (setq doom-modeline-buffer-modification-icon t) ; show the buffer modification icon.
+  (setq doom-modeline-vcs-max-length 12)          ; length of the version control info.
+  (setq doom-modeline-checker-simple-format nil)  ; use a detailed format for checkers
   (setq doom-modeline-buffer-file-name-style 'file-name-with-project)
-
   (setq doom-modeline-buffer-encoding nil)
 #+end_src
 

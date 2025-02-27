@@ -28,3 +28,5 @@ eshell/
 /.lsp-session-v1
 /bookmarks
 /tramp
+/.dap-breakpoints
+/.extension/

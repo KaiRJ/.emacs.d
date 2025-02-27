@@ -29,7 +29,7 @@
  '(lock-file-name-transforms '((".*" "~/.emacs.d/lockfiles/\\1" t)))
  '(neo-theme 'icons)
  '(package-selected-packages
-   '(cmake-mode iedit centaur-tabs treemacs-all-the-icons magit writegood-mode tex latex-preview-pane multiple-cursors flyspell-correct-ivy flyspell-correct ox-beamer auctex ox-reveal expand-region hungry-delete beacon company-mode modern-cpp-font-lock highlight-indent-guides ggtags undo-tree pdf-continuous-scroll-mode quelpa pdf-tools flycheck-pos-tip diff-hl doom-modeline smart-mode-line jedi yasnippet-snippets neotree amx color-theme auto-complete zenburn-theme which-key use-package try org-bullets doom-themes counsel ace-window))
+   '(dap-mode realgud drag-stuff drag-mode lsp-treemacs major-mode-hydra cmake-mode iedit centaur-tabs treemacs-all-the-icons magit writegood-mode tex latex-preview-pane multiple-cursors flyspell-correct-ivy flyspell-correct ox-beamer auctex ox-reveal expand-region hungry-delete beacon company-mode modern-cpp-font-lock highlight-indent-guides ggtags undo-tree pdf-continuous-scroll-mode quelpa pdf-tools flycheck-pos-tip diff-hl doom-modeline smart-mode-line jedi yasnippet-snippets neotree amx color-theme auto-complete zenburn-theme which-key use-package try org-bullets doom-themes counsel ace-window))
  '(safe-local-variable-values
    '((eval setq flycheck-gcc-include-path
            (list
