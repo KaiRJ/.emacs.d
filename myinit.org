@@ -546,7 +546,7 @@ TODO split all these up into own headers
     :bind
     ("C-c l l" . lsp-treemacs-errors-list) ; TODO move to hydra table
     :config
-    (add-hook 'lsp-mode-hook #'lsp-treemacs-mode))
+    (lsp-treemacs-sync-mode 1))
 
   ;; clangd is fast
   (setq gc-cons-threshold (* 100 1024 1024)
@@ -587,6 +587,7 @@ A one-time step is required to download the extension and set it up automaticall
   (use-package dap-mode
     :ensure t
     :after lsp-mode
+    :hook (dap-stopped . (lambda (arg) (call-interactively #'dap-hydra)))
     :config
     (dap-auto-configure-mode)  ;; Automatically configures dap-mode
     (require 'dap-cpptools)
