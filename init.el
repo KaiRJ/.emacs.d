@@ -1,22 +1,23 @@
+;;; Commentary:
+
+;; Following lines build the configuration code out of the myinit.el file.
+
+;;; Code:
+
+;; Make startup faster by reducing the frequency of garbage
+;; collection.
+(setq gc-cons-threshold (* 100 1024 1024))
+
 (require 'package)
-(setq package-enable-at-startup nil)
-(add-to-list 'package-archives
-     '("melpa" . "https://melpa.org/packages/"))
-(add-to-list 'package-archives
-     '("gnu" . "https://elpa.gnu.org/packages/"))
 (package-initialize)
-
-
-;; Bootstrap `use-package'
-(unless (package-installed-p 'use-package)
-    (package-refresh-contents)
-    (package-install 'use-package))
-
 
 ;; load myinit org file
 (org-babel-load-file (expand-file-name "~/.emacs.d/myinit.org"))
 
+;; Make gc pauses faster by decreasing the threshold.
+(setq gc-cons-threshold (* 10 1000 1000))
 
+;;; init.el ends here
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -24,31 +25,21 @@
  ;; If there is more than one, they won't work right.
  '(auto-save-file-name-transforms '((".*" "~/.emacs.d/autosaves/\\1" t)))
  '(backup-directory-alist '((".*" . "~/.emacs.d/backups/")))
- '(custom-safe-themes
-   '("288482f5c627c1fe5a1d26fcc17ec6ca8837f36bf940db809895bf3f8e2e4edd" default))
  '(lock-file-name-transforms '((".*" "~/.emacs.d/lockfiles/\\1" t)))
- '(neo-theme 'icons)
  '(package-selected-packages
-   '(dap-mode realgud drag-stuff drag-mode lsp-treemacs major-mode-hydra cmake-mode iedit centaur-tabs treemacs-all-the-icons magit writegood-mode tex latex-preview-pane multiple-cursors flyspell-correct-ivy flyspell-correct ox-beamer auctex ox-reveal expand-region hungry-delete beacon company-mode modern-cpp-font-lock highlight-indent-guides ggtags undo-tree pdf-continuous-scroll-mode quelpa pdf-tools flycheck-pos-tip diff-hl doom-modeline smart-mode-line jedi yasnippet-snippets neotree amx color-theme auto-complete zenburn-theme which-key use-package try org-bullets doom-themes counsel ace-window))
- '(safe-local-variable-values
-   '((eval setq flycheck-gcc-include-path
-           (list
-            (expand-file-name "~/dev/bxdecay0/include/")))
-     (flycheck-gcc-language-standard . "c++2a")
-     (flycheck-gcc-language-standard . c++2a)
-     (flycheck-gcc-language-standard . c++20)))
- '(warning-suppress-types
-   '((color-theme)
-     (color-theme)
-     (color-theme)
-     (color-theme)
-     (color-theme)
-     (color-theme)
-     (color-theme))))
+   '(aggressive-indent amx auctex cmake-font-lock company-box consult-lsp counsel
+                       dap-mode dashboard doom-modeline doom-themes drag-stuff
+                       exec-path-from-shell expand-region flycheck
+                       git-gutter-fringe highlight-indent-guides
+                       highlight-indentation ibuffer-vc iedit imenu-list lsp-ui
+                       move-text multiple-cursors org-bullets page-break-lines
+                       rainbow-delimiters smartparens tree-sitter-langs
+                       treemacs-all-the-icons treemacs-magit treemacs-projectile
+                       try undo-tree use-package which-key writegood-mode
+                       yasnippet-snippets)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(aw-leading-char-face ((t (:inherit ace-jump-face-foreground :height 3.0)))))
-(put 'narrow-to-region 'disabled nil)

@@ -1,11 +1,197 @@
 #+STARTUP: overview
 
-* Tweaks
-** General
-#+begin_src emacs-lisp
-  ;; remove 'cl dpricated' warning on startup
-  (setq byte-compile-warnings '(cl-functions))
+* Emacs initialization
 
+This section contains the basic commands you need to know to properly initialize your GNU Emacs.
+
+** Package Sources
+
+To install packages, it is useful to configure the package sources.
+
+#+begin_src emacs-lisp
+  (setq package-archives '(("elpa" . "https://elpa.gnu.org/packages/")
+                           ("melpa" . "https://melpa.org/packages/")
+                           ("nongnu" . "https://elpa.nongnu.org/nongnu/")))
+#+end_src
+
+** Package Configurations
+
+To manage the package configurations with =use-package=, you must install it with the following code snippet.
+
+#+begin_src emacs-lisp
+  (unless (package-installed-p 'use-package)
+    (package-refresh-contents)
+    (package-install 'use-package))
+#+end_src
+
+** Misc requirements
+These are instructions you may need for a fresh install of emacs using this init file:
+
+- For the doom modeline run M-x nerd-icons-install-fonts to install the necessary fonts.
+
+- Might need to also run M-x all-the-icons-install-fonts
+#+begin_src emacs-lisp
+  (use-package all-the-icons
+    :ensure t)
+#+end_src
+
+- For `lsp-mode` you will need to install all the language servers, eg. `sudo apt install clangd`. But emacs should prompt you to install them automatically anyway as you open files.
+  - On linux, I ran into an error of emacs not being able to find `npm` to install for example the `bash-ls`.
+  - I therefore had to install `nvm` in my terminal, following the instructions [[https://github.com/nvm-sh/nvm?tab=readme-ov-file#installing-and-updating][here]] (`apt` install old versions that didn't work either).
+  - Then I'm using the `exec-path-from-shell` package so that my terminal and emacs enviroments are the same:
+#+begin_src emacs-lisp
+  (use-package exec-path-from-shell
+    :ensure t
+    :config
+    (exec-path-from-shell-initialize))
+#+end_src
+
+- For =dap-mode= a one-time step is required to download the extension and set it up automatically  =M-x dap-cpptools-setup= then you are good start debugging.
+
+* Start up
+
+This section contains the packages and configurations needed to get started with GNU Emacs.
+
+** Defaults
+
+For a better user experience of GNU Emacs, here are the default values that I use.
+
+#+begin_src emacs-lisp
+  (setq-default
+   ad-redefinition-action 'accept                   ; Silence warnings for redefinition
+   cursor-in-non-selected-windows nil               ; Hide the cursor in inactive windows
+   display-time-default-load-average nil            ; Don't display load average
+   fill-column 80                                   ; Set width for automatic line breaks
+   help-window-select t                             ; Focus new help windows when opened
+   indent-tabs-mode nil                             ; Prefer spaces over tabs
+   initial-scratch-message ""                       ; Empty the initial *scratch* buffer
+   kill-ring-max 128                                ; Maximum length of kill ring
+   load-prefer-newer t                              ; Prefer the newest version of a file
+   mark-ring-max 128                                ; Maximum length of mark ring
+   read-process-output-max (* 1024 1024)            ; Increase the amount of data reads from the process
+   scroll-conservatively most-positive-fixnum       ; Always scroll by one line
+   select-enable-clipboard t                        ; Merge system's and Emacs' clipboard
+   tab-width 4                                      ; Set width for tabs
+   use-package-always-ensure t                      ; Avoid the :ensure keyword for each package
+   vc-follow-symlinks t                             ; Always follow the symlinks
+   view-read-only t                                 ; Always open read-only buffers in view-mode
+   apropos-sort-by-scores t                         ; Sort apropos results by relevency
+   save-interprogram-paste-before-kill t            ; Save current (system) clipboard before replacing.
+   global-subword-mode 1)                           ; treat CamelCase as distinct words
+
+  (setq byte-compile-warnings '(cl-functions))      ; Remove 'cl dpricated' warning on startup
+
+  (column-number-mode 1)                            ; Show the column number
+  (fset 'yes-or-no-p 'y-or-n-p)                     ; Replace yes/no prompts with y/n
+  (global-hl-line-mode)                             ; Hightlight current line
+  (set-default-coding-systems 'utf-8)               ; Default to utf-8 encoding
+  (show-paren-mode 1)                               ; Show the parent
+  (delete-selection-mode 1)                         ; Delete highlighted text by typing
+
+  ;; line Wrappings
+  (add-hook 'text-mode-hook 'turn-on-visual-line-mode)
+  (add-hook 'prog-mode-hook (lambda () (setq truncate-lines t)))
+
+  ;; clean up white space when file is saved
+  (add-hook 'before-save-hook 'whitespace-cleanup)
+
+  ;; should fix issue with aspell and org mode headings getting stuck
+  (setq org-fold-core-style 'overlays)
+
+ #+end_src
+** Interface
+
+I like my UI to be clean.
+
+#+BEGIN_SRC emacs-lisp
+  (setq inhibit-startup-message t)
+  (tool-bar-mode -1)
+  (scroll-bar-mode -1)
+  (blink-cursor-mode 0)   ;; stop cursor blinking
+  (show-paren-mode 1)     ;; highlight matching paren
+  (global-hl-line-mode t) ;; hightlight cursor line
+
+  (set-face-attribute 'default nil :height 160) ;; set font size
+
+  ;; add line numbers to progam and tex modes
+  (add-hook 'prog-mode-hook 'display-line-numbers-mode)
+  (add-hook 'TeX-mode-hook  'display-line-numbers-mode)
+ #+END_SRC
+
+** Theme
+
+Here I do all the things that make emacs look pretty.
+
+*** color theme
+
+Just comment in what theme you want.
+
+**** zenburn
+#+begin_src emacs-lisp
+  ;; (use-package zenburn-theme
+  ;;   :ensure t
+  ;;   :config (load-theme 'zenburn t))
+#+end_src
+**** atom one dark
+#+begin_src emacs-lisp
+  ;; (use-package atom-one-dark-theme
+  ;;   :ensure t
+  ;;   :config (load-theme 'atom-one-dark t))
+#+end_src
+**** doom
+#+begin_src emacs-lisp
+  (use-package doom-themes
+    :config
+    (load-theme 'doom-one t)
+    (doom-themes-visual-bell-config)    ;; Enable flashing mode-line on errors
+    (doom-themes-org-config))           ;; Corrects (and improves) org-mode's native fontification.
+#+end_src
+*** modeline
+**** doom-modeline
+#+begin_src emacs-lisp
+  (use-package doom-modeline
+    :init (doom-modeline-mode)
+    :custom
+    (doom-modeline-icon (display-graphic-p))
+    (doom-modeline-mu4e t))
+
+  (setq inhibit-compacting-font-caches t)         ; don’t compact font caches during GC.
+  (setq doom-modeline-buffer-modification-icon t) ; show the buffer modification icon.
+  (setq doom-modeline-vcs-max-length 12)          ; length of the version control info.
+  (setq doom-modeline-checker-simple-format nil)  ; use a detailed format for checkers
+  ;; (setq doom-modeline-buffer-file-name-style 'file-name-with-project)
+  (setq doom-modeline-buffer-encoding nil)
+#+end_src
+
+*** emacs-dashboard
+
+This package gives a nicer startup menu.
+
+#+begin_src emacs-lisp
+  ;; optional dependancy of emacs-dashboard
+  (use-package page-break-lines)
+
+  (use-package dashboard
+    :config
+    (dashboard-setup-startup-hook))
+
+  (setq dashboard-items '((projects . 5)
+      (recents . 5)))
+#+end_src
+
+*** rainbow-delimiters
+
+Highlights delimiters according to their depth.
+
+#+begin_src emacs-lisp
+  (use-package rainbow-delimiters
+    :hook (prog-mode-hook . rainbow-delimiters-mode))
+#+end_src
+* Backups and autosaves
+
+Creating folder and pointing emacs to autosave and backup spots in =.emacs.d=.
+
+#+begin_src emacs-lisp
   ;; Put autosave files (ie #foo#) and backup files (ie foo~) in ~/.emacs.d/.
   (custom-set-variables
    '(auto-save-file-name-transforms '((".*" "~/.emacs.d/autosaves/\\1" t)))
@@ -15,136 +201,142 @@
   ;; create the autosave and lockfiles dir if necessary, since emacs won't.
   (make-directory "~/.emacs.d/autosaves/" t)
   (make-directory "~/.emacs.d/lockfiles/" t)
+#+end_src
+* LSP
 
-  ;; Move cursor to the help window when one is open
-  (setq help-window-select t)
+The main benefit of using Language Server Protocol (LSP) to configure the management of your programming languages is that LSP servers are also used by other text editors, increasing contributions to these packages.
 
-  ;; replace yes/no with y/n
-  (fset 'yes-or-no-p 'y-or-n-p)
-  ;; Delete highlighted text by typing
-  (delete-selection-mode 1)
+** lsp-mode
 
-  ;; line Wrappings
-  (add-hook 'text-mode-hook 'turn-on-visual-line-mode)
-  (add-hook 'prog-mode-hook (lambda () (setq truncate-lines t)))
+That's where [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]] comes in!
 
-  ;; Sort apropos results by relevency
-  (setq apropos-sort-by-scores t)
+#+begin_src emacs-lisp
+  (use-package lsp-mode
+    :commands (lsp lsp-deferred)
+    :hook ((prog-mode . lsp-deferred)
+           (lsp-mode . lsp-enable-which-key-integration))
+    :custom
+    (lsp-enable-folding nil)
+    (lsp-enable-links nil)
+    (lsp-enable-snippet nil)
+    (lsp-keymap-prefix "C-c l")
+    (lsp-prefer-capf t)                   ;; Use completion-at-point-functions
+    (lsp-headerline-breadcrumb-enable t)) ;; Show breadcrumbs
 
-  ;; clean up white space when file is saved
-  (add-hook 'before-save-hook 'whitespace-cleanup)
 
-  ;; should fix issue with aspell and org mode headings getting stuck
-  (setq org-fold-core-style 'overlays)
+    ;; Clangd is fast
+  (setq gc-cons-threshold (* 100 1024 1024)
+        read-process-output-max (* 1024 1024)
+        treemacs-space-between-root-nodes nil
+        company-idle-delay 0.500
+        company-minimum-prefix-length 1
+        lsp-idle-delay 0.1)  ;; clangd is fast
+#+end_src
 
-  ;; Save whatever’s in the current (system) clipboard before
-  ;; replacing it with the Emacs’ text.
-  (setq save-interprogram-paste-before-kill t)
- #+end_src
-** Interface
+** lsp-ui
+
+In addition to =lsp-mode=, it is possible to use =lsp-ui= to get additional information (e.g., documentation) when hovering a variable or a function.
+
+#+begin_src emacs-lisp
+  (use-package lsp-ui
+    :hook (lsp-mode . lsp-ui-mode)
+    :custom
+    (lsp-ui-sideline-enable t)
+    (lsp-ui-doc-enable t)
+    (lsp-ui-doc-position 'at-point))
+#+end_src
+
+** consult-lsp
+
+When using =lsp=, it is likely that you will encounter programming errors. To navigate through these errors via the minibuffer, you can use a package for that. If like me, you use =consult= with your minibuffer completion, then =consult-lsp= is made for you.
+
+#+begin_src emacs-lisp
+  (use-package consult-lsp
+    :commands (consult-lsp-diagnostics consult-lsp-symbols))
+#+end_src
+
+** lsp-treemacs
+
+For treemacs integrating with lsp-mode
+
+#+begin_src emacs-lisp
+  (use-package lsp-treemacs
+    :ensure t
+    :after (lsp-mode treemacs)
+    :bind
+    ("C-c l l" . lsp-treemacs-errors-list) ; TODO move to hydra table
+    :config
+    (lsp-treemacs-sync-mode 1))
+#+end_src
+
+** dap-mode
+
+Finally, if like me you need a debugger, [[https://github.com/emacs-lsp/dap-mode][dap-mode]] uses the Debug Adapter Protocol wire protocol for communication between client and Debug Server. You won't find a better debugger.
+
+#+begin_src emacs-lisp
+  (use-package dap-mode
+    :after lsp-mode
+    :hook (dap-stopped . (lambda (arg) (call-interactively #'dap-hydra)))
+    :config
+    (dap-auto-configure-mode)  ;; Automatically configures dap-mode
+    (require 'dap-cpptools)
+
+    (dap-register-debug-template
+     "cpptools::main"
+     (list :type "cppdbg"
+           :request "launch"
+           :MIMode "lldb"
+           :program "${workspaceFolder}/build/main"
+           :cwd "${workspaceFolder}"))
+
+    (dap-register-debug-template
+     "cpptools::main-input"
+     (list :name "cpptools::main-input"
+           :type "cppdbg"
+           :request "launch"
+           :MIMode "lldb"
+           :program "${workspaceFolder}/build/main"
+           :cwd "${workspaceFolder}"
+           :externalConsole t)))
+#+end_src
+* Navigation
+** Buffers
+*** Ibuffer
+
+Buffers can quickly become a mess to manage. To manage them better, I use the =ibuffer= built-in package instead of buffer-menu, to have a nicer visual interface with a syntax color.
+
+#+begin_src emacs-lisp
+  (global-set-key (kbd "C-x C-b") 'ibuffer)
+
+  ;; (setq ibuffer-default-sorting-mode 'major-mode)
+  (setq ibuffer-show-empty-filter-groups nil)
+
+  (use-package ibuffer-vc
+    :ensure t)
+#+end_src
+
+** Windows
+*** ace windows
 #+BEGIN_SRC emacs-lisp
-  ;; misc
-  (setq inhibit-startup-message t)
-  (tool-bar-mode -1)
-  (scroll-bar-mode -1)
-
-  ;; set font size
-  (set-face-attribute 'default nil :height 160)
-
-  ;; add line numbers to progam and tex modes
-  (add-hook 'prog-mode-hook 'display-line-numbers-mode)
-  (add-hook 'TeX-mode-hook  'display-line-numbers-mode)
-
-  ;; stop cursor blinking
-  (blink-cursor-mode 0)
-
-  ;; highlight matching paren
-  (show-paren-mode 1)
-
-  ;; hightlight cursor line
-  (global-hl-line-mode t)
- #+END_SRC
-
-** Key bindings
-#+begin_src emacs-lisp
-  ;; C-n adds new line if reaches end of buffer
-  (setq next-line-add-newlines t)
-
-  ;; allow hash to be entered (changed keyboard to australian instead)
-  ;; (global-set-key (kbd "M-3") '(lambda () (interactive) (insert "#")))
-
-  ;; set keys for Apple keyboard, for emacs in OS X
-  (setq mac-command-modifier 'meta) ; make cmd key do Meta
-  (setq mac-option-modifier 'super) ; make opt key do Super
-  ;; (setq mac-control-modifier 'control) ; make Control key do Control
-  ;; (setq ns-function-modifier 'hyper)  ; make Fn key do Hyper
-
-  ;; disable certain mac keyboard commands
-  ;; s is for super (cmd on mac)
-  (define-key global-map [?\s-c] nil) ;; Disable copy
-  (define-key global-map [?\s-v] nil) ;; Disable paste
-  (define-key global-map [?\s-m] nil) ;; Disable minimize
-  (define-key global-map [?\s-p] nil) ;; Disable print
-  (define-key global-map [?\s-o] nil) ;; Disable open
-  (define-key global-map [?\C-z] nil) ;; Disable minimize
-
-  ;; remap quary replace so its not on M-% which is screenshot on mac
-  (global-set-key (kbd "M-r") 'query-replace)
-
-  ;; Switch to new window on window split
-  (global-set-key "\C-x2" (lambda () (interactive)(split-window-vertically) (other-window 1)))
-  (global-set-key "\C-x3" (lambda () (interactive)(split-window-horizontally) (other-window 1)))
-
-  ;; bind comment-line to C-; instead of C-x C-;
-  (global-set-key (kbd "C-;") 'comment-line)
-
-  ;; keep cursor at same position when scrolling
-  ;; (setq scroll-preserve-screen-position 1)
-  ;; scroll window up/down by one line
-  (global-set-key (kbd "M-n") (kbd "C-u 1 C-v"))
-  (global-set-key (kbd "M-p") (kbd "C-u 1 M-v"))
-
-  ;; makefile keybindings (see custom commands tab)
-  (global-set-key (kbd "<f5>") 'compile-build)
-  (global-set-key (kbd "<f6>") 'compile-clean)
-
-  ;; Duplicate a line below
-  (global-set-key (kbd "s-d") (kbd "C-a C-SPC C-e M-w C-j C-y"))
-#+end_src
-** Custom commands
-#+begin_src emacs-lisp
-  (defun compile-build ()
-    "Compile using 'make build'."
-    (interactive)
-    (compile "make build"))
-
-  (defun compile-clean ()
-    "Clean using 'make clean'."
-    (interactive)
-    (compile "make clean"))
-
-  (defun run-sync-git-tracked-script ()
-    "Run the sync_git_tracked.sh script to sync Git-tracked files to the remote server."
-    (interactive)
-    (let ((default-directory (locate-dominating-file default-directory ".git")))
-      (if default-directory
-          (progn
-            ;; Run the sysc script and pass the Git root directory
-            (let ((script (concat "~/git/scripts/sync_git_tracked.sh")))
-              (if (file-executable-p script)
-                  ;; (async-shell-command script& "*Messages*")
-                  (call-process-shell-command script nil "*scratch*")
-                (message "Error: sync_git_tracked.sh not found or not executable."))))
-        (message "Error: Not inside a Git repository!"))))
-
-  ;; Bind the function to a keyboard shortcut
-  (global-set-key (kbd "C-x s") 'run-sync-git-tracked-script)
-#+end_src
+  ;; for easy window switching between multiple windows
+  (use-package ace-window
+    :init
+    (progn
+      ;; bind ace-window to M-o
+      (global-set-key (kbd "M-o") 'ace-window)
+      ;; set window lables to home row
+      (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
+      (custom-set-faces
+       '(aw-leading-char-face
+     ((t (:inherit ace-jump-face-foreground :height 3.0)))))
+      ))
+#+END_SRC
 
 * General packages
 ** Try
+Try different packages without having to install them.
+
 #+BEGIN_SRC emacs-lisp
-  ;; try different packages without having to install them
   (use-package try
     :ensure t)
 #+END_SRC
@@ -164,23 +356,6 @@
     (amx-backend 'auto)
     :config
     (amx-mode 1))
-#+END_SRC
-
-** ace windows
-#+BEGIN_SRC emacs-lisp
-  ;; for easy window switching between multiple windows
-  (use-package ace-window
-    :ensure t
-    :init
-    (progn
-      ;; bind ace-window to M-o
-      (global-set-key (kbd "M-o") 'ace-window)
-      ;; set window lables to home row
-      (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
-      (custom-set-faces
-       '(aw-leading-char-face
-     ((t (:inherit ace-jump-face-foreground :height 3.0)))))
-      ))
 #+END_SRC
 
 ** Ivy / Counsel / Swiper
@@ -237,56 +412,6 @@
   (global-set-key (kbd "M-i") 'counsel-imenu)
 #+end_src
 
-** Ibuffer
-A better buffer manager.
-
-#+begin_src emacs-lisp
-  (global-set-key (kbd "C-x C-b") 'ibuffer)
-  ;; (setq ibuffer-default-sorting-mode 'major-mode)
-  (setq ibuffer-show-empty-filter-groups nil)
-  ;; (add-to-list 'ibuffer-never-show-predicates "^\\*")
-
-  (use-package ibuffer-vc
-    :ensure t)
-
-  ;; hide buffers starting *
-  ;; (require 'ibuf-ext)
-  ;; (add-to-list 'ibuffer-never-show-predicates "^\\*")
-
-  (defun ibuffer-apply-filter-groups ()
-    "Combine my saved ibuffer filter groups with those generated
-       by `ibuffer-vc-generate-filter-groups-by-vc-root' and 'ibuffer-tramp-generate-filter-groups-by-tramp-connection' taken from `https://github.com/reinh/dotemacs/blob/master/conf/init.org#ido'"
-    (interactive)
-    (setq ibuffer-filter-groups
-          (append
-           ;; (ibuffer-tramp-generate-filter-groups-by-tramp-connection)
-           (ibuffer-vc-generate-filter-groups-by-vc-root)
-           ibuffer-saved-filter-groups))
-    (message "ibuffer-vc: groups set")
-    (let ((ibuf (get-buffer "*Ibuffer*")))
-      (when ibuf
-        (with-current-buffer ibuf
-          (pop-to-buffer ibuf)
-          (ibuffer-update nil t)))))
-
-  ;; '(("Group Title"
-  ;;   ("Label"   (type  . value))))
-  (setq ibuffer-saved-filter-groups
-        '(
-          ;; ("Unsaved" (modified))                ; All unsaved buffers
-          ("Starred" (starred-name))
-          ("Dired"   (mode         . dired-mode))
-          ;; ("nersc"   (directory    . "/ssh:kairj@perlmutter.nersc.gov:*"))
-          ("nersc-simulations" (directory . "/ssh:kairj@perlmutter.nersc.gov:/global/homes/k/kairj/git/bb-simulations/*"))
-          ("nersc-prominence"  (directory . "/ssh:kairj@perlmutter.nersc.gov:/global/homes/k/kairj/git/prominence-testing/*"))
-          ))
-
-  ;; Tell ibuffer to load the group automatically
-  (add-hook 'ibuffer-hook 'ibuffer-apply-filter-groups)
-#+end_src
-
-#+RESULTS:
-| ibuffer-apply-filter-groups |
 
 ** Avy
 #+Begin_SRC emacs-lisp
@@ -340,12 +465,6 @@ A better buffer manager.
 #+END_SRC
 ** treemacs
 #+begin_src emacs-lisp
-  ;; required for treemacs
-  ;; might need to run M-x all-the-icons-install-fonts
-  ;; TODO move this somewhere else, as used with a could packages
-  (use-package all-the-icons
-    :ensure t)
-
   (use-package treemacs
     :ensure t
     :config
@@ -400,7 +519,6 @@ A better buffer manager.
 #+end_src
 ** imenu-list
 #+begin_src emacs-lisp
-  ;; Install pdf-tools if not already installed
   (use-package imenu-list
     :ensure t)
 
@@ -414,7 +532,6 @@ A better buffer manager.
 ** iedit
 #+begin_src emacs-lisp
   (use-package iedit
-    :ensure t
     :config
     ;; Disable default "C-;" binding
     (define-key iedit-mode-keymap (kbd "C-;") nil)
@@ -452,112 +569,27 @@ Doesn't work well, need to find alternative. Or don't use at all.
     (global-set-key (kbd "s-<right>") 'drag-stuff-right)
     (global-set-key (kbd "s-<left>") 'drag-stuff-left))
 #+end_src
-* Programming modes
-** Tweaks
+** Projectile
 #+begin_src emacs-lisp
-  ;; treat CamelCase as distinct words
-  (global-subword-mode 1)
-
-  ;; Visualize trailing white space
-  ;; (global-whitespace-mode) ; Enable whitespace mode everywhere
-#+end_src
-
-*** tabs/indentation
-#+begin_src emacs-lisp
-  (defvar my-indent-width 4
-    "The number of spaces to use for each indentation level.")
-
-  ;; Set tab width to my-indent-width spaces
-  (setq-default tab-width my-indent-width)
-  (setq python-indent-offset my-indent-width)
-  (setq-default c-basic-offset my-indent-width)
-
-  ;; change the c style for aggressive indent
-  (setq c-default-style "linux")
-
-  ;; Set indent-tabs-mode to nil (use spaces) for specific modes
-  (add-hook 'prog-mode-hook (lambda () (setq indent-tabs-mode nil)))
-
-  ;; Enable tabs for indentation in Makefiles
-  (add-hook 'makefile-mode-hook
-            (lambda ()
-              (setq indent-tabs-mode t)))
-
-  ;; Make the backspace properly erase the tab instead of removing 1 space at a time.
-  (setq backward-delete-char-untabify-method 'hungry)
-#+end_src
-
-*** fill-column-indicator
-#+begin_src emacs-lisp
-  (setq fci-rule-column 100) ; Set the fill column
-  (add-hook 'prog-mode-hook 'display-fill-column-indicator-mode)
-#+end_src
-
-*** comment line
-#+begin_src emacs-lisp
-  (defun comment-or-uncomment-region-or-line ()
-    "Comments or uncomments the region or the current line if there's no active region."
-    (interactive)
-    (let (beg end)
-      (if (region-active-p)
-      (setq beg (region-beginning) end (region-end))
-    (setq beg (line-beginning-position) end (line-end-position)))
-      (comment-or-uncomment-region beg end)))
-
-  (bind-key* "C-;" 'comment-or-uncomment-region-or-line)
-#+end_src
-
-** Syntax
- checkers
-*** lsp-mode
-TODO split all these up into own headers
-
-#+begin_src emacs-lisp
-  (use-package lsp-mode
+  (use-package projectile
     :ensure t
     :init
-    ;; set prefix for lsp-command-keymap
-    (setq lsp-keymap-prefix "C-c l")
-    :hook (;; modes set for lsp
-           (c++-mode     . lsp)
-           (c-mode     . lsp)
-           (python-mode     . lsp)
-           ;; which-key integration
-           (lsp-mode    . lsp-enable-which-key-integration))
-    :commands lsp
-    :config
-    (setq lsp-prefer-capf t) ;; Use completion-at-point-functions
-    (setq lsp-headerline-breadcrumb-enable t)) ;; Show breadcrumbs
+    (projectile-mode +1)
+    :bind (:map projectile-mode-map
+                ("s-p" . projectile-command-map)
+                ("C-c p" . projectile-command-map)))
 
-  ;; for better user experience
-  (use-package lsp-ui
-    :ensure t
-    :commands lsp-ui-mode
-    :hook (lsp-mode . lsp-ui-mode)
-    :config
-    (setq lsp-ui-sideline-enable t
-          lsp-ui-doc-enable t
-          lsp-ui-doc-position 'at-point))
-
-  ;; for treemacs integrating with lsp-mode
-  (use-package lsp-treemacs
-    :ensure t
-    :after (lsp-mode treemacs)
-    :bind
-    ("C-c l l" . lsp-treemacs-errors-list) ; TODO move to hydra table
-    :config
-    (lsp-treemacs-sync-mode 1))
-
-  ;; clangd is fast
-  (setq gc-cons-threshold (* 100 1024 1024)
-        read-process-output-max (* 1024 1024)
-        treemacs-space-between-root-nodes nil
-        company-idle-delay 0.500
-        company-minimum-prefix-length 1
-        lsp-idle-delay 0.1)  ;; clangd is fast
-
+  (setq projectile-project-search-path '("~/git/"))
 #+end_src
-
+** move-text
+#+begin_src emacs-lisp
+  (use-package move-text
+    :bind (("M-p" . move-text-up)
+           ("M-n" . move-text-down))
+    :config (move-text-default-bindings))
+#+end_src
+* Programming tools
+** Syntax checking
 *** company-mode
 #+begin_src emacs-lisp
   (use-package company
@@ -580,51 +612,68 @@ TODO split all these up into own headers
     :ensure t
     :hook (prog-mode . flycheck-mode))
 #+end_src
-** Packages
-*** dap-mode
-A one-time step is required to download the extension and set it up automatically - M-x dap-cpptools-setup - then you are good start debugging.
+** Git
+*** git-gutter
+
+These packages are showing the git difference. I have set it to be similar to VScode.
+
 #+begin_src emacs-lisp
-  (use-package dap-mode
+  (use-package git-gutter
     :ensure t
-    :after lsp-mode
-    :hook (dap-stopped . (lambda (arg) (call-interactively #'dap-hydra)))
+    :hook ((prog-mode . git-gutter-mode)
+       (org-mode . git-gutter-mode))
     :config
-    (dap-auto-configure-mode)  ;; Automatically configures dap-mode
-    (require 'dap-cpptools)
+    (setq git-gutter:update-interval 0.5)) ;; if too small causes lagging
 
-    (dap-register-debug-template
-     "cpptools::main"
-     (list :type "cppdbg"
-           :request "launch"
-           :MIMode "lldb"
-           :program "${workspaceFolder}/build/main"
-           :cwd "${workspaceFolder}"))
-
-    (dap-register-debug-template
-     "cpptools::main-input"
-     (list :name "cpptools::main-input"
-           :type "cppdbg"
-           :request "launch"
-           :MIMode "lldb"
-           :program "${workspaceFolder}/build/main"
-           :cwd "${workspaceFolder}"
-           :externalConsole t)))
-#+end_src
-
-*** Projectile
-#+begin_src emacs-lisp
-  (use-package projectile
+  ;; makes it prettier
+  (use-package git-gutter-fringe
     :ensure t
-    :init
-    (projectile-mode +1)
-    :bind (:map projectile-mode-map
-                ("s-p" . projectile-command-map)
-                ("C-c p" . projectile-command-map)))
+    :config
+    (define-fringe-bitmap 'git-gutter-fr:added [224] nil nil '(center repeated))
+    (define-fringe-bitmap 'git-gutter-fr:modified [224] nil nil '(center repeated))
+    (define-fringe-bitmap 'git-gutter-fr:deleted [128 192 224 240] nil nil 'bottom))
 
-  (setq projectile-project-search-path '("~/git/"))
-
+  ;; Customize the git-gutter:modified face to use different colours
+  (set-face-foreground 'git-gutter-fr:modified "#2375B3")
+  ;; (set-face-foreground 'git-gutter-fr:added    "blue")
+  ;; (set-face-foreground 'git-gutter-fr:deleted  "white")
 #+end_src
-*** smartparens
+
+*** Git sync
+This hydra command lets me quickly sync repos to the correct server
+
+#+begin_src emacs-lisp
+  ;; Define a hydra to choose the target server (nersc or deucalion)
+  (defhydra hydra-sync-git (:color blue)
+    "
+  Sync to which server?
+  _n_ NERSC
+  _d_ Deucalion
+  _q_ Quit
+  "
+    ("n" (run-sync-git-tracked-script "nersc"))
+    ("d" (run-sync-git-tracked-script "deucalion"))
+    ("q" nil "quit"))
+
+  ;; Function to run the sync script with an argument
+  (defun run-sync-git-tracked-script (target)
+    "Run the sync_git_tracked.sh script with the specified TARGET argument."
+    (interactive "sTarget (nersc or deucalion): ") ;; Allow the hydra to pass this value
+    (let ((default-directory (locate-dominating-file default-directory ".git")))
+      (if default-directory
+          (progn
+            ;; Run the sync script with the argument based on the hydra choice
+            (let ((script (concat "~/git/scripts/sync_git_tracked.sh")))
+              (if (file-executable-p script)
+                  (call-process-shell-command (concat script " " target) nil "*scratch*")
+                (message "Error: sync_git_tracked.sh not found or not executable."))))
+        (message "Error: Not inside a Git repository!"))))
+
+  ;; Bind the hydra to a keyboard shortcut
+  (global-set-key (kbd "C-c s") 'hydra-sync-git/body)
+#+end_src
+
+** Paranthesis
 #+begin_src emacs-lisp
   (use-package smartparens
     :ensure t
@@ -644,10 +693,59 @@ A one-time step is required to download the extension and set it up automaticall
     ("M-[" . sp-backward-unwrap-sexp)
     ("M-]" . sp-unwrap-sexp))
 #+end_src
-** Language specific
-*** Python
-*** C++
-**** Tweaks
+
+** Indentation
+
+My setup for dealing with indentation
+
+*** aggressive-indent
+#+begin_src emacs-lisp
+  ;; disabled for now
+  (use-package aggressive-indent
+    :custom
+    (aggressive-indent-comments-too t))
+#+end_src
+
+*** highlight-indentation-guides
+
+Currently using [[https://github.com/DarthFennec/highlight-indent-guides][highlight-indentation-guides]] for my indentation highlight as its easy to use. Although I'd like to eventually find a solution to highlight blank spaces as well.
+
+#+begin_src emacs-lisp
+(use-package highlight-indent-guides
+  :hook (prog-mode . highlight-indent-guides-mode)
+  :config
+  ;; Use thin character style
+  (setq highlight-indent-guides-method 'character)
+  (setq highlight-indent-guides-character ?\│) ;; Unicode thin vertical bar
+  (setq highlight-indent-guides-responsive 'top) ;; Active indent
+  (setq highlight-indent-guides-auto-enabled t)
+
+  ;; Show guides even on blank lines
+  (setq highlight-indent-guides-show-leading-blank-lines t)
+
+  ;; Customize colors to fit doom-one
+  (set-face-foreground 'highlight-indent-guides-character-face "#3f444a")
+  (set-face-foreground 'highlight-indent-guides-top-character-face "#875faf")
+  (set-face-foreground 'highlight-indent-guides-stack-character-face "#5c5f77"))
+#+end_src
+
+*** highlight-indentation
+
+I was using [[https://github.com/antonj/Highlight-Indentation-for-Emacs][highlight-indentation]] but it didn't look nice and the active highlighting was buggy. But it did highlight empty lines.
+
+#+begin_src emacs-lisp
+;; (use-package highlight-indentation
+;;   :hook ((prog-mode . highlight-indentation-mode)
+;;          (prog-mode . highlight-indentation-current-column-mode))
+;;    :custom
+;;    (highlight-indentation-blank-lines t) ;; Enable highlighting of blank lines.
+;;    :config
+;;    ;; Customize the face for the indent guides
+;;    (set-face-background 'highlight-indentation-face "#3f444a")
+;;    (set-face-background 'highlight-indentation-current-column-face "#5f8787"))
+#+end_src
+** C++
+*** Tweaks
 #+begin_src emacs-lisp
   ;; make sure up to date
   (require 'cc-mode)
@@ -655,36 +753,9 @@ A one-time step is required to download the extension and set it up automaticall
   ;; set .h files to use c++ mode instead
   (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode))
 #+end_src
-**** aggressive-indent
-#+begin_src emacs-lisp
-  ;; disabled for now
-  (use-package aggressive-indent
-    :ensure t
-    :config
-    ;; (add-hook 'c++-mode-hook 'aggressive-indent-mode)
-    )
-#+end_src
 
-**** highlight-indentation
-#+begin_src emacs-lisp
-  (use-package highlight-indentation
-    :ensure t
-    :config
-    ;; Enable `highlight-indentation-mode` in c++ modes  modes only
-    (add-hook 'c++-mode-hook 'highlight-indentation-mode)
-    (add-hook 'c-mode-hook 'highlight-indentation-mode)
-
-    (setq highlight-indentation-offset my-indent-width)
-
-    ;; Enable highlighting of blank lines.
-    (setq highlight-indentation-blank-lines t)
-
-    ;; Customize the face for the indent guides (optional).
-    (custom-set-faces
-     (set-face-background 'highlight-indentation-face "#e3e3d3")
-     (set-face-background 'highlight-indentation-current-column-face "#c3b3b3")))
-#+end_src
-*** cmake
+** Python
+** cmake
 #+begin_src emacs-lisp
   (use-package cmake-mode
     :ensure t
@@ -694,12 +765,12 @@ A one-time step is required to download the extension and set it up automaticall
   (use-package cmake-font-lock
     :hook (cmake-mode . cmake-font-lock-activate))
 #+end_src
-*** make
+** make
 #+begin_src emacs-lisp
   ;; use makefile-mode for MakeFiles
   (add-to-list 'auto-mode-alist '("Makefile" . makefile-mode))
 #+end_src
-* Org mode
+* Org-mode
 A lot of these changes are based of [[https://doc.norang.ca/org-mode.html#HowToUseThisDocument][this]].
 ** Tweaks
 #+begin_src emacs-lisp
@@ -722,7 +793,7 @@ A lot of these changes are based of [[https://doc.norang.ca/org-mode.html#HowToU
   (global-set-key (kbd "\C-c b") 'org-iswitchb)
 #+end_src
 
-** Agenda changes
+** Agenda
 #+begin_src emacs-lisp
   ;;
   (setq org-agenda-files (quote ("~/git/agenda/phd/simulations.org"
@@ -759,46 +830,51 @@ A lot of these changes are based of [[https://doc.norang.ca/org-mode.html#HowToU
     :config
     (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
   #+END_SRC
-* Writing modes
+* Writing
 ** Spell checking
 *** Ispell
-#+begin_src emacs-lisp
-  (use-package ispell
-    :ensure t)
+Ispell is a spell-checking program that was one of the early tools for spell-checking in Unix-like systems. It's often used in Emacs and other text editors to detect and correct spelling errors. Aspell is a more modern and improved spell-checking program compared to Ispell. It has better support for multiple languages, better handling of compound words, and is more actively maintained.
 
-  ;; can use homebrew to download aspell
-  (setq ispell-program-name "aspell")
+#+begin_src emacs-lisp
+  ;; (use-package ispell
+  ;;   :ensure t)
+
+  (setq ispell-program-name "hunspell")
   (setq ispell-extra-args '("--sug-mode=ultra"))
   (setq ispell-dictionary "english")
+  (setq ispell-list-command "--list")
+  (add-to-list 'ispell-skip-region-alist '("^#+BEGIN_SRC" . "^#+END_SRC"))
 #+end_src
+
 *** Flyspell
+Flyspell is an on-the-fly spell checker in Emacs. It works in the background while you're typing to highlight misspelled words in your buffer. Flyspell integrates with Emacs and uses a spell-checking engine like Ispell or Aspell to detect misspellings as you type.
+
 #+begin_src emacs-lisp
-  (use-package flyspell
-    :ensure t
-    :config
-    (setq ispell-program-name "aspell")  ; Use Aspell as the spell checker
-    (add-hook 'text-mode-hook 'flyspell-mode)
-    (add-hook 'prog-mode-hook 'flyspell-prog-mode))
+  ;; (use-package flyspell
+  ;;   :ensure t
+  ;;   :config
+  ;;   (add-hook 'text-mode-hook 'flyspell-mode)
+  ;;   (add-hook 'prog-mode-hook 'flyspell-prog-mode))
 
   ;; auto start flyspell mode
   (setq flyspell-mode 1)
 
   ;; recommended to speed up flycheck
-  (setq flyspell-issue-message-flag nil)
+  ;; (setq flyspell-issue-message-flag nil)
 
   ;; easy spell check
-  (global-set-key (kbd "<f8>") 'ispell-word)
-  (global-set-key (kbd "C-S-<f8>") 'flyspell-mode)
-  (global-set-key (kbd "C-M-<f8>") 'flyspell-buffer)
+  ;; (global-set-key (kbd "<f8>") 'ispell-word)
+  ;; (global-set-key (kbd "C-S-<f8>") 'flyspell-mode)
+  ;; (global-set-key (kbd "C-M-<f8>") 'flyspell-buffer)
 
-  (defun flyspell-check-next-highlighted-word ()
-    "Custom function to spell check next highlighted word"
-    (interactive)
-    (flyspell-goto-next-error)
-    (ispell-word)
-    )
-  (global-set-key (kbd "C-<f8>") 'flyspell-check-next-highlighted-word)
-  (global-set-key (kbd "M-<f8>") 'flyspell-check-previous-highlighted-word)
+  ;; (defun flyspell-check-next-highlighted-word ()
+  ;;   "Custom function to spell check next highlighted word"
+  ;;   (interactive)
+  ;;   (flyspell-goto-next-error)
+  ;;   (ispell-word)
+  ;;   )
+  ;; (global-set-key (kbd "C-<f8>") 'flyspell-check-next-highlighted-word)
+  ;; (global-set-key (kbd "M-<f8>") 'flyspell-check-previous-highlighted-word)
 
 #+end_src
 ** writegood-mode
@@ -809,13 +885,13 @@ A lot of these changes are based of [[https://doc.norang.ca/org-mode.html#HowToU
   (add-hook 'TeX-mode-hook 'writegood-mode)
 #+end_src
 
-* LaTeX mode
+** LaTeX mode
 combine with writing modes?
-** General Tweaks
+*** General Tweaks
 #+begin_src emacs-lisp
   (add-hook 'TeX-mode-hook 'prettify-symbols-mode)
 #+end_src
-** AECTeX
+*** AECTeX
 #+begin_src emacs-lisp
   (use-package tex
     :ensure auctex
@@ -825,7 +901,7 @@ combine with writing modes?
       TeX-master nil))
 #+end_src
 
-** Org mode
+*** Org mode
 #+begin_src emacs-lisp
   ;; set size of latex fragments
   (setq org-format-latex-options (plist-put org-format-latex-options :scale 1.3))
@@ -845,122 +921,64 @@ combine with writing modes?
     '("pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
       "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
       "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"))
-#+end_src
-
-* Themes
-** color theme
-*** zenburn
+#+end_arc
+*
+* Custom
+** Key bindings
 #+begin_src emacs-lisp
-  ;; (use-package zenburn-theme
-  ;;   :ensure t
-  ;;   :config (load-theme 'zenburn t))
+  ;; C-n adds new line if reaches end of buffer
+  (setq next-line-add-newlines t)
+
+  ;; allow hash to be entered (changed keyboard to australian instead)
+  ;; (global-set-key (kbd "M-3") '(lambda () (interactive) (insert "#")))
+
+  ;; set keys for Apple keyboard, for emacs in OS X
+  (setq mac-command-modifier 'meta) ; make cmd key do Meta
+  (setq mac-option-modifier 'super) ; make opt key do Super
+  ;; (setq mac-control-modifier 'control) ; make Control key do Control
+  ;; (setq ns-function-modifier 'hyper)  ; make Fn key do Hyper
+
+  ;; disable certain mac keyboard commands
+  ;; s is for super (cmd on mac)
+  (define-key global-map [?\s-c] nil) ;; Disable copy
+  (define-key global-map [?\s-v] nil) ;; Disable paste
+  (define-key global-map [?\s-m] nil) ;; Disable minimize
+  (define-key global-map [?\s-p] nil) ;; Disable print
+  (define-key global-map [?\s-o] nil) ;; Disable open
+  (define-key global-map [?\C-z] nil) ;; Disable minimize
+
+  ;; remap quary replace so its not on M-% which is screenshot on mac
+  (global-set-key (kbd "M-r") 'query-replace)
+
+  ;; Switch to new window on window split
+  (global-set-key "\C-x2" (lambda () (interactive)(split-window-vertically) (other-window 1)))
+  (global-set-key "\C-x3" (lambda () (interactive)(split-window-horizontally) (other-window 1)))
+
+  ;; bind comment-line to C-; instead of C-x C-;
+  (global-set-key (kbd "C-;") 'comment-line)
+
+  ;; keep cursor at same position when scrolling
+  ;; (setq scroll-preserve-screen-position 1)
+  ;; scroll window up/down by one line
+  (global-set-key (kbd "M-n") (kbd "C-u 1 C-v"))
+  (global-set-key (kbd "M-p") (kbd "C-u 1 M-v"))
+
+  ;; makefile keybindings (see custom commands tab)
+  (global-set-key (kbd "<f5>") 'compile-build)
+  (global-set-key (kbd "<f6>") 'compile-clean)
+
+  ;; Duplicate a line below
+  (global-set-key (kbd "s-d") (kbd "C-a C-SPC C-e M-w C-j C-y"))
 #+end_src
-*** atom one dark
+** Commands
 #+begin_src emacs-lisp
-  ;; (use-package atom-one-dark-theme
-  ;;   :ensure t
-  ;;   :config (load-theme 'atom-one-dark t))
-#+end_src
-*** doom
-#+begin_src emacs-lisp
-  (use-package doom-themes
-    :ensure t
-    :config
-    ;; Global settings (defaults)
-    (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-      doom-themes-enable-italic t) ; if nil, italics is universally disabled
-    (load-theme 'doom-one t)
+  (defun compile-build ()
+    "Compile using 'make build'."
+    (interactive)
+    (compile "make build"))
 
-    ;; Enable flashing mode-line on errors
-    (doom-themes-visual-bell-config)
-
-    ;; Custom treemacs tree
-    ;; (setq doom-themes-treemacs-theme "doom-colors") ; use "doom-colors" or "doom-one"
-    ;; (doom-themes-treemacs-config)
-
-    ;; Corrects (and improves) org-mode's native fontification.
-    (doom-themes-org-config))
-#+end_src
-** modeline
-*** doom-modeline
-#+begin_src emacs-lisp
-  ;; Run M-x nerd-icons-install-fonts to install the necessary fonts.
-  (use-package doom-modeline
-    :ensure t
-    :init (doom-modeline-mode 1))
-
-  (setq inhibit-compacting-font-caches t)         ; don’t compact font caches during GC.
-  (setq doom-modeline-buffer-modification-icon t) ; show the buffer modification icon.
-  (setq doom-modeline-vcs-max-length 12)          ; length of the version control info.
-  (setq doom-modeline-checker-simple-format nil)  ; use a detailed format for checkers
-  (setq doom-modeline-buffer-file-name-style 'file-name-with-project)
-  (setq doom-modeline-buffer-encoding nil)
-#+end_src
-
-** fonts
-#+begin_src emacs-lisp
-  ;; required for doom modeline
-  ;; (use-package nerd-icons
-  ;;   :ensure t)
-#+end_src
-
-** emacs-dashboard
-#+begin_src emacs-lisp
-  ;; optional dependancy of emacs-dashboard
-  (use-package page-break-lines
-    :ensure t)
-
-  (use-package dashboard
-    :ensure t
-    :config
-    (dashboard-setup-startup-hook))
-
-  (setq dashboard-items '((projects . 5)
-      (recents . 5)))
-#+end_src
-
-** git-gutter
-#+begin_src emacs-lisp
-  (use-package git-gutter
-    :ensure t
-    :hook ((prog-mode . git-gutter-mode)
-       (org-mode . git-gutter-mode))
-    :config
-    (setq git-gutter:update-interval 0.5)) ;; if too small causes lagging
-
-  ;; makes it prettier
-  (use-package git-gutter-fringe
-    :ensure t
-    :config
-    (define-fringe-bitmap 'git-gutter-fr:added [224] nil nil '(center repeated))
-    (define-fringe-bitmap 'git-gutter-fr:modified [224] nil nil '(center repeated))
-    (define-fringe-bitmap 'git-gutter-fr:deleted [128 192 224 240] nil nil 'bottom))
-
-  ;; Customize the git-gutter:modified face to use different colours
-  (set-face-foreground 'git-gutter-fr:modified "#2375B3")
-  ;; (set-face-foreground 'git-gutter-fr:added    "blue")
-  ;; (set-face-foreground 'git-gutter-fr:deleted  "white")
-#+end_src
-
-** tree-sitter
-#+begin_src emacs-lisp
-  ;; this was app merged into master for emacs 29, so need to look into if theres a better way to enable it
-
-  ;; for better syntax hightlighting
-  (use-package tree-sitter
-    :ensure t)
-
-  (use-package tree-sitter-langs
-    :ensure t)
-
-  (global-tree-sitter-mode)
-  (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
-#+end_src
-
-** rainbow-delimiters
-#+begin_src emacs-lisp
-  ;; highlights delimiters according to their depth
-  (use-package rainbow-delimiters
-    :ensure t)
-  (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
+  (defun compile-clean ()
+    "Clean using 'make clean'."
+    (interactive)
+    (compile "make clean"))
 #+end_src
