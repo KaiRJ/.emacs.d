@@ -1,3 +1,10 @@
+;; -*- lexical-binding: t; -*-
+
+;;; init.el --- GNU Emacs Configuration
+
+;; Author: Kai Jenkins
+;; Homepage: https://github.com/KaiRJ/.emacs.d
+
 ;;; Commentary:
 
 ;; Following lines build the configuration code out of the myinit.el file.
@@ -18,6 +25,7 @@
 (setq gc-cons-threshold (* 10 1000 1000))
 
 ;;; init.el ends here
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -28,15 +36,18 @@
  '(lock-file-name-transforms '((".*" "~/.emacs.d/lockfiles/\\1" t)))
  '(package-selected-packages
    '(aggressive-indent amx auctex cmake-font-lock company-box consult-lsp counsel
-                       dap-mode dashboard doom-modeline doom-themes drag-stuff
-                       exec-path-from-shell expand-region flycheck
-                       git-gutter-fringe highlight-indent-guides
-                       highlight-indentation ibuffer-vc iedit imenu-list lsp-ui
+                       dap-mode dashboard delight doom-modeline doom-themes
+                       drag-stuff exec-path-from-shell expand-region flycheck
+                       git-gutter-fringe helpful highlight-indent-guides
+                       highlight-indentation ibuffer-vc iedit imenu-list
+                       ivy-yasnippet lsp-latex lsp-ltex lsp-ui marginalia
                        move-text multiple-cursors org-bullets page-break-lines
                        rainbow-delimiters smartparens tree-sitter-langs
                        treemacs-all-the-icons treemacs-magit treemacs-projectile
                        try undo-tree use-package which-key writegood-mode
-                       yasnippet-snippets)))
+                       yasnippet-snippets))
+ '(package-vc-selected-packages
+   '((doom-dashboard :url "https://github.com/emacs-dashboard/doom-dashboard.git"))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

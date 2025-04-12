@@ -4,6 +4,16 @@
 
 This section contains the basic commands you need to know to properly initialize your GNU Emacs.
 
+** Lexical scoping
+
+In Emacs 30, a warning has been introduced when a file is loaded without a lexical binding directive, either =t= or =nil=. This warning is part of the ongoing transition towards making lexical binding the default in future versions of Emacs. To avoid this warning, you can add the following line at the top of your Emacs Lisp files:
+
+#+begin_src emacs-lisp
+  ;; -*- lexical-binding: t; -*-
+#+end_src
+
+This cookie tells Emacs to use lexical scoping for variables — which is now the default and recommended style for almost all modern Emacs Lisp code. Without it, older dynamic scoping is used, which can cause weird bugs or performance issues in some cases. I also had to add this to some files that caused a warning on startup (not required but I found it annoying)
+
 ** Package Sources
 
 To install packages, it is useful to configure the package sources.
@@ -22,29 +32,39 @@ To manage the package configurations with =use-package=, you must install it wit
   (unless (package-installed-p 'use-package)
     (package-refresh-contents)
     (package-install 'use-package))
+
+  (use-package delight :ensure t)
 #+end_src
 
-** Misc requirements
+** TODO Misc requirements
+
+TODO think this could be tidier and more clear
+
 These are instructions you may need for a fresh install of emacs using this init file:
+
+- Running the emacs from pop shop was cause errors with the enviroment being completely different. fixed this by downloading directly from emacs (TODO add link) and installing using the script here.
 
 - For the doom modeline run M-x nerd-icons-install-fonts to install the necessary fonts.
 
-- Might need to also run M-x all-the-icons-install-fonts
+- Might need to also run =M-x all-the-icons-install-fonts=
 #+begin_src emacs-lisp
   (use-package all-the-icons
     :ensure t)
 #+end_src
 
-- For `lsp-mode` you will need to install all the language servers, eg. `sudo apt install clangd`. But emacs should prompt you to install them automatically anyway as you open files.
-  - On linux, I ran into an error of emacs not being able to find `npm` to install for example the `bash-ls`.
-  - I therefore had to install `nvm` in my terminal, following the instructions [[https://github.com/nvm-sh/nvm?tab=readme-ov-file#installing-and-updating][here]] (`apt` install old versions that didn't work either).
-  - Then I'm using the `exec-path-from-shell` package so that my terminal and emacs enviroments are the same:
-#+begin_src emacs-lisp
-  (use-package exec-path-from-shell
-    :ensure t
-    :config
-    (exec-path-from-shell-initialize))
-#+end_src
+- For =lsp-mode= you will need to install all the language servers, eg. =sudo apt install clangd=. But emacs should prompt you to install them automatically anyway as you open files, if you run into issues just install them from the terminal.
+  - On linux, I ran into an error of Emacs not being able to find =npm= to install for example the =bash-ls=.
+  - I therefore had to install =nvm= in my terminal, following the instructions [[https://github.com/nvm-sh/nvm?tab=readme-ov-file#installing-and-updating][here]] (=apt= installs old versions that didn't work either).
+  - Then I'm using the =exec-path-from-shell= package so that my terminal and emacs enviroments are the same:
+    #+begin_src emacs-lisp
+      (use-package exec-path-from-shell
+        :ensure t
+        :config
+        (exec-path-from-shell-initialize))
+    #+end_src
+
+  - For lsp-itex, the automatic install wasn't working but just try M-x lsp-install-server ltex-ls instead. Or if you download directly note to place the executable in =~/.emacs.d/.cache/lsp/ltex-ls/latest=.
+
 
 - For =dap-mode= a one-time step is required to download the extension and set it up automatically  =M-x dap-cpptools-setup= then you are good start debugging.
 
@@ -106,6 +126,7 @@ I like my UI to be clean.
 #+BEGIN_SRC emacs-lisp
   (setq inhibit-startup-message t)
   (tool-bar-mode -1)
+  (menu-bar-mode -1)
   (scroll-bar-mode -1)
   (blink-cursor-mode 0)   ;; stop cursor blinking
   (show-paren-mode 1)     ;; highlight matching paren
@@ -120,25 +141,21 @@ I like my UI to be clean.
 
 ** Theme
 
-Here I do all the things that make emacs look pretty.
-
-*** color theme
-
 Just comment in what theme you want.
 
-**** zenburn
+*** zenburn
 #+begin_src emacs-lisp
   ;; (use-package zenburn-theme
   ;;   :ensure t
   ;;   :config (load-theme 'zenburn t))
 #+end_src
-**** atom one dark
+*** atom one dark
 #+begin_src emacs-lisp
   ;; (use-package atom-one-dark-theme
   ;;   :ensure t
   ;;   :config (load-theme 'atom-one-dark t))
 #+end_src
-**** doom
+*** doom
 #+begin_src emacs-lisp
   (use-package doom-themes
     :config
@@ -146,8 +163,10 @@ Just comment in what theme you want.
     (doom-themes-visual-bell-config)    ;; Enable flashing mode-line on errors
     (doom-themes-org-config))           ;; Corrects (and improves) org-mode's native fontification.
 #+end_src
-*** modeline
-**** doom-modeline
+** Modeline
+
+I am using the doom modeline. TODO get link
+
 #+begin_src emacs-lisp
   (use-package doom-modeline
     :init (doom-modeline-mode)
@@ -163,9 +182,10 @@ Just comment in what theme you want.
   (setq doom-modeline-buffer-encoding nil)
 #+end_src
 
-*** emacs-dashboard
+** Dashboard
 
-This package gives a nicer startup menu.
+
+This package gives a nicer startup menu using the [[https://github.com/emacs-dashboard/emacs-dashboard][dashboard]] package.
 
 #+begin_src emacs-lisp
   ;; optional dependancy of emacs-dashboard
@@ -173,20 +193,17 @@ This package gives a nicer startup menu.
 
   (use-package dashboard
     :config
-    (dashboard-setup-startup-hook))
-
-  (setq dashboard-items '((projects . 5)
-      (recents . 5)))
+    (dashboard-setup-startup-hook)
+    :custom
+    (dashboard-items '((projects . 5)
+                       (recents . 5)))
+    (dashboard-set-file-icons t)
+    (dashboard-set-heading-icons t)
+    (dashboard-set-navigator t)
+    (dashboard-startup-banner 'logo)
+    )
 #+end_src
 
-*** rainbow-delimiters
-
-Highlights delimiters according to their depth.
-
-#+begin_src emacs-lisp
-  (use-package rainbow-delimiters
-    :hook (prog-mode-hook . rainbow-delimiters-mode))
-#+end_src
 * Backups and autosaves
 
 Creating folder and pointing emacs to autosave and backup spots in =.emacs.d=.
@@ -202,7 +219,9 @@ Creating folder and pointing emacs to autosave and backup spots in =.emacs.d=.
   (make-directory "~/.emacs.d/autosaves/" t)
   (make-directory "~/.emacs.d/lockfiles/" t)
 #+end_src
-* LSP
+* TODO LSP
+
+TODO need to expand on all this and check them out
 
 The main benefit of using Language Server Protocol (LSP) to configure the management of your programming languages is that LSP servers are also used by other text editors, increasing contributions to these packages.
 
@@ -222,7 +241,6 @@ That's where [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]] comes in!
     (lsp-keymap-prefix "C-c l")
     (lsp-prefer-capf t)                   ;; Use completion-at-point-functions
     (lsp-headerline-breadcrumb-enable t)) ;; Show breadcrumbs
-
 
     ;; Clangd is fast
   (setq gc-cons-threshold (* 100 1024 1024)
@@ -246,7 +264,19 @@ In addition to =lsp-mode=, it is possible to use =lsp-ui= to get additional info
     (lsp-ui-doc-position 'at-point))
 #+end_src
 
-** consult-lsp
+** flycheck
+#+begin_src emacs-lisp
+  (use-package flycheck
+    :delight
+    :hook (lsp-mode . flycheck-mode)
+    :bind (:map flycheck-mode-map
+                ("M-'" . flycheck-previous-error)
+                ("M-\\" . flycheck-next-error))
+    :custom (flycheck-display-errors-delay .3))
+#+end_src
+** TODO consult-lsp
+
+TODO learn how to use this
 
 When using =lsp=, it is likely that you will encounter programming errors. To navigate through these errors via the minibuffer, you can use a package for that. If like me, you use =consult= with your minibuffer completion, then =consult-lsp= is made for you.
 
@@ -257,7 +287,7 @@ When using =lsp=, it is likely that you will encounter programming errors. To na
 
 ** lsp-treemacs
 
-For treemacs integrating with lsp-mode
+For treemacs integrating with lsp-mode.
 
 #+begin_src emacs-lisp
   (use-package lsp-treemacs
@@ -271,7 +301,7 @@ For treemacs integrating with lsp-mode
 
 ** dap-mode
 
-Finally, if like me you need a debugger, [[https://github.com/emacs-lsp/dap-mode][dap-mode]] uses the Debug Adapter Protocol wire protocol for communication between client and Debug Server. You won't find a better debugger.
+[[https://github.com/emacs-lsp/dap-mode][dap-mode]] uses the Debug Adapter Protocol wire protocol for communication between client and Debug Server. You won't find a better debugger.
 
 #+begin_src emacs-lisp
   (use-package dap-mode
@@ -300,21 +330,65 @@ Finally, if like me you need a debugger, [[https://github.com/emacs-lsp/dap-mode
            :externalConsole t)))
 #+end_src
 * Navigation
+
+Section dedicated to managing buffers, files, and windows on GNU Emacs to provide a more pleasant experience.
+
 ** Buffers
 *** Ibuffer
 
 Buffers can quickly become a mess to manage. To manage them better, I use the =ibuffer= built-in package instead of buffer-menu, to have a nicer visual interface with a syntax color.
 
 #+begin_src emacs-lisp
-  (global-set-key (kbd "C-x C-b") 'ibuffer)
-
-  ;; (setq ibuffer-default-sorting-mode 'major-mode)
-  (setq ibuffer-show-empty-filter-groups nil)
-
-  (use-package ibuffer-vc
-    :ensure t)
+  (use-package ibuffer
+    :ensure nil
+    :bind ("C-x C-b" . ibuffer)
+    :config
+    ;; (setq ibuffer-default-sorting-mode 'major-mode)
+    (setq ibuffer-show-empty-filter-groups nil))
 #+end_src
 
+*** ibuffer-vc
+
+I organise my ibuffer by git repos. Evenentually would like to do this by projectile so it's more generic.
+
+#+begin_src emacs-lisp
+  (use-package ibuffer-vc
+    :after ibuffer)
+
+  (defun ibuffer-apply-filter-groups ()
+    "Combine my saved ibuffer filter groups with those generated
+       by `ibuffer-vc-generate-filter-groups-by-vc-root' taken from `https://github.com/reinh/dotemacs/blob/master/conf/init.org#ido'"
+    (interactive)
+    (setq ibuffer-filter-groups
+          (append
+           (ibuffer-vc-generate-filter-groups-by-vc-root)
+           ibuffer-saved-filter-groups))
+    (message "ibuffer-vc: groups set")
+    (let ((ibuf (get-buffer "*Ibuffer*")))
+      (when ibuf
+        (with-current-buffer ibuf
+          (pop-to-buffer ibuf)
+          (ibuffer-update nil t)))))
+
+  ;; Tell ibuffer to load the group automatically
+  (add-hook 'ibuffer-hook 'ibuffer-apply-filter-groups)
+#+end_src
+
+*** imenu-list
+
+[[https://github.com/bmag/imenu-list][imenu-list]] provides a really nice view of the structure of a file.
+
+#+begin_src emacs-lisp
+  (use-package imenu-list
+    :ensure t)
+
+  (global-set-key (kbd "s-i") #'imenu-list-smart-toggle)
+  (setq imenu-list-focus-after-activation t)
+  (setq imenu-list-auto-resize t)
+
+  (setq imenu-list-after-jump-hook nil)
+  (add-hook 'imenu-list-after-jump-hook #'top)
+#+end_src
 ** Windows
 *** ace windows
 #+BEGIN_SRC emacs-lisp
@@ -332,88 +406,7 @@ Buffers can quickly become a mess to manage. To manage them better, I use the =i
       ))
 #+END_SRC
 
-* General packages
-** Try
-Try different packages without having to install them.
-
-#+BEGIN_SRC emacs-lisp
-  (use-package try
-    :ensure t)
-#+END_SRC
-** which key / amx
-#+BEGIN_SRC emacs-lisp
-  ;; display possible key bindings following incomplete command
-  (use-package which-key
-    :ensure t
-    :config
-    (which-key-mode))
-
-  ;; Alternative interface for M-x.
-  ;; Prioritizes most used commands and shows keyboard shortcuts
-  (use-package amx
-    :ensure t
-    :custom
-    (amx-backend 'auto)
-    :config
-    (amx-mode 1))
-#+END_SRC
-
-** Ivy / Counsel / Swiper
-*** install packages
-#+begin_src emacs-lisp
-
-  ;; Swiper gives us a really efficient incremental search with
-  ;; regular expressions and Ivy / Counsel replace a lot of ido
-  ;; or helms completion functionality
-
-  (use-package ivy
-    :ensure t)
-
-  (use-package counsel
-    :ensure t)
-
-  (use-package swiper
-    :ensure t)
-#+end_src
-
-*** config
-#+begin_src emacs-lisp
-  (ivy-mode 1)
-  (setq ivy-use-virtual-buffers t)
-  (setq ivy-display-style 'fancy)
-  (setq ivy-wrap t)
-
-  ;; should_ speed swiper up
-  (setq swiper-use-visual-line nil)
-  (setq swiper-use-visual-line-p (lambda (a) nil))
-
-  ;; ignore certain files in find-file
-  (setq counsel-find-file-ignore-regexp "\\(?:\\.DS_Store\\)")
-  (setq ivy-extra-directories nil) ;; /. and /..
-
-
-#+END_SRC
-*** keybinding
-#+begin_src emacs-lisp
-  (global-set-key (kbd "C-x b") 'ivy-switch-buffer)
-  (global-set-key (kbd "M-w") 'ivy-kill-ring-save)
-
-  (global-set-key (kbd "M-x") 'counsel-M-x)
-  (global-set-key (kbd "C-x C-f") 'counsel-find-file)
-  (global-set-key (kbd "M-y") 'counsel-yank-pop)
-  (global-set-key (kbd "C-h f") 'counsel-describe-function)
-  (global-set-key (kbd "C-h v") 'counsel-describe-variable)
-  (global-set-key (kbd "C-h l") 'counsel-find-library)
-
-  (global-set-key (kbd "C-s") 'swiper)
-  ;; (global-set-key (kbd "C-r") 'swiper) ;; using this for quary-replace
-  (global-set-key (kbd "s-s") 'counsel-ag)
-
-  (global-set-key (kbd "M-i") 'counsel-imenu)
-#+end_src
-
-
-** Avy
+*** Avy
 #+Begin_SRC emacs-lisp
   ;; for quicker navigation around windows
   (use-package avy
@@ -422,51 +415,34 @@ Try different packages without having to install them.
     ("M-s" . avy-goto-word-1)
     ( "M-g M-g" . 'avy-goto-line))
 #+END_SRC
+*** Focus on new windows
 
-** yasnippet
+Most of the time, I want to split a window and put the focus on it to perform an action. By default GNU Emacs does not give the focus to this new window. I have no idea why this is not the default behavior, but we can easily set this behavior.
+
 #+begin_src emacs-lisp
-  (use-package yasnippet
-    :ensure t
-    :init
-    (yas-global-mode 1))
+(use-package window
+  :ensure nil
+  :bind (("C-x 2" . vsplit-last-buffer)
+         ("C-x 3" . hsplit-last-buffer)
+         ;; Don't ask before killing a buffer.
+         ([remap kill-buffer] . kill-this-buffer))
+  :preface
+  (defun hsplit-last-buffer ()
+    "Focus to the last created horizontal window."
+    (interactive)
+    (split-window-horizontally)
+    (other-window 1))
 
-  ;; needed to install the actual snippets
-  (use-package yasnippet-snippets
-    :ensure t
-    :after yasnippet
-    :config (yasnippet-snippets-initialize))
+  (defun vsplit-last-buffer ()
+    "Focus to the last created vertical window."
+    (interactive)
+    (split-window-vertically)
+    (other-window 1)))
 #+end_src
 
-** undo-tree
-#+begin_src emacs-lisp
-  (use-package undo-tree
-    :ensure t
-    :init
-    (global-undo-tree-mode)
-    :config
-    (setq undo-tree-visualizer-diff t) ;; show difs
-    (setq undo-tree-auto-save-history t) ;; save history to file
-    (setq undo-tree-visualizer-timestamps t) ;; show timestamps
-
-    ;; Create the undo history directory if it doesn't exist
-    (let ((undo-history-dir (expand-file-name "undo-history" user-emacs-directory)))
-      (unless (file-directory-p undo-history-dir)
-    (make-directory undo-history-dir)))
-
-    ;; Set the directory for undo history files
-    (setq undo-tree-history-directory-alist
-      `((".*" . ,(expand-file-name "undo-history" user-emacs-directory)))))
-#+end_src
-
-** magit
-#+Begin_SRC emacs-lisp
-  (use-package magit
-    :ensure t)
-#+END_SRC
-** treemacs
+** Treemacs
 #+begin_src emacs-lisp
   (use-package treemacs
-    :ensure t
     :config
     (progn
       (setq treemacs-hide-dot-git-directory          t
@@ -486,79 +462,23 @@ Try different packages without having to install them.
           ("C-x t M-t" . treemacs-find-tag)))
 
   (use-package treemacs-projectile
-    :after treemacs
-    :ensure t)
+    :after treemacs)
 
   (use-package treemacs-magit
-    :after treemacs
-    :ensure t)
+    :after treemacs)
 
   (use-package treemacs-all-the-icons
     :after treemacs all-the-icons
-    :config (treemacs-load-theme "all-the-icons")
-    :ensure t)
+    :config (treemacs-load-theme "all-the-icons"))
 #+end_src
-** expand-region
-#+begin_src emacs-lisp
-  ;; expand the marked region in semantic increments
-  ;; (C-- C-= to reduce region)
-  (use-package expand-region
-    :ensure t
-    :config
-    (global-set-key (kbd "C-=") 'er/expand-region))
-#+end_src
-** multiple-cursors
-#+begin_src emacs-lisp
-  (use-package multiple-cursors
-    :ensure t)
+* TODO Editing
 
-  ;; (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
-  (global-set-key (kbd "C->") 'mc/mark-next-like-this)
-  (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
-  ;; (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
-#+end_src
-** imenu-list
-#+begin_src emacs-lisp
-  (use-package imenu-list
-    :ensure t)
+TODO: need to expand on the description of all these packages
 
-  (global-set-key (kbd "s-i") #'imenu-list-smart-toggle)
-  (setq imenu-list-focus-after-activation t)
-  (setq imenu-list-auto-resize t)
-
-  (setq imenu-list-after-jump-hook nil)
-  (add-hook 'imenu-list-after-jump-hook #'top)
-#+end_src
-** iedit
-#+begin_src emacs-lisp
-  (use-package iedit
-    :config
-    ;; Disable default "C-;" binding
-    (define-key iedit-mode-keymap (kbd "C-;") nil)
-    ;; Rebind "C-r" to iedit-mode
-    (global-set-key (kbd "C-r") 'iedit-mode))
-#+end_src
-** tramp
-Doesn't work well, need to find alternative. Or don't use at all.
-
-#+begin_src emacs-lisp
-  (setq remote-file-name-inhibit-cache nil)
-
-  ;; disable version control to avoid delays
-  (setq vc-ignore-dir-regexp
-    (format "\\(%s\\)\\|\\(%s\\)"
-    vc-ignore-dir-regexp
-    tramp-file-name-regexp))
-
-  (setq tramp-verbose 1)
-
-  (defun connect-nersc ()
-    (interactive)
-    (dired "/ssh:kairj@perlmutter.nersc.gov:/global/homes/k/kairj/")
-    ;; want to add make this a bookmark so easy to get to
-    )
-#+end_src
 ** drag-stuff
+
+It is useful to be able to move a line or a region up and down without having to =kill-region= (=C-w=) and =yank (C-y)=. The [[https://github.com/rejeep/drag-stuff.el][drag-stuff]] package allows you to moves the current work, line or if marked, the current region.
+
 #+begin_src emacs-lisp
   (use-package drag-stuff
     :ensure t
@@ -569,50 +489,262 @@ Doesn't work well, need to find alternative. Or don't use at all.
     (global-set-key (kbd "s-<right>") 'drag-stuff-right)
     (global-set-key (kbd "s-<left>") 'drag-stuff-left))
 #+end_src
-** Projectile
-#+begin_src emacs-lisp
-  (use-package projectile
-    :ensure t
-    :init
-    (projectile-mode +1)
-    :bind (:map projectile-mode-map
-                ("s-p" . projectile-command-map)
-                ("C-c p" . projectile-command-map)))
+** TODO yasnippet
 
-  (setq projectile-project-search-path '("~/git/"))
-#+end_src
-** move-text
+TODO: expand intro with some links. could add a keybinding for ivy.
+
+To make editting a coding easier.
+
 #+begin_src emacs-lisp
-  (use-package move-text
-    :bind (("M-p" . move-text-up)
-           ("M-n" . move-text-down))
-    :config (move-text-default-bindings))
+  (use-package yasnippet-snippets
+    :after yasnippet
+    :config (yasnippet-snippets-initialize))
+
+  (use-package yasnippet
+    :delight yas-minor-mode "υ"
+    :config (yas-global-mode))
+
+  (use-package ivy-yasnippet :after yasnippet)
 #+end_src
+
+** iedit
+#+begin_src emacs-lisp
+  (use-package iedit
+    :config
+    ;; Disable default "C-;" binding
+    (define-key iedit-mode-keymap (kbd "C-;") nil)
+    ;; Rebind "C-r" to iedit-mode
+    (global-set-key (kbd "C-r") 'iedit-mode))
+#+end_src
+** undo-tree
+#+begin_src emacs-lisp
+  (use-package undo-tree
+    :init
+    (global-undo-tree-mode)
+    :config
+    (setq undo-tree-visualizer-diff t) ;; show difs
+    (setq undo-tree-auto-save-history t) ;; save history to file
+    (setq undo-tree-visualizer-timestamps t) ;; show timestamps
+
+    ;; Create the undo history directory if it doesn't exist
+    (let ((undo-history-dir (expand-file-name "undo-history" user-emacs-directory)))
+      (unless (file-directory-p undo-history-dir)
+    (make-directory undo-history-dir)))
+
+    ;; Set the directory for undo history files
+    (setq undo-tree-history-directory-alist
+      `((".*" . ,(expand-file-name "undo-history" user-emacs-directory)))))
+#+end_src
+
+** multiple-cursors
+
+TODO
+
+#+begin_src emacs-lisp
+  (use-package multiple-cursors
+    :bind
+    ;; (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
+    ;; (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
+    ("C->" . mc/mark-next-like-this)
+    ("C-<" . mc/mark-previous-like-this))
+
+#+end_src
+** expand-region
+
+Expand the marked region in semantic increments
+(C-- C-= to reduce region)
+
+#+begin_src emacs-lisp
+  (use-package expand-region
+    :bind
+    ("C-=" . er/expand-region))
+#+end_src
+* Minibuffer
+
+These packages make everything in the minibuffer easier.
+
+** Ivy / Counsel / Swiper
+
+Swiper gives us a really efficient incremental search with regular expressions and Ivy/Counsel replace a lot of ido or helms completion functionality.
+
+#+begin_src emacs-lisp
+  (use-package counsel ;; installs ivy and swiper as dependancies
+    :config (ivy-mode)
+
+    :custom
+    (ivy-use-virtual-buffers t)
+    (ivy-display-style 'fancy)
+    (ivy-wrap t)
+
+    ;; should_ speed swiper up
+    (swiper-use-visual-line nil)
+    (swiper-use-visual-line-p (lambda (a) nil))
+
+    ;; ignore certain files in find-file
+    (counsel-find-file-ignore-regexp "\\(?:\\.DS_Store\\)")
+    (ivy-extra-directories nil) ;; /. and /..
+
+    :bind (("C-x b"   . ivy-switch-buffer)
+           ("M-w"     . ivy-kill-ring-save)
+           ("M-x"     . counsel-M-x)
+           ("C-x C-f" . counsel-find-file)
+           ("M-y"     . counsel-yank-pop)
+           ("C-h f"   . counsel-describe-function)
+           ("C-h v"   . counsel-describe-variable)
+           ("C-h l"   . counsel-find-library)
+           ("C-s"     . swiper)
+           ;; (global-set-key (kbd "C-r") 'swiper) ;; using this for quary-replace
+           ("s-s"     . counsel-ag)
+           ("M-i"     . counsel-imenu)))
+#+end_src
+
+** which key
+Display possible key bindings following incomplete command.
+
+#+begin_src emacs-lisp
+  (use-package which-key
+    :delight
+    :custom (which-key-idle-delay 0.5)
+    :config (which-key-mode))
+#+end_src
+** amx
+Alternative interface for M-x. Prioritizes most used commands and shows keyboard shortcuts
+
+#+begin_src emacs-lisp
+  (use-package amx
+    :ensure t
+    :custom
+    (amx-backend 'auto)
+    :config
+    (amx-mode 1))
+#+end_src
+** marginalia
+#+begin_src emacs-lisp
+  (use-package marginalia
+    :after ivy
+    :init (marginalia-mode)
+    :custom
+    (marginalia-annotators '(marginalia-annotators-heavy marginalia-annotators-light nil)))
+#+end_src
+* Writing tools
+This packages are to improve all things writing.
+
+** Flyspell
+Flyspell is an on-the-fly spell checker in Emacs. It works in the background while you're typing to highlight misspelled words in your buffer. Flyspell integrates with Emacs and uses a spell-checking engine like Ispell or Aspell to detect misspellings as you type.
+
+#+begin_src emacs-lisp
+  (use-package flyspell
+    :ensure nil
+    :delight
+    :hook ((text-mode . flyspell-mode)
+           (prog-mode . flyspell-prog-mode))
+    :custom
+    ;; Add correction to abbreviation table.
+    (flyspell-abbrev-p t)
+    (flyspell-default-dictionary "en_GB")
+    (flyspell-issue-message-flag nil)
+    (flyspell-issue-welcome-flag nil))
+
+  ;; recommended to speed up flycheck
+  ;; (setq flyspell-issue-message-flag nil)
+
+  ;; easy spell check
+  ;; (global-set-key (kbd "<f8>") 'ispell-word)
+  ;; (global-set-key (kbd "C-S-<f8>") 'flyspell-mode)
+  ;; (global-set-key (kbd "C-M-<f8>") 'flyspell-buffer)
+
+  ;; (defun flyspell-check-next-highlighted-word ()
+  ;;   "Custom function to spell check next highlighted word"
+  ;;   (interactive)
+  ;;   (flyspell-goto-next-error)
+  ;;   (ispell-word)
+  ;;   )
+  ;; (global-set-key (kbd "C-<f8>") 'flyspell-check-next-highlighted-word)
+  ;; (global-set-key (kbd "M-<f8>") 'flyspell-check-previous-highlighted-word)
+
+#+end_src
+** Ispell
+Ispell is a spell-checking program that was one of the early tools for spell-checking in Unix-like systems. It's often used in Emacs and other text editors to detect and correct spelling errors. Aspell is a more modern and improved spell-checking program compared to Ispell. It has better support for multiple languages, better handling of compound words, and is more actively maintained.
+
+#+begin_src emacs-lisp
+  (use-package ispell
+    :custom
+    (ispell-hunspell-dict-paths-alist
+     '(("en_US" "/usr/share/hunspell/en_US.aff")
+       ("fr_BE" "/usr/share/hunspell/fr_BE.aff")))
+    ;; Save words in the personal dictionary without asking.
+    (ispell-silently-savep t)
+    :config
+    (setenv "LANG" "en_GB")
+    (cond ((executable-find "hunspell")
+           (setq ispell-program-name "hunspell"))
+          ((executable-find "aspell")
+           (setq ispell-program-name "aspell")
+           (setq ispell-extra-args '("--sug-mode=ultra"))))
+    ;; Ignore file sections for spell checking.
+    (add-to-list 'ispell-skip-region-alist '("#\\+begin_align" . "#\\+end_align"))
+    (add-to-list 'ispell-skip-region-alist '("#\\+begin_align*" . "#\\+end_align*"))
+    (add-to-list 'ispell-skip-region-alist '("#\\+begin_equation" . "#\\+end_equation"))
+    (add-to-list 'ispell-skip-region-alist '("#\\+begin_equation*" . "#\\+end_equation*"))
+    (add-to-list 'ispell-skip-region-alist '("#\\+begin_example" . "#\\+end_example"))
+    (add-to-list 'ispell-skip-region-alist '("#\\+begin_labeling" . "#\\+end_labeling"))
+    (add-to-list 'ispell-skip-region-alist '("#\\+begin_src" . "#\\+end_src"))
+    (add-to-list 'ispell-skip-region-alist '("\\$" . "\\$"))
+    (add-to-list 'ispell-skip-region-alist '(org-property-drawer-re))
+    (add-to-list 'ispell-skip-region-alist '(":\\(PROPERTIES\\|LOGBOOK\\):" . ":END:")))
+#+end_src
+
+** LanguageTools
+[[https://languagetool.org/][LanguageTool]] is great for correcting your grammar while you are writing or saving your buffer. To use LanguageTool with LSP mode, the [[https://github.com/emacs-languagetool/lsp-ltex][lsp-ltex]] package is what you need. The first time you use it, it will download the [[https://github.com/valentjn/ltex-ls][LTEX Language Server]] LSP server for you.
+
+*NOTE:* I don't hook =lsp-ltex= to =text-mode= since it would process the =config.org= file which has too many errors to be processed properly.
+
+#+begin_src emacs-lisp
+  (use-package lsp-ltex
+    :after lsp-mode
+    :hook ((latex-mode) . (lambda ()
+                            (require 'lsp-ltex)
+                            (lsp)))
+    :init
+    (setq lsp-ltex-version "16.0.0"))
+#+end_src
+
+** writegood-mode
+#+begin_src emacs-lisp
+  (use-package writegood-mode
+    :ensure t)
+
+  (add-hook 'TeX-mode-hook 'writegood-mode)
+#+end_src
+
 * Programming tools
-** Syntax checking
+** Auto-completion
+Auto-completion with GNU Emacs is mainly combined with LSP mode. Therefore the development of any programming language is made easier with auto-completion, which involves a completion at point followed by the display of a small pop-in containing the candidates. I am using [[https://github.com/company-mode/company-mode][company-mode]] which is easier and smoother to configure.
+
 *** company-mode
 #+begin_src emacs-lisp
   (use-package company
-    :ensure t
+    :after lsp-mode
     :hook (prog-mode . company-mode)
-    :config
-    (setq company-idle-delay 0.2  ;; Delay before suggestions popup
-          company-minimum-prefix-length 1  ;; Show suggestions after 1 char
-          company-tooltip-align-annotations t)) ;; Align annotations (e.g., function signatures)
+    :custom
+    (company-show-quick-access t)
+    (company-idle-delay 0.2)               ;; Delay before suggestions popup
+    (company-minimum-prefix-length 1)      ;; Show suggestions after 1 char
+    (company-tooltip-align-annotations t)) ;; Align annotations (e.g., function signatures)
 
   ;; for visuals
   (use-package company-box
-    :ensure t
+    :after company
+    :init (setq company-box-icons-alist 'company-box-icons-all-the-icons)
     :hook (company-mode . company-box-mode))
 #+end_src
-
-*** flycheck
-#+begin_src emacs-lisp
-  (use-package flycheck
-    :ensure t
-    :hook (prog-mode . flycheck-mode))
-#+end_src
+** TODO Syntax checking
+TODO this should maybe be moved somewhere else as lsp does all this. but uses this ? so maybe move it to ls
 ** Git
+*** magit
+#+begin_src emacs-lisp
+  (use-package magit)
+#+end_src
 *** git-gutter
 
 These packages are showing the git difference. I have set it to be similar to VScode.
@@ -673,7 +805,20 @@ This hydra command lets me quickly sync repos to the correct server
   (global-set-key (kbd "C-c s") 'hydra-sync-git/body)
 #+end_src
 
-** Paranthesis
+** Parenthesis
+*** TODO rainbow-delimiters
+
+TODO add link
+
+Highlights delimiters according to their depth.
+
+#+begin_src emacs-lisp
+  (use-package rainbow-delimiters
+    :hook (prog-mode-hook . rainbow-delimiters-mode))
+#+end_src
+
+*** TODO smartparens
+
 #+begin_src emacs-lisp
   (use-package smartparens
     :ensure t
@@ -744,8 +889,8 @@ I was using [[https://github.com/antonj/Highlight-Indentation-for-Emacs][highlig
 ;;    (set-face-background 'highlight-indentation-face "#3f444a")
 ;;    (set-face-background 'highlight-indentation-current-column-face "#5f8787"))
 #+end_src
-** C++
-*** Tweaks
+** Languages
+*** C++
 #+begin_src emacs-lisp
   ;; make sure up to date
   (require 'cc-mode)
@@ -754,24 +899,110 @@ I was using [[https://github.com/antonj/Highlight-Indentation-for-Emacs][highlig
   (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode))
 #+end_src
 
-** Python
-** cmake
+*** Python
+Look [[https://github.com/rememberYou/.emacs.d/blob/master/config.org#python][here]] when i need these
+*** cmake
 #+begin_src emacs-lisp
   (use-package cmake-mode
-    :ensure t
-    :mode ("CMakeLists.txt" . cmake-mode))
+    :hook (cmake-mode . lsp-deferred)
+    :mode ("CMakeLists\\.txt\\'" "\\.cmake\\'"))
 
   ;; for better sytax colours
   (use-package cmake-font-lock
     :hook (cmake-mode . cmake-font-lock-activate))
 #+end_src
-** make
+*** make
 #+begin_src emacs-lisp
   ;; use makefile-mode for MakeFiles
   (add-to-list 'auto-mode-alist '("Makefile" . makefile-mode))
 #+end_src
-* Org-mode
+* TODO LaTeX
+
+TODO - need to add a better language server, and in general look over these packages and see what i want/ if there are alternatives.
+
+I use the =tex-mode= built-in package and [[https://github.com/latex-lsp/texlab][texlab]] as LSP server. To use it, make sure you install it with your package manager and to configure the LSP package.
+
+With =tex-mode= we need to ensure to install AUCTeX, which is a built-in package for writing and formatting TeX files in GNU Emacs. With =AUCTeX= you can for example use the =TeX-command-master= (=C-c C-c=) command to compile your TeX files
+and the =LaTeX-environment= (=C-c C-e=) command to insert a LaTeX environment.
+
+#+begin_src emacs-lisp
+  (use-package tex
+    :ensure auctex
+    :preface
+    (defun my/switch-to-help-window (&optional ARG REPARSE)
+      "Switches to the *TeX Help* buffer after compilation."
+      (other-window 1))
+    :hook ((LaTeX-mode . reftex-mode)
+           (LaTeX-mode . prettify-symbols-mode))
+    :bind (:map TeX-mode-map
+                ("C-c C-o" . TeX-recenter-output-buffer)
+                ("C-c C-l" . TeX-next-error)
+                ("M-[" . outline-previous-heading)
+                ("M-]" . outline-next-heading))
+    :custom
+    (TeX-auto-save t)
+    (TeX-byte-compile t)
+    (TeX-clean-confirm nil)
+    (TeX-master 'dwim)
+    (TeX-parse-self t)
+    (TeX-PDF-mode t)
+    (TeX-source-correlate-mode t)
+    (TeX-view-program-selection '((output-pdf "PDF Tools")))
+    :config
+    (advice-add 'TeX-next-error :after #'my/switch-to-help-window)
+    (advice-add 'TeX-recenter-output-buffer :after #'my/switch-to-help-window)
+    ;; the ":hook" doesn't work for this one... don't ask me why.
+    (add-hook 'TeX-after-compilation-finished-functions 'TeX-revert-document-buffer))
+#+end_src
+
+Also, I like to use a TeX engine that can handle Unicode and use the font of my choice.
+
+#+begin_src emacs-lisp
+  (setq-default TeX-engine 'xetex)
+#+end_src
+
+By default, LSP mode uses =lsp-tex= as the LSP client for LaTeX. However, I prefer to use [[https://github.com/ROCKTAKEY/lsp-latex][lsp-latex]] which fully supports =texlab= (cf. https://github.com/ROCKTAKEY/lsp-latex/issues/26)
+
+#+begin_src emacs-lisp
+  (use-package lsp-latex
+    :if (executable-find "texlab")
+    ;; To properly load `lsp-latex', the `require' instruction is important.
+    :hook (LaTeX-mode . (lambda ()
+                          (require 'lsp-latex)
+                          (lsp-deferred)))
+    :custom (lsp-latex-build-on-save t))
+#+end_src
+
+To easier deal with =\label=, =\ref=, and =\cite= commands in LaTeX, I use the =reftex= built-in package.
+
+#+begin_src emacs-lisp
+  (use-package reftex
+    :ensure nil
+    :custom
+    (reftex-save-parse-info t)
+    (reftex-use-multiple-selection-buffers t))
+#+end_src
+
+Finally, it is often useful to put our hands in a bibliography in LaTeX. The built-in package =bibtex= improves the visual and provides several commands.
+
+#+begin_src emacs-lisp
+  (use-package bibtex
+    :ensure nil
+    :preface
+    (defun my/bibtex-fill-column ()
+      "Ensure that each entry does not exceed 120 characters."
+      (setq fill-column 120))
+    :hook ((bibtex-mode . lsp-deferred)
+           (bibtex-mode . my/bibtex-fill-column)))
+#+end_src
+* TODO Org
+
+TODO needs a big tidy up, see https://github.com/rememberYou/.emacs.d/blob/master/config.org#org-mode
+
+and check out https://github.com/org-roam/org-roam
+
 A lot of these changes are based of [[https://doc.norang.ca/org-mode.html#HowToUseThisDocument][this]].
+
 ** Tweaks
 #+begin_src emacs-lisp
   ;; indent with tabs for better readability
@@ -830,100 +1061,52 @@ A lot of these changes are based of [[https://doc.norang.ca/org-mode.html#HowToU
     :config
     (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
   #+END_SRC
-* Writing
-** Spell checking
-*** Ispell
-Ispell is a spell-checking program that was one of the early tools for spell-checking in Unix-like systems. It's often used in Emacs and other text editors to detect and correct spelling errors. Aspell is a more modern and improved spell-checking program compared to Ispell. It has better support for multiple languages, better handling of compound words, and is more actively maintained.
+* General packages
+** Try
+Try different packages without having to install them.
 
 #+begin_src emacs-lisp
-  ;; (use-package ispell
-  ;;   :ensure t)
+  (use-package try)
+#+end_src
+** Projectile
+#+begin_src emacs-lisp
+  (use-package projectile
+    :ensure t
+    :init
+    (projectile-mode +1)
+    :bind (:map projectile-mode-map
+                ("s-p" . projectile-command-map)
+                ("C-c p" . projectile-command-map)))
 
-  (setq ispell-program-name "hunspell")
-  (setq ispell-extra-args '("--sug-mode=ultra"))
-  (setq ispell-dictionary "english")
-  (setq ispell-list-command "--list")
-  (add-to-list 'ispell-skip-region-alist '("^#+BEGIN_SRC" . "^#+END_SRC"))
+  (setq projectile-project-search-path '("~/git/"))
 #+end_src
 
-*** Flyspell
-Flyspell is an on-the-fly spell checker in Emacs. It works in the background while you're typing to highlight misspelled words in your buffer. Flyspell integrates with Emacs and uses a spell-checking engine like Ispell or Aspell to detect misspellings as you type.
+** Documentation
+
+To have a more user-friendly documentation I use the [[https://github.com/Wilfred/helpful][helpful]] package.
 
 #+begin_src emacs-lisp
-  ;; (use-package flyspell
-  ;;   :ensure t
-  ;;   :config
-  ;;   (add-hook 'text-mode-hook 'flyspell-mode)
-  ;;   (add-hook 'prog-mode-hook 'flyspell-prog-mode))
-
-  ;; auto start flyspell mode
-  (setq flyspell-mode 1)
-
-  ;; recommended to speed up flycheck
-  ;; (setq flyspell-issue-message-flag nil)
-
-  ;; easy spell check
-  ;; (global-set-key (kbd "<f8>") 'ispell-word)
-  ;; (global-set-key (kbd "C-S-<f8>") 'flyspell-mode)
-  ;; (global-set-key (kbd "C-M-<f8>") 'flyspell-buffer)
-
-  ;; (defun flyspell-check-next-highlighted-word ()
-  ;;   "Custom function to spell check next highlighted word"
-  ;;   (interactive)
-  ;;   (flyspell-goto-next-error)
-  ;;   (ispell-word)
-  ;;   )
-  ;; (global-set-key (kbd "C-<f8>") 'flyspell-check-next-highlighted-word)
-  ;; (global-set-key (kbd "M-<f8>") 'flyspell-check-previous-highlighted-word)
-
+  (use-package helpful
+    :commands (helpful-at-point
+               helpful-callable
+               helpful-command
+               helpful-function
+               helpful-key
+               helpful-macro
+               helpful-variable)
+    :bind
+    ([remap display-local-help] . helpful-at-point)
+    ([remap describe-function] . helpful-callable)
+    ([remap describe-variable] . helpful-variable)
+    ([remap describe-symbol] . helpful-symbol)
+    ([remap describe-key] . helpful-key)
+    ([remap describe-command] . helpful-command))
 #+end_src
-** writegood-mode
-#+begin_src emacs-lisp
-  (use-package writegood-mode
-    :ensure t)
+** TODO Hydra
+* TODO Custom
 
-  (add-hook 'TeX-mode-hook 'writegood-mode)
-#+end_src
+TODO Would rather this was at the start and need tidyed up in general. dont think a lot of them are working
 
-** LaTeX mode
-combine with writing modes?
-*** General Tweaks
-#+begin_src emacs-lisp
-  (add-hook 'TeX-mode-hook 'prettify-symbols-mode)
-#+end_src
-*** AECTeX
-#+begin_src emacs-lisp
-  (use-package tex
-    :ensure auctex
-    :config
-    (setq TeX-parse-self t
-      TeX-auto-save t
-      TeX-master nil))
-#+end_src
-
-*** Org mode
-#+begin_src emacs-lisp
-  ;; set size of latex fragments
-  (setq org-format-latex-options (plist-put org-format-latex-options :scale 1.3))
-
-  ;; needed to get latexpdf working within emacs
-  (setenv "PATH" (concat (getenv "PATH") ":/usr/local/texlive/2023/bin/universal-darwin"))
-
-  ;; needed to get dvisvgm working within orgmode - note need to start emacs from terminal to work
-  (setenv "PATH" (concat (getenv "PATH") ":/Library/TeX/texbin/dvisvgm"))
-  (setq org-latex-create-formula-image-program 'dvisvgm)
-
-  ;; code highlighting in beamer presentations
-  (require 'ox-latex)
-  (setq org-latex-src-block-backend 'minted)
-  (add-to-list 'org-latex-packages-alist '("newfloat" "minted"))
-  (setq org-latex-pdf-process
-    '("pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
-      "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
-      "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"))
-#+end_arc
-*
-* Custom
 ** Key bindings
 #+begin_src emacs-lisp
   ;; C-n adds new line if reaches end of buffer

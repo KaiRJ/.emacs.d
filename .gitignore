@@ -30,3 +30,5 @@ eshell/
 /tramp
 /.dap-breakpoints
 /.extension/
+/abbrev_defs
+/eln-cache/
