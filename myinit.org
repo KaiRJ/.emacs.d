@@ -72,7 +72,9 @@ These are instructions you may need for a fresh install of emacs using this init
 
 This section contains the packages and configurations needed to get started with GNU Emacs.
 
-** Defaults
+** TODO Defaults
+
+TODO split this up a little
 
 For a better user experience of GNU Emacs, here are the default values that I use.
 
@@ -97,7 +99,10 @@ For a better user experience of GNU Emacs, here are the default values that I us
    view-read-only t                                 ; Always open read-only buffers in view-mode
    apropos-sort-by-scores t                         ; Sort apropos results by relevency
    save-interprogram-paste-before-kill t            ; Save current (system) clipboard before replacing.
-   global-subword-mode 1)                           ; treat CamelCase as distinct words
+   track-mouse nil                                  ; Ignore Mouse Movement During Key Sequences
+   next-line-add-newlines t)                        ; C-n adds new line if reaches end of buffer
+
+  (global-subword-mode 1)                           ; treat CamelCase as distinct words
 
   (setq byte-compile-warnings '(cl-functions))      ; Remove 'cl dpricated' warning on startup
 
@@ -112,13 +117,136 @@ For a better user experience of GNU Emacs, here are the default values that I us
   (add-hook 'text-mode-hook 'turn-on-visual-line-mode)
   (add-hook 'prog-mode-hook (lambda () (setq truncate-lines t)))
 
+  ;; keep cursor at same position when scrolling
+  ;; (setq scroll-preserve-screen-position 1)
+
+  ;; edge ruler
+  (add-hook 'prog-mode-hook (lambda () (display-fill-column-indicator-mode)))
+
   ;; clean up white space when file is saved
   (add-hook 'before-save-hook 'whitespace-cleanup)
 
   ;; should fix issue with aspell and org mode headings getting stuck
   (setq org-fold-core-style 'overlays)
-
  #+end_src
+
+*** Mac specific
+
+Some defaults to make working on mac nicer.
+
+#+begin_src emacs-lisp
+  ;; set keys for Apple keyboard, for emacs in OS X
+  ;; (setq mac-command-modifier 'meta) ; make cmd key do Meta
+  ;; (setq mac-option-modifier 'super) ; make opt key do Super
+  ;; (setq mac-control-modifier 'control) ; make Control key do Control
+  ;; (setq ns-function-modifier 'hyper)  ; make Fn key do Hyper
+
+  ;; disable certain mac keyboard commands
+  ;; s is for super (cmd on mac)
+  ;; (define-key global-map [?\s-c] nil) ;; Disable copy
+  ;; (define-key global-map [?\s-v] nil) ;; Disable paste
+  ;; (define-key global-map [?\s-m] nil) ;; Disable minimize
+  ;; (define-key global-map [?\s-p] nil) ;; Disable print
+  ;; (define-key global-map [?\s-o] nil) ;; Disable open
+  ;; (define-key global-map [?\C-z] nil) ;; Disable minimize
+#+end_src
+
+** Custom key bindings
+
+Here I change and define any small key binding that I use frequently in my workflow. Note I change package specific key binds when I install that package.
+
+*** Redefine
+
+This section changes some key bindings or edits there behaviour to how I like it.
+
+#+begin_src emacs-lisp
+  ;; remap quary replace so its not on M-% which is screenshot on mac
+  (global-set-key (kbd "M-r") 'query-replace)
+
+  ;; Switch to new window on window split
+  (global-set-key "\C-x2" (lambda () (interactive)(split-window-vertically) (other-window 1)))
+  (global-set-key "\C-x3" (lambda () (interactive)(split-window-horizontally) (other-window 1)))
+
+  ;; bind comment-line to C-; instead of C-x C-;
+  (global-set-key (kbd "C-;") 'comment-line)
+#+end_src
+
+*** Duplicate line
+
+Duplicates the current line below.
+
+#+begin_src emacs-lisp
+  (defun kai/duplicate-line()
+    "Duplicate the current line below."
+    (interactive)
+    (move-beginning-of-line 1)
+    (kill-line)
+    (yank)
+    (open-line 1)
+    (next-line 1)
+    (yank))
+
+  (global-set-key (kbd "s-d") 'kai/duplicate-line)
+#+end_src
+
+*** Makefile Commands
+
+Key bindings to quickly make and clean makefile projects.
+
+#+begin_src emacs-lisp
+  (defun kai/compile-build ()
+    "Compile using 'make build'."
+    (interactive)
+    (compile "make build"))
+
+  (defun kai/compile-clean ()
+    "Clean using 'make clean'."
+    (interactive)
+    (compile "make clean"))
+
+  ;; makefile keybindings
+  (global-set-key (kbd "<f5>") 'kai/compile-build)
+  (global-set-key (kbd "<f6>") 'kai/compile-clean)
+#+end_src
+*** Kill buff
+
+Kill the current buffer instead of having to pick it.
+
+#+begin_src emacs-lisp
+  (defun kai/kill-this-buffer ()
+    "Kill the current buffer."
+    (interactive)
+    (kill-buffer (current-buffer)))
+
+  (global-set-key (kbd "C-x k") 'kai/kill-this-buffer)
+#+end_src
+*** Scroll
+
+Scroll window up/down by one line
+
+#+begin_src emacs-lisp
+  (global-set-key (kbd "M-n") (kbd "C-u 1 C-v"))
+  (global-set-key (kbd "M-p") (kbd "C-u 1 M-v"))
+#+end_src
+*** Comment line
+#+begin_src emacs-lisp
+  ;;  (defun kai/comment-line-stay ()
+  ;;    "Comment or uncomment the current line, but don't move point."
+  ;;    (interactive)
+  ;;    (let ((orig-pos (point)))
+  ;;      (comment-line 1)
+  ;;      (goto-char orig-pos)))
+
+  (defun kai/comment-line-stay ()
+    "Toggle comment on current line without moving point."
+    (interactive)
+    (let ((orig-pos (point)))
+      (comment-line nil)  ;; nil = behave normally (toggle)
+      (goto-char orig-pos)))
+
+
+  (global-set-key (kbd "C-;") 'kai/comment-line-stay)
+#+end_src
 ** Interface
 
 I like my UI to be clean.
@@ -200,8 +328,7 @@ This package gives a nicer startup menu using the [[https://github.com/emacs-das
     (dashboard-set-file-icons t)
     (dashboard-set-heading-icons t)
     (dashboard-set-navigator t)
-    (dashboard-startup-banner 'logo)
-    )
+    (dashboard-startup-banner 'official))
 #+end_src
 
 * Backups and autosaves
@@ -507,14 +634,16 @@ To make editting a coding easier.
   (use-package ivy-yasnippet :after yasnippet)
 #+end_src
 
-** iedit
+** TODO iedit
+
+TODO
+
 #+begin_src emacs-lisp
   (use-package iedit
+    :bind
+    ("C-r" . iedit-mode)
     :config
-    ;; Disable default "C-;" binding
-    (define-key iedit-mode-keymap (kbd "C-;") nil)
-    ;; Rebind "C-r" to iedit-mode
-    (global-set-key (kbd "C-r") 'iedit-mode))
+    (define-key iedit-mode-keymap (kbd "C-;") nil)) ;; unbind as used for commend-line
 #+end_src
 ** undo-tree
 #+begin_src emacs-lisp
@@ -551,8 +680,7 @@ TODO
 #+end_src
 ** expand-region
 
-Expand the marked region in semantic increments
-(C-- C-= to reduce region)
+Expand the marked region in semantic increments (C-- C-= to reduce region).
 
 #+begin_src emacs-lisp
   (use-package expand-region
@@ -630,6 +758,7 @@ Alternative interface for M-x. Prioritizes most used commands and shows keyboard
 This packages are to improve all things writing.
 
 ** Flyspell
+
 Flyspell is an on-the-fly spell checker in Emacs. It works in the background while you're typing to highlight misspelled words in your buffer. Flyspell integrates with Emacs and uses a spell-checking engine like Ispell or Aspell to detect misspellings as you type.
 
 #+begin_src emacs-lisp
@@ -638,6 +767,8 @@ Flyspell is an on-the-fly spell checker in Emacs. It works in the background whi
     :delight
     :hook ((text-mode . flyspell-mode)
            (prog-mode . flyspell-prog-mode))
+    :config
+    (define-key flyspell-mode-map (kbd "C-;") nil) ;; unbind as used for commend-line
     :custom
     ;; Add correction to abbreviation table.
     (flyspell-abbrev-p t)
@@ -664,15 +795,17 @@ Flyspell is an on-the-fly spell checker in Emacs. It works in the background whi
 
 #+end_src
 ** Ispell
+
 Ispell is a spell-checking program that was one of the early tools for spell-checking in Unix-like systems. It's often used in Emacs and other text editors to detect and correct spelling errors. Aspell is a more modern and improved spell-checking program compared to Ispell. It has better support for multiple languages, better handling of compound words, and is more actively maintained.
 
 #+begin_src emacs-lisp
   (use-package ispell
-    :custom
-    (ispell-hunspell-dict-paths-alist
-     '(("en_US" "/usr/share/hunspell/en_US.aff")
-       ("fr_BE" "/usr/share/hunspell/fr_BE.aff")))
+    ;; :custom
+    ;; (ispell-hunspell-dict-paths-alist
+    ;;  '(("en_US" "/usr/share/hunspell/en_US.aff")
+    ;;    ("fr_BE" "/usr/share/hunspell/fr_BE.aff")))
     ;; Save words in the personal dictionary without asking.
+    :custom
     (ispell-silently-savep t)
     :config
     (setenv "LANG" "en_GB")
@@ -845,7 +978,6 @@ My setup for dealing with indentation
 
 *** aggressive-indent
 #+begin_src emacs-lisp
-  ;; disabled for now
   (use-package aggressive-indent
     :custom
     (aggressive-indent-comments-too t))
@@ -897,6 +1029,14 @@ I was using [[https://github.com/antonj/Highlight-Indentation-for-Emacs][highlig
 
   ;; set .h files to use c++ mode instead
   (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode))
+#+end_src
+
+If you follow [[https://google.github.io/styleguide/cppguide.html][Google's C/++ conventions]], the [[https://github.com/google/styleguide/blob/gh-pages/google-c-style.el][google-c-style]] package changes some default values to ensure that you follow these conventions as much as possible.
+
+#+begin_src emacs-lisp
+  (use-package google-c-style
+    :hook (((c-mode c++-mode) . google-set-c-style)
+           (c-mode-common . google-make-newline-indent)))
 #+end_src
 
 *** Python
@@ -1103,65 +1243,3 @@ To have a more user-friendly documentation I use the [[https://github.com/Wilfre
     ([remap describe-command] . helpful-command))
 #+end_src
 ** TODO Hydra
-* TODO Custom
-
-TODO Would rather this was at the start and need tidyed up in general. dont think a lot of them are working
-
-** Key bindings
-#+begin_src emacs-lisp
-  ;; C-n adds new line if reaches end of buffer
-  (setq next-line-add-newlines t)
-
-  ;; allow hash to be entered (changed keyboard to australian instead)
-  ;; (global-set-key (kbd "M-3") '(lambda () (interactive) (insert "#")))
-
-  ;; set keys for Apple keyboard, for emacs in OS X
-  (setq mac-command-modifier 'meta) ; make cmd key do Meta
-  (setq mac-option-modifier 'super) ; make opt key do Super
-  ;; (setq mac-control-modifier 'control) ; make Control key do Control
-  ;; (setq ns-function-modifier 'hyper)  ; make Fn key do Hyper
-
-  ;; disable certain mac keyboard commands
-  ;; s is for super (cmd on mac)
-  (define-key global-map [?\s-c] nil) ;; Disable copy
-  (define-key global-map [?\s-v] nil) ;; Disable paste
-  (define-key global-map [?\s-m] nil) ;; Disable minimize
-  (define-key global-map [?\s-p] nil) ;; Disable print
-  (define-key global-map [?\s-o] nil) ;; Disable open
-  (define-key global-map [?\C-z] nil) ;; Disable minimize
-
-  ;; remap quary replace so its not on M-% which is screenshot on mac
-  (global-set-key (kbd "M-r") 'query-replace)
-
-  ;; Switch to new window on window split
-  (global-set-key "\C-x2" (lambda () (interactive)(split-window-vertically) (other-window 1)))
-  (global-set-key "\C-x3" (lambda () (interactive)(split-window-horizontally) (other-window 1)))
-
-  ;; bind comment-line to C-; instead of C-x C-;
-  (global-set-key (kbd "C-;") 'comment-line)
-
-  ;; keep cursor at same position when scrolling
-  ;; (setq scroll-preserve-screen-position 1)
-  ;; scroll window up/down by one line
-  (global-set-key (kbd "M-n") (kbd "C-u 1 C-v"))
-  (global-set-key (kbd "M-p") (kbd "C-u 1 M-v"))
-
-  ;; makefile keybindings (see custom commands tab)
-  (global-set-key (kbd "<f5>") 'compile-build)
-  (global-set-key (kbd "<f6>") 'compile-clean)
-
-  ;; Duplicate a line below
-  (global-set-key (kbd "s-d") (kbd "C-a C-SPC C-e M-w C-j C-y"))
-#+end_src
-** Commands
-#+begin_src emacs-lisp
-  (defun compile-build ()
-    "Compile using 'make build'."
-    (interactive)
-    (compile "make build"))
-
-  (defun compile-clean ()
-    "Clean using 'make clean'."
-    (interactive)
-    (compile "make clean"))
-#+end_src

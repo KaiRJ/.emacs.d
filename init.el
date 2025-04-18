@@ -38,14 +38,14 @@
    '(aggressive-indent amx auctex cmake-font-lock company-box consult-lsp counsel
                        dap-mode dashboard delight doom-modeline doom-themes
                        drag-stuff exec-path-from-shell expand-region flycheck
-                       git-gutter-fringe helpful highlight-indent-guides
-                       highlight-indentation ibuffer-vc iedit imenu-list
-                       ivy-yasnippet lsp-latex lsp-ltex lsp-ui marginalia
-                       move-text multiple-cursors org-bullets page-break-lines
-                       rainbow-delimiters smartparens tree-sitter-langs
-                       treemacs-all-the-icons treemacs-magit treemacs-projectile
-                       try undo-tree use-package which-key writegood-mode
-                       yasnippet-snippets))
+                       git-gutter-fringe google-c-style helpful
+                       highlight-indent-guides highlight-indentation ibuffer-vc
+                       iedit imenu-list ivy-yasnippet lsp-latex lsp-ltex lsp-ui
+                       marginalia move-text multiple-cursors org-bullets
+                       page-break-lines rainbow-delimiters smartparens
+                       tree-sitter-langs treemacs-all-the-icons treemacs-magit
+                       treemacs-projectile try undo-tree use-package which-key
+                       writegood-mode yasnippet-snippets))
  '(package-vc-selected-packages
    '((doom-dashboard :url "https://github.com/emacs-dashboard/doom-dashboard.git"))))
 (custom-set-faces
