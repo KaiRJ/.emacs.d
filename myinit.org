@@ -1,8 +1,47 @@
 #+STARTUP: overview
 
 * TODO Introduction
-* TODO Contents
-need to auto generate this
+* Contents :TOC_2:
+- [[#introduction][Introduction]]
+- [[#initialisation][Initialisation]]
+  - [[#lexical-scoping][Lexical scoping]]
+  - [[#minimal-emacs][Minimal-Emacs]]
+  - [[#use-package][use-package]]
+  - [[#my-defaults][My defaults]]
+  - [[#shell-environment][Shell environment]]
+  - [[#custom-key-bindings][Custom key bindings]]
+  - [[#misc-requirements][Misc requirements]]
+- [[#ui][UI]]
+  - [[#theme][Theme]]
+  - [[#dashboard][Dashboard]]
+- [[#general-packages][General packages]]
+  - [[#try][Try]]
+  - [[#projectile][Projectile]]
+  - [[#documentation][Documentation]]
+  - [[#hydra][Hydra]]
+  - [[#org][Org]]
+  - [[#minibuffer][Minibuffer]]
+  - [[#navigation][Navigation]]
+  - [[#editing][Editing]]
+- [[#programming-packages][Programming packages]]
+  - [[#defaults][Defaults]]
+  - [[#lsp][LSP]]
+  - [[#tree-sitter][Tree-sitter]]
+  - [[#flycheck][flycheck]]
+  - [[#dap-mode][dap-mode]]
+  - [[#company-mode][company-mode]]
+  - [[#git][Git]]
+  - [[#parenthesis][Parenthesis]]
+  - [[#indentation][Indentation]]
+  - [[#languages][Languages]]
+- [[#writing-packages][Writing packages]]
+  - [[#defaults-1][Defaults]]
+  - [[#flyspell][Flyspell]]
+  - [[#ispell][Ispell]]
+  - [[#languagetools][LanguageTools]]
+  - [[#writegood-mode][writegood-mode]]
+  - [[#latex][LaTeX]]
+
 * TODO Initialisation
 This section contains the basic commands to initialize your GNU Emacs with some of my default preferences.
 
@@ -343,6 +382,13 @@ A lot of these changes are based of [[https://doc.norang.ca/org-mode.html#HowToU
     :config
     (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
   #+END_SRC
+**** toc-org
+In order to auto generate the table of contents of this file (and others) I'm using the [[https://github.com/snosov1/toc-org][toc-org]] package. Every time you save an org file, the first headline with a =:TOC:= tag will be updated with the current table of contents (=:TOC_2:= sets the max depth to 2).
+
+#+begin_src emacs-lisp
+  (use-package toc-org
+    :hook (org-mode . toc-org-enable))
+#+end_src
 ** Minibuffer
 These packages make everything in the minibuffer nicer and easier.
 
