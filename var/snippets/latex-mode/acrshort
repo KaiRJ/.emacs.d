@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: arcshort
+# key: as
+# --
+\acrshort{${1:acronym}}$0
