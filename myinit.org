@@ -595,7 +595,6 @@ To make editting a coding easier.
     :config (yasnippet-snippets-initialize))
 
   (use-package yasnippet
-    :delight yas-minor-mode "√èÖ"
     :config (yas-global-mode))
 
   (use-package ivy-yasnippet :after yasnippet)
@@ -740,7 +739,7 @@ For treemacs integrating with lsp-mode.
 #+end_src
 ** TODO Tree-sitter
 
-[[https://tree-sitter.github.io/tree-sitter/][Tree-sitter]] is a fast, incremental parsing library that gives Emacs (and other editors) rich, real-time syntax trees of your code. It lets your editor understand code like a compiler does Å\ with actual structure, not just regex-y color rules. As of Emacs 29 it is built in.
+[[https://tree-sitter.github.io/tree-sitter/][Tree-sitter]] is a fast, incremental parsing library that gives Emacs (and other editors) rich, real-time syntax trees of your code. It lets your editor understand code like a compiler does - with actual structure, not just regex-y color rules. As of Emacs 29 it is built in.
 
 I am currently using [[https://github.com/renzmann/treesit-auto][treesit-auto]] to make the setup easier.
 
