@@ -3,7 +3,7 @@
 * Introduction
 This is my =.emacsd= folder to load my preferred Emacs configuration. Although it "should" work out of the box, I've added some extra steps I've needed in the past to the section [[*Misc requirements][Misc requirements]].
 
-* Contents :TOC_2:
+* Contents                                                            :TOC_2:
 - [[#introduction][Introduction]]
 - [[#initialisation][Initialisation]]
   - [[#lexical-scoping][Lexical scoping]]
@@ -12,8 +12,15 @@ This is my =.emacsd= folder to load my preferred Emacs configuration. Although i
   - [[#auto-save][auto-save]]
   - [[#my-defaults][My defaults]]
   - [[#shell-environment][Shell environment]]
-  - [[#custom-key-bindings][Custom key bindings]]
   - [[#misc-requirements][Misc requirements]]
+- [[#custom-changes][Custom changes]]
+  - [[#redefine-keybindings][Redefine keybindings]]
+  - [[#split-window][Split window]]
+  - [[#duplicate-line][Duplicate line]]
+  - [[#makefile-commands][Makefile Commands]]
+  - [[#kill-buff][Kill buff]]
+  - [[#scroll][Scroll]]
+  - [[#comment-line][Comment line]]
 - [[#ui][UI]]
   - [[#theme][Theme]]
   - [[#dashboard][Dashboard]]
@@ -46,12 +53,10 @@ This is my =.emacsd= folder to load my preferred Emacs configuration. Although i
   - [[#writegood-mode][writegood-mode]]
   - [[#latex][LaTeX]]
 
-* TODO Initialisation
-TODO the order of these could be better
-
+* Initialisation
 This section contains the basic commands to initialize your GNU Emacs with some of my default preferences.
 
-** TODO Lexical scoping
+** Lexical scoping
 In Emacs 30, a warning has been introduced when a file is loaded without a lexical binding directive, either =t= or =nil=. This warning is part of the ongoing transition towards making lexical binding the default in future versions of Emacs. To avoid this warning, you can add the following line at the top of your Emacs Lisp files:
 
 #+begin_src emacs-lisp
@@ -91,7 +96,7 @@ Enabling auto-save-mode mitigates the risk of data loss in the event of a crash.
 When auto-save-visited-mode is enabled, Emacs will auto-save file-visiting buffers after a certain amount of idle time if the user forgets to save it with =save-buffer= or =C-x s= for example.
 
 #+begin_src emacs-lisp
-  (setq auto-save-visited-interval 5) ;; Save after 5 seconds if inactivity
+  (setq auto-save-visited-interval 30) ;; Save after 30 seconds if inactivity
   (auto-save-visited-mode 1)
 #+end_src
 
@@ -124,108 +129,13 @@ I'm using the [[https://github.com/purcell/exec-path-from-shell][exec-path-from-
 
 #+begin_src emacs-lisp
   (use-package exec-path-from-shell
+    :defer t
     :config
     (exec-path-from-shell-initialize))
 #+end_src
 
-** TODO Custom key bindings
-TODO move redfine into the emacs usepackage above.
-TODO I think move all my functions into their own section, maybe at end of their own heading
-
-Here I change and define any small key binding that I use frequently in my workflow. Note I change package specific key binds when I install that package.
-
-*** Redefine
-This section changes some key bindings or edits there behaviour to how I like it.
-
-#+begin_src emacs-lisp
-  ;; Remap quary replace so its not on M-% which is screenshot on mac
-  (keymap-global-set "M-r" 'quary-repace)
-
-  ;; Switch to new window on window split
-  (global-set-key "\C-x2"
-                  (lambda ()
-                    (interactive)
-                    (split-window-vertically)
-                    (other-window 1)))
-
-  (global-set-key "\C-x3"
-                  (lambda ()
-                    (interactive)
-                    (split-window-horizontally)
-                    (other-window 1)))
-
-  ;; Bind comment-line to C-; instead of C-x C-;
-  (global-set-key (kbd "C-;") 'comment-line)
-#+end_src
-
-*** Duplicate line
-
-Duplicates the current line below.
-
-#+begin_src emacs-lisp
-  (defun kai/duplicate-line()
-    "Duplicate the current line below."
-    (interactive)
-    (move-beginning-of-line 1)
-    (kill-line)
-    (yank)
-    (open-line 1)
-    (next-line 1)
-    (yank))
-
-  (global-set-key (kbd "s-d") 'kai/duplicate-line)
-#+end_src
-
-*** Makefile Commands
-
-Key bindings to quickly make and clean makefile projects.
-
-#+begin_src emacs-lisp
-  (defun kai/compile-build ()
-    "Compile using 'make build'."
-    (interactive)
-    (compile "make build"))
-
-  (defun kai/compile-clean ()
-    "Clean using 'make clean'."
-    (interactive)
-    (compile "make clean"))
-
-  ;; makefile keybindings
-  (global-set-key (kbd "<f5>") 'kai/compile-build)
-  (global-set-key (kbd "<f6>") 'kai/compile-clean)
-#+end_src
-*** Kill buff
-Kill the current buffer instead of having to pick it.
-
-#+begin_src emacs-lisp
-  (defun kai/kill-this-buffer ()
-    "Kill the current buffer."
-    (interactive)
-    (kill-buffer (current-buffer)))
-
-  (global-set-key (kbd "C-x k") 'kai/kill-this-buffer)
-#+end_src
-*** Scroll
-Scroll window up/down by one line
-
-#+begin_src emacs-lisp
-  (global-set-key (kbd "M-n") (kbd "C-u 1 C-v"))
-  (global-set-key (kbd "M-p") (kbd "C-u 1 M-v"))
-#+end_src
-*** Comment line
-#+begin_src emacs-lisp
-  (defun kai/comment-line-stay ()
-    "Toggle comment on current line without moving point."
-    (interactive)
-    (let ((orig-pos (point)))
-      (comment-line nil)  ;; nil = behave normally (toggle)
-      (goto-char orig-pos)))
-
-  (global-set-key (kbd "C-;") 'kai/comment-line-stay)
-#+end_src
 ** Misc requirements
-These are instructions you may need for a fresh install of emacs using this init file:
+These are instructions you may need for a fresh install of Emacs using this init file:
 
 - Running Emacs from pop shop caused errors with the environment being completely different, I fixed this by downloading directly from [[https://www.gnu.org/software/emacs/][Emacs]].
 
@@ -243,6 +153,108 @@ These are instructions you may need for a fresh install of emacs using this init
 
 - For =dap-mode= a one-time step is required to download the extension and set it up automatically  =M-x dap-cpptools-setup= then you are good start debugging.
 
+* TODO Custom changes
+This section contains my elisp code and some small keybinding changes that I use frequently in my workflow. Note, I change package specific keybindings when I install that package.
+
+** Redefine keybindings
+Some keybinding changes to how I like it.
+
+#+begin_src emacs-lisp
+  (use-package keybindings
+    :ensure nil
+    :bind
+    ;; Remap quary replace so its not on M-% which is screenshot on mac
+    ("M-r" . quary-repace)
+    ;; Bind comment-line to C-; instead of C-x C-;
+    ("C-;" . comment-line))
+#+end_src
+
+** Split window
+I prefer when the focus is moved to the new window.
+
+#+begin_src emacs-lisp
+  ;; Switch to new window on window split
+  (keymap-global-set "C-x 2"
+                     (lambda ()
+                       (interactive)
+                       (split-window-vertically)
+                       (other-window 1)))
+
+  (keymap-global-set "C-x 3"
+                     (lambda ()
+                       (interactive)
+                       (split-window-horizontally)
+                       (other-window 1)))
+#+end_src
+
+** Duplicate line
+Duplicates the current line below.
+
+#+begin_src emacs-lisp
+  (defun kai/duplicate-line()
+    "Duplicate the current line below."
+    (interactive)
+    (move-beginning-of-line 1)
+    (kill-line)
+    (yank)
+    (open-line 1)
+    (next-line 1)
+    (yank))
+
+  (keymap-global-set "s-d" 'kai/duplicate-line)
+#+end_src
+
+** TODO Makefile Commands
+Check if there's a package to work with make projects.
+
+Key bindings to quickly make and clean makefile projects.
+
+#+begin_src emacs-lisp
+  (defun kai/compile-build ()
+    "Compile using 'make build'."
+    (interactive)
+    (compile "make build"))
+
+  (defun kai/compile-clean ()
+    "Clean using 'make clean'."
+    (interactive)
+    (compile "make clean"))
+
+  ;; makefile keybindings
+  (keymap-global-set "<f5>" 'kai/compile-build)
+  (keymap-global-set "<f6>" 'kai/compile-clean)
+#+end_src
+** Kill buff
+Kill the current buffer instead of having to pick it.
+
+#+begin_src emacs-lisp
+  (defun kai/kill-this-buffer ()
+    "Kill the current buffer."
+    (interactive)
+    (kill-buffer (current-buffer)))
+
+  (keymap-global-set "C-x k" 'kai/kill-this-buffer)
+#+end_src
+** Scroll
+Scroll window up/down by one line using single chords.
+
+#+begin_src emacs-lisp
+  (keymap-global-set "M-n" '(kbd "C-u 1 C-v"))
+  (keymap-global-set "M-p" '(kbd "C-u 1 M-v"))
+#+end_src
+** Comment line
+I prefer the point to stay in place when I comment a line.
+
+#+begin_src emacs-lisp
+  (defun kai/comment-line-stay ()
+    "Toggle comment on current line without moving point."
+    (interactive)
+    (let ((orig-pos (point)))
+      (comment-line nil)  ;; nil = behave normally (toggle)
+      (goto-char orig-pos)))
+
+  (keymap-global-set "C-;" 'kai/comment-line-stay)
+#+end_src
 * UI
 ** Theme
 I'm using the [[https://github.com/doomemacs/themes][doom-one]] theme:
