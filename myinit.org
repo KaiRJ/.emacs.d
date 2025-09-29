@@ -1,12 +1,15 @@
 #+STARTUP: overview
 
-* TODO Introduction
+* Introduction
+This is my =.emacsd= folder to load my preferred Emacs configuration. Although it "should" work out of the box, I've added some extra steps I've needed in the past to the section [[*Misc requirements][Misc requirements]].
+
 * Contents :TOC_2:
 - [[#introduction][Introduction]]
 - [[#initialisation][Initialisation]]
   - [[#lexical-scoping][Lexical scoping]]
   - [[#minimal-emacs][Minimal-Emacs]]
   - [[#use-package][use-package]]
+  - [[#auto-save][auto-save]]
   - [[#my-defaults][My defaults]]
   - [[#shell-environment][Shell environment]]
   - [[#custom-key-bindings][Custom key bindings]]
@@ -15,6 +18,7 @@
   - [[#theme][Theme]]
   - [[#dashboard][Dashboard]]
 - [[#general-packages][General packages]]
+  - [[#from-mimimal-emacs][From mimimal emacs]]
   - [[#try][Try]]
   - [[#projectile][Projectile]]
   - [[#documentation][Documentation]]
@@ -43,9 +47,11 @@
   - [[#latex][LaTeX]]
 
 * TODO Initialisation
+TODO the order of these could be better
+
 This section contains the basic commands to initialize your GNU Emacs with some of my default preferences.
 
-** Lexical scoping
+** TODO Lexical scoping
 In Emacs 30, a warning has been introduced when a file is loaded without a lexical binding directive, either =t= or =nil=. This warning is part of the ongoing transition towards making lexical binding the default in future versions of Emacs. To avoid this warning, you can add the following line at the top of your Emacs Lisp files:
 
 #+begin_src emacs-lisp
@@ -71,6 +77,22 @@ If you are having trouble when starting Emacs, you can pass Emacs the =--debug-i
     (setq use-package-verbose t
           use-package-expand-minimally nil
           use-package-compute-statistics t))
+#+end_src
+
+** auto-save
+Enabling auto-save-mode mitigates the risk of data loss in the event of a crash. Auto-saved data can be recovered using the =recover-file= or =recover-session= functions:
+
+#+begin_src emacs-lisp
+  (setq auto-save-default t)
+  (setq auto-save-interval 300)
+  (setq auto-save-timeout 30)
+#+end_src
+
+When auto-save-visited-mode is enabled, Emacs will auto-save file-visiting buffers after a certain amount of idle time if the user forgets to save it with =save-buffer= or =C-x s= for example.
+
+#+begin_src emacs-lisp
+  (setq auto-save-visited-interval 5) ;; Save after 5 seconds if inactivity
+  (auto-save-visited-mode 1)
 #+end_src
 
 ** My defaults
@@ -272,6 +294,79 @@ This package gives a nicer startup menu using the [[https://github.com/emacs-das
 TODO write short description
 TODO all these need tidied up and put into a sub headings
 
+** TODO From mimimal emacs
+TODO split these up and write proper intro to them
+
+#+begin_src emacs-lisp
+  ;; Auto-revert in Emacs is a feature that automatically updates the
+  ;; contents of a buffer to reflect changes made to the underlying file
+  ;; on disk.
+  (use-package autorevert
+    :ensure nil
+    :commands (auto-revert-mode global-auto-revert-mode)
+    :hook
+    (after-init . global-auto-revert-mode)
+    :custom
+    (auto-revert-interval 3)
+    (auto-revert-remote-files nil)
+    (auto-revert-use-notify t)
+    (auto-revert-avoid-polling nil)
+    (auto-revert-verbose t))
+
+  ;; Recentf is an Emacs package that maintains a list of recently
+  ;; accessed files, making it easier to reopen files you have worked on
+  ;; recently.
+  (use-package recentf
+    :ensure nil
+    :commands (recentf-mode recentf-cleanup)
+    :hook
+    (after-init . recentf-mode)
+
+    :custom
+    (recentf-auto-cleanup (if (daemonp) 300 'never))
+    (recentf-exclude
+     (list "\\.tar$" "\\.tbz2$" "\\.tbz$" "\\.tgz$" "\\.bz2$"
+           "\\.bz$" "\\.gz$" "\\.gzip$" "\\.xz$" "\\.zip$"
+           "\\.7z$" "\\.rar$"
+           "COMMIT_EDITMSG\\'"
+           "\\.\\(?:gz\\|gif\\|svg\\|png\\|jpe?g\\|bmp\\|xpm\\)$"
+           "-autoloads\\.el$" "autoload\\.el$"))
+
+    :config
+    ;; A cleanup depth of -90 ensures that `recentf-cleanup' runs before
+    ;; `recentf-save-list', allowing stale entries to be removed before the list
+    ;; is saved by `recentf-save-list', which is automatically added to
+    ;; `kill-emacs-hook' by `recentf-mode'.
+    (add-hook 'kill-emacs-hook #'recentf-cleanup -90))
+
+  ;; savehist is an Emacs feature that preserves the minibuffer history between
+  ;; sessions. It saves the history of inputs in the minibuffer, such as commands,
+  ;; search strings, and other prompts, to a file. This allows users to retain
+  ;; their minibuffer history across Emacs restarts.
+  (use-package savehist
+    :ensure nil
+    :commands (savehist-mode savehist-save)
+    :hook
+    (after-init . savehist-mode)
+    :custom
+    (savehist-autosave-interval 600)
+    (savehist-additional-variables
+     '(kill-ring                        ; clipboard
+       register-alist                   ; macros
+       mark-ring global-mark-ring       ; marks
+       search-ring regexp-search-ring)))
+
+  ;; save-place-mode enables Emacs to remember the last location within a file
+  ;; upon reopening. This feature is particularly beneficial for resuming work at
+  ;; the precise point where you previously left off.
+  (use-package saveplace
+    :ensure nil
+    :commands (save-place-mode save-place-local-mode)
+    :hook
+    (after-init . save-place-mode)
+    :custom
+    (save-place-limit 400))
+#+end_src
 ** Try
 Try different packages without having to install them.
 
@@ -708,6 +803,8 @@ Expand the marked region in semantic increments (C-- C-= to reduce region).
     :hook
     (;; Add line numbers to progam modes
      (prog-mode . display-line-numbers-mode)
+     ;; Add column fill indicator
+     (prog-mode . display-fill-column-indicator-mode)
      ;; Line Wrappings
      (prog-mode . (lambda () (setq truncate-lines t))))
     :custom
@@ -715,7 +812,6 @@ Expand the marked region in semantic increments (C-- C-= to reduce region).
     (global-subword-mode 1))
 #+end_src
 ** TODO LSP
-
 TODO need to expand on all this and check them out
 
 The main benefit of using Language Server Protocol (LSP) to configure the management of your programming languages is that LSP servers are also used by other text editors, increasing contributions to these packages.
@@ -723,6 +819,8 @@ The main benefit of using Language Server Protocol (LSP) to configure the manage
 *** lsp-mode
 
 That's where [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]] comes in!
+
+I was running into problems with lsp-mode and C++, where it would should errors in C++20 but would compile and run fine. I think this was due to the clangd downloaded by lsp-mode being too old, so I've directly set it to be my local download using =lsp-clients-clangd-executable=.
 
 #+begin_src emacs-lisp
   (use-package lsp-mode
@@ -734,8 +832,10 @@ That's where [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]] comes in!
     (lsp-enable-links nil)
     (lsp-enable-snippet nil)
     (lsp-keymap-prefix "C-c l")
-    (lsp-prefer-capf t)                   ;; Use completion-at-point-functions
-    (lsp-headerline-breadcrumb-enable t)) ;; Show breadcrumbs
+    (lsp-prefer-capf t)                  ;; Use completion-at-point-functions
+    (lsp-headerline-breadcrumb-enable t) ;; Show breadcrumbs
+    (lsp-clients-clangd-executable "/usr/bin/clangd-20")
+    (lsp-clients-clangd-args ("--header-insertion=never")))
 
     ;; Clangd is fast
   (setq gc-cons-threshold (* 100 1024 1024)
@@ -746,7 +846,8 @@ That's where [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]] comes in!
         lsp-idle-delay 0.1)  ;; clangd is fast
 #+end_src
 
-*** lsp-ui
+*** TODO lsp-ui
+TODO i think this is causing issues with pop os tiling
 
 In addition to =lsp-mode=, it is possible to use =lsp-ui= to get additional information (e.g., documentation) when hovering a variable or a function.
 
@@ -755,7 +856,7 @@ In addition to =lsp-mode=, it is possible to use =lsp-ui= to get additional info
     :hook (lsp-mode . lsp-ui-mode)
     :custom
     (lsp-ui-sideline-enable t)
-    (lsp-ui-doc-enable t)
+    (lsp-ui-doc-enable nil)
     (lsp-ui-doc-position 'at-point))
 #+end_src
 
@@ -767,6 +868,7 @@ When using =lsp=, it is likely that you will encounter programming errors. To na
 
 #+begin_src emacs-lisp
   (use-package consult-lsp
+    :disabled
     :commands (consult-lsp-diagnostics consult-lsp-symbols))
 #+end_src
 
@@ -971,7 +1073,6 @@ Need to learn how to use this. Might only be good to use strict mode with emacs 
 #+end_src
 
 ** Indentation
-
 My setup for dealing with indentation
 
 *** aggressive-indent
@@ -1020,7 +1121,9 @@ I was using [[https://github.com/antonj/Highlight-Indentation-for-Emacs][highlig
 ;;    (set-face-background 'highlight-indentation-current-column-face "#5f8787"))
 #+end_src
 ** Languages
-*** C++
+*** TODO C++
+TODO Need to set this all up better
+
 #+begin_src emacs-lisp
   ;; make sure up to date
   (require 'cc-mode)
@@ -1033,6 +1136,7 @@ If you follow [[https://google.github.io/styleguide/cppguide.html][Google's C/++
 
 #+begin_src emacs-lisp
   (use-package google-c-style
+    :disabled
     :hook (((c-mode c++-mode) . google-set-c-style)
            (c-mode-common . google-make-newline-indent)))
 #+end_src
