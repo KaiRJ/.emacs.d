@@ -27,15 +27,9 @@ This is my =.emacsd= folder to load my preferred Emacs configuration. Although i
 - [[#general-packages][General packages]]
   - [[#from-mimimal-emacs][From mimimal emacs]]
   - [[#try][Try]]
-  - [[#projectile][Projectile]]
-  - [[#documentation][Documentation]]
-  - [[#hydra][Hydra]]
-  - [[#org][Org]]
-  - [[#minibuffer][Minibuffer]]
-  - [[#navigation][Navigation]]
-  - [[#editing][Editing]]
+  - [[#helpful][Helpful]]
 - [[#programming-packages][Programming packages]]
-  - [[#defaults][Defaults]]
+  - [[#my-defaults-1][My defaults]]
   - [[#lsp][LSP]]
   - [[#tree-sitter][Tree-sitter]]
   - [[#flycheck][flycheck]]
@@ -46,12 +40,17 @@ This is my =.emacsd= folder to load my preferred Emacs configuration. Although i
   - [[#indentation][Indentation]]
   - [[#languages][Languages]]
 - [[#writing-packages][Writing packages]]
-  - [[#defaults-1][Defaults]]
+  - [[#defaults][Defaults]]
   - [[#flyspell][Flyspell]]
   - [[#ispell][Ispell]]
   - [[#languagetools][LanguageTools]]
   - [[#writegood-mode][writegood-mode]]
   - [[#latex][LaTeX]]
+- [[#org-mode][Org mode]]
+- [[#hydra][Hydra]]
+  - [[#minibuffer][Minibuffer]]
+  - [[#navigation][Navigation]]
+  - [[#editing][Editing]]
 
 * Initialisation
 This section contains the basic commands to initialize your GNU Emacs with some of my default preferences.
@@ -254,7 +253,7 @@ I prefer the point to stay in place when I comment a line.
 Most the small UI changes are made by [[https://github.com/KaiRJ/minimal-emacs.d?tab=readme-ov-file#customizations-packages-post-initel][minimal-emacs.d]], here I am just adding a new theme and adjusting the modeline.
 
 ** Theme
-Here I have the [[https://github.com/doomemacs/themes][doom-one]] and [[https://github.com/sellout/emacs-color-theme-solarized][solarized]] themes, un-disable the one you want:
+I'm using the [[https://github.com/doomemacs/themes][doom-one]] theme:
 
 #+begin_src emacs-lisp
   (use-package doom-themes
@@ -301,8 +300,9 @@ This package gives a nicer startup menu using the [[https://github.com/emacs-das
     (dashboard-startup-banner 'official))
 #+end_src
 
-* TODO General packages
+* General packages
 These are the packages that aren't really tied to a specific mode, and more general to my entire Emacs workflow.
+
 ** From mimimal emacs
 The =recentf=, =savehist=, =saveplace=, and =auto-revert= built-in packages are already configured by [[https://github.com/KaiRJ/minimal-emacs.d?tab=readme-ov-file#customizations-packages-post-initel][minimal-emacs.d]]. They just need to be activated (depending on which you want).
 
@@ -344,429 +344,30 @@ The [[https://github.com/larstvei/Try][Try]] package lets you try different pack
     :commands try)
 #+end_src
 
-** TODO Projectile
-TODO look into built in version of this, project.el i think
-
-#+begin_src emacs-lisp
-  (use-package projectile
-    :init
-    (projectile-mode +1)
-    :bind (:map projectile-mode-map
-                ("s-p" . projectile-command-map)
-                ("C-c p" . projectile-command-map)))
-
-  (setq projectile-project-search-path '("~/git/"))
-#+end_src
-
-** Documentation
+** Helpful
 To have a more user-friendly documentation I use the [[https://github.com/Wilfred/helpful][helpful]] package.
 
 #+begin_src emacs-lisp
   (use-package helpful
-    :commands (helpful-at-point
-               helpful-callable
-               helpful-command
-               helpful-function
-               helpful-key
-               helpful-macro
-               helpful-variable)
+    :commands (helpful-function
+               helpful-macro)
     :bind
-    ([remap display-local-help] . helpful-at-point)
-    ([remap describe-function] . helpful-callable)
-    ([remap describe-variable] . helpful-variable)
-    ([remap describe-symbol] . helpful-symbol)
-    ([remap describe-key] . helpful-key)
-    ([remap describe-command] . helpful-command))
-#+end_src
-
-** TODO Hydra
-could maybe be its own head?
-could put this is one of like (my own packages or my own lisp)
-** TODO Org
-TODO needs a big tidy up (could be its own heading?, see https://github.com/rememberYou/.emacs.d/blob/master/config.org#org-mode
-
-and check out https://github.com/org-roam/org-roam
-
-A lot of these changes are based of [[https://doc.norang.ca/org-mode.html#HowToUseThisDocument][this]].
-
-*** Tweaks
-#+begin_src emacs-lisp
-  ;; indent with tabs for better readability
-  (add-hook 'org-mode-hook #'org-indent-mode)
-  ;; (setq org-indent-indentation-per-level 4)
-
-  ;; When editing org-files with source-blocks, we want the source blocks to be themed as they would in their native mode.
-  (setq org-src-fontify-natively t
-    org-src-tab-acts-natively t
-    org-confirm-babel-evaluate nil)
-#+end_src
-
-*** Keybindings
-#+begin_src emacs-lisp
-  ;; Standard key bindings
-  ;; (global-set-key (kbd "\C-c l") 'org-store-link)
-  (global-set-key (kbd "\C-c a") 'org-agenda)
-  (global-set-key (kbd "\C-c c") 'org-capture)
-  (global-set-key (kbd "\C-c b") 'org-iswitchb)
-#+end_src
-
-*** Agenda
-#+begin_src emacs-lisp
-  ;;
-  (setq org-agenda-files (quote ("~/git/agenda/phd/simulations.org"
-                                 "~/git/agenda/phd/prominence.org"
-                                 "~/git/agenda/personal.org"
-                                 "~/git/agenda/emacs.org")))
-
-  ;; Define the keywords for the agenda
-  (setq org-todo-keywords
-        '((sequence "TODO(t)"    "NEXT(n)" "|" "DONE(d)")
-          (sequence "WAITING(w)" "HOLD(h)" "|" "CANCELLED(c)")))
-
-  (setq org-log-done 'time)
-
-  ;; Set default column view headings: Task Total-Time Time-Stamp
-  (setq org-columns-default-format "%50ITEM(Task) %TIMESTAMP_IA")
-
-  ;; Colour the keywords
-  (setq org-todo-keyword-faces
-        (quote (("TODO"      :foreground "red"          :weight bold)
-                ("NEXT"      :foreground "blue"         :weight bold)
-                ("DONE"      :foreground "forest green" :weight bold)
-                ("WAITING"   :foreground "orange"       :weight bold)
-                ("HOLD"      :foreground "magenta"      :weight bold)
-                ("CANCELLED" :foreground "forest green" :weight bold))))
-#+end_src
-
-*** Packages
-**** org-bullets
-#+BEGIN_SRC emacs-lisp
-  ;; Org bullets makes things look pretty
-  (use-package org-bullets
-    :ensure t
-    :config
-    (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
-  #+END_SRC
-**** toc-org
-In order to auto generate the table of contents of this file (and others) I'm using the [[https://github.com/snosov1/toc-org][toc-org]] package. Every time you save an org file, the first headline with a =:TOC:= tag will be updated with the current table of contents (=:TOC_2:= sets the max depth to 2).
-
-#+begin_src emacs-lisp
-  (use-package toc-org
-    :hook (org-mode . toc-org-enable))
-#+end_src
-** Minibuffer
-These packages make everything in the minibuffer nicer and easier.
-
-*** Ivy / Counsel / Swiper
-
-Swiper gives us a really efficient incremental search with regular expressions and Ivy/Counsel replace a lot of ido or helms completion functionality.
-
-#+begin_src emacs-lisp
-  (use-package counsel ;; installs ivy and swiper as dependancies
-    :config (ivy-mode)
-
-    :custom
-    (ivy-use-virtual-buffers t)
-    (ivy-display-style 'fancy)
-    (ivy-wrap t)
-
-    ;; should_ speed swiper up
-    (swiper-use-visual-line nil)
-    (swiper-use-visual-line-p (lambda (a) nil))
-
-    ;; ignore certain files in find-file
-    (counsel-find-file-ignore-regexp "\\(?:\\.DS_Store\\)")
-    (ivy-extra-directories nil) ;; /. and /..
-
-    :bind (("C-x b"   . ivy-switch-buffer)
-           ("M-w"     . ivy-kill-ring-save)
-           ("M-x"     . counsel-M-x)
-           ("C-x C-f" . counsel-find-file)
-           ("M-y"     . counsel-yank-pop)
-           ("C-h f"   . counsel-describe-function)
-           ("C-h v"   . counsel-describe-variable)
-           ("C-h l"   . counsel-find-library)
-           ("C-s"     . swiper)
-           ;; (global-set-key (kbd "C-r") 'swiper) ;; using this for quary-replace
-           ("s-s"     . counsel-ag)
-           ("M-i"     . counsel-imenu)))
-#+end_src
-
-*** which key
-Display possible key bindings following incomplete command.
-
-#+begin_src emacs-lisp
-  (use-package which-key
-    :custom (which-key-idle-delay 0.5)
-    :config (which-key-mode))
-#+end_src
-*** amx
-Alternative interface for =M-x=. Prioritizes most used commands and shows keyboard shortcuts
-
-#+begin_src emacs-lisp
-  (use-package amx
-    :custom
-    (amx-backend 'auto)
-    :config
-    (amx-mode 1))
-#+end_src
-*** TODO marginalia
-What does this do?
-
-#+begin_src emacs-lisp
-  (use-package marginalia
-    :after ivy
-    :init (marginalia-mode)
-    :custom
-    (marginalia-annotators '(marginalia-annotators-heavy marginalia-annotators-light nil)))
-#+end_src
-** Navigation
-Section dedicated to managing buffers, files, and windows on GNU Emacs to provide a more pleasant experience.
-
-*** Buffers
-**** Ibuffer
-
-Buffers can quickly become a mess to manage. To manage them better, I use the =ibuffer= built-in package instead of buffer-menu, to have a nicer visual interface with a syntax color.
-
-#+begin_src emacs-lisp
-  (use-package ibuffer
-    :ensure nil
-    :bind ("C-x C-b" . ibuffer)
-    :config
-    ;; (setq ibuffer-default-sorting-mode 'major-mode)
-    (setq ibuffer-show-empty-filter-groups nil))
-#+end_src
-
-**** ibuffer-vc
-
-I organise my ibuffer by git repos. Evenentually would like to do this by projectile so it's more generic.
-
-#+begin_src emacs-lisp
-  (use-package ibuffer-vc
-    :after ibuffer)
-
-  (defun ibuffer-apply-filter-groups ()
-    "Combine my saved ibuffer filter groups with those generated
-       by `ibuffer-vc-generate-filter-groups-by-vc-root' taken from `https://github.com/reinh/dotemacs/blob/master/conf/init.org#ido'"
-    (interactive)
-    (setq ibuffer-filter-groups
-          (append
-           (ibuffer-vc-generate-filter-groups-by-vc-root)
-           ibuffer-saved-filter-groups))
-    (message "ibuffer-vc: groups set")
-    (let ((ibuf (get-buffer "*Ibuffer*")))
-      (when ibuf
-        (with-current-buffer ibuf
-          (pop-to-buffer ibuf)
-          (ibuffer-update nil t)))))
-
-  ;; Tell ibuffer to load the group automatically
-  (add-hook 'ibuffer-hook 'ibuffer-apply-filter-groups)
-#+end_src
-
-**** imenu-list
-
-[[https://github.com/bmag/imenu-list][imenu-list]] provides a really nice view of the structure of a file.
-
-#+begin_src emacs-lisp
-  (use-package imenu-list
-    :ensure t)
-
-  (global-set-key (kbd "s-i") #'imenu-list-smart-toggle)
-  (setq imenu-list-focus-after-activation t)
-  (setq imenu-list-auto-resize t)
-
-  (setq imenu-list-after-jump-hook nil)
-  (add-hook 'imenu-list-after-jump-hook #'top)
-#+end_src
-*** Windows
-**** ace windows
-#+BEGIN_SRC emacs-lisp
-  ;; for easy window switching between multiple windows
-  (use-package ace-window
-    :init
-    (progn
-      ;; bind ace-window to M-o
-      (global-set-key (kbd "M-o") 'ace-window)
-      ;; set window lables to home row
-      (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
-      (custom-set-faces
-       '(aw-leading-char-face
-     ((t (:inherit ace-jump-face-foreground :height 3.0)))))
-      ))
-#+END_SRC
-
-**** TODO Avy
-
-Add link.
-
-For quicker navigation around windows.
-
-#+Begin_SRC emacs-lisp
-  (use-package avy
-    :ensure t
-    :bind
-    ("M-s"     . avy-goto-word-1)
-    ("M-g M-g" . 'avy-goto-line))
-#+end_src
-**** Focus on new windows
-
-Most of the time, I want to split a window and put the focus on it to perform an action. By default GNU Emacs does not give the focus to this new window. I have no idea why this is not the default behavior, but we can easily set this behavior.
-
-#+begin_src emacs-lisp
-(use-package window
-  :ensure nil
-  :bind (("C-x 2" . vsplit-last-buffer)
-         ("C-x 3" . hsplit-last-buffer)
-         ;; Don't ask before killing a buffer.
-         ([remap kill-buffer] . kill-this-buffer))
-  :preface
-  (defun hsplit-last-buffer ()
-    "Focus to the last created horizontal window."
-    (interactive)
-    (split-window-horizontally)
-    (other-window 1))
-
-  (defun vsplit-last-buffer ()
-    "Focus to the last created vertical window."
-    (interactive)
-    (split-window-vertically)
-    (other-window 1)))
-#+end_src
-
-*** Treemacs
-#+begin_src emacs-lisp
-  (use-package treemacs
-    :config
-    (progn
-      (setq treemacs-hide-dot-git-directory          t
-            treemacs-move-files-by-mouse-dragging    t
-            treemacs-sorting                         'alphabetic-asc
-            treemacs-width                           28)
-      (treemacs-project-follow-mode t)
-      (treemacs-resize-icons 24))
-    :bind
-    (:map global-map
-          ("M-0"       . treemacs-select-window)
-          ("C-x t 1"   . treemacs-delete-other-windows)
-          ("C-x t d"   . treemacs-select-directory)
-          ("C-x t t"   . treemacs)
-          ("C-x t B"   . treemacs-bookmark)
-          ("C-x t C-t" . treemacs-find-file)
-          ("C-x t M-t" . treemacs-find-tag)))
-
-  (use-package treemacs-projectile
-    :after treemacs)
-
-  (use-package treemacs-magit
-    :after treemacs)
-
-  (use-package treemacs-all-the-icons
-    :after treemacs all-the-icons
-    :config (treemacs-load-theme "all-the-icons"))
-#+end_src
-
-*** Scrolling
-#+begin_src emacs-lisp
-  (use-package ultra-scroll
-  :init
-  (setq scroll-conservatively 3 ; or whatever value you prefer, since v0.4
-        scroll-margin 0)        ; important: scroll-margin>0 not yet supported
-  :config
-  (ultra-scroll-mode 1))
-#+end_src
-
-** TODO Editing
-TODO write short description of these
-TODO: need to expand on the description of all these packages
-
-*** drag-stuff
-
-It is useful to be able to move a line or a region up and down without having to =kill-region= (=C-w=) and =yank (C-y)=. The [[https://github.com/rejeep/drag-stuff.el][drag-stuff]] package allows you to moves the current work, line or if marked, the current region.
-
-#+begin_src emacs-lisp
-  (use-package drag-stuff
-    :ensure t
-    :config
-    (drag-stuff-global-mode 1)
-    (global-set-key (kbd "s-<down>") 'drag-stuff-down)
-    (global-set-key (kbd "s-<up>") 'drag-stuff-up)
-    (global-set-key (kbd "s-<right>") 'drag-stuff-right)
-    (global-set-key (kbd "s-<left>") 'drag-stuff-left))
-#+end_src
-*** TODO yasnippet
-
-TODO: expand intro with some links. could add a keybinding for ivy.
-
-To make editting a coding easier.
-
-#+begin_src emacs-lisp
-  (use-package yasnippet-snippets
-    :after yasnippet
-    :config (yasnippet-snippets-initialize))
-
-  (use-package yasnippet
-    :config (yas-global-mode))
-
-  (use-package ivy-yasnippet :after yasnippet)
-#+end_src
-
-*** TODO iedit
-
-TODO
-
-#+begin_src emacs-lisp
-  (use-package iedit
-    :bind
-    ("C-r" . iedit-mode)
-    :config
-    (define-key iedit-mode-keymap (kbd "C-;") nil)) ;; unbind as used for commend-line
-#+end_src
-*** undo-tree
-#+begin_src emacs-lisp
-  (use-package undo-tree
-    :init
-    (global-undo-tree-mode)
-    :config
-    (setq undo-tree-visualizer-diff t) ;; show difs
-    (setq undo-tree-auto-save-history t) ;; save history to file
-    (setq undo-tree-visualizer-timestamps t) ;; show timestamps
-
-    ;; Create the undo history directory if it doesn't exist
-    (let ((undo-history-dir (expand-file-name "undo-history" user-emacs-directory)))
-      (unless (file-directory-p undo-history-dir)
-    (make-directory undo-history-dir)))
-
-    ;; Set the directory for undo history files
-    (setq undo-tree-history-directory-alist
-      `((".*" . ,(expand-file-name "undo-history" user-emacs-directory)))))
-#+end_src
-
-*** multiple-cursors
-
-TODO
-
-#+begin_src emacs-lisp
-  (use-package multiple-cursors
-    :bind
-    ;; (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
-    ;; (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
-    ("C->" . mc/mark-next-like-this)
-    ("C-<" . mc/mark-previous-like-this))
-
-    #+end_src
-*** expand-region
-
-Expand the marked region in semantic increments (C-- C-= to reduce region).
-
-#+begin_src emacs-lisp
-  (use-package expand-region
-    :bind
-    ("C-=" . er/expand-region))
+    ("C-h f" . helpful-callable)
+    ("C-h v" . helpful-variable)
+    ("C-h k" . helpful-key)
+    ("C-h x" . helpful-command)
+    ("C-h ." . helpful-at-point)
+    ("C-h o" . helpful-symbol))
 #+end_src
 
 * TODO Programming packages
-** Defaults
+INTRO
+
+** TODO My defaults
+Could maybe just move these to the general emacs defaults. need to have a think about this.
+
+Here are some defaults that I prefer to have:
+
 #+begin_src emacs-lisp
   (use-package programming
     :ensure nil
@@ -781,8 +382,9 @@ Expand the marked region in semantic increments (C-- C-= to reduce region).
     ;; Treat CamelCase as distinct words
     (global-subword-mode 1))
 #+end_src
+
 ** TODO LSP
-TODO need to expand on all this and check them out
+TODO need to expand on all this and check them out - maybe switch to eglot, its built in and lighter
 
 The main benefit of using Language Server Protocol (LSP) to configure the management of your programming languages is that LSP servers are also used by other text editors, increasing contributions to these packages.
 
@@ -1321,4 +923,389 @@ Finally, it is often useful to put our hands in a bibliography in LaTeX. The bui
       (setq fill-column 120))
     :hook ((bibtex-mode . lsp-deferred)
            (bibtex-mode . my/bibtex-fill-column)))
+#+end_src
+* TODO Org mode
+TODO needs a big tidy up (could be its own heading?, see https://github.com/rememberYou/.emacs.d/blob/master/config.org#org-mode
+
+and check out https://github.com/org-roam/org-roam
+
+A lot of these changes are based of [[https://doc.norang.ca/org-mode.html#HowToUseThisDocument][this]].
+
+*** Tweaks
+#+begin_src emacs-lisp
+  ;; indent with tabs for better readability
+  (add-hook 'org-mode-hook #'org-indent-mode)
+  ;; (setq org-indent-indentation-per-level 4)
+
+  ;; When editing org-files with source-blocks, we want the source blocks to be themed as they would in their native mode.
+  (setq org-src-fontify-natively t
+    org-src-tab-acts-natively t
+    org-confirm-babel-evaluate nil)
+#+end_src
+
+*** Keybindings
+#+begin_src emacs-lisp
+  ;; Standard key bindings
+  ;; (global-set-key (kbd "\C-c l") 'org-store-link)
+  (global-set-key (kbd "\C-c a") 'org-agenda)
+  (global-set-key (kbd "\C-c c") 'org-capture)
+  (global-set-key (kbd "\C-c b") 'org-iswitchb)
+#+end_src
+
+*** Agenda
+#+begin_src emacs-lisp
+  ;;
+  (setq org-agenda-files (quote ("~/git/agenda/phd/simulations.org"
+                                 "~/git/agenda/phd/prominence.org"
+                                 "~/git/agenda/personal.org"
+                                 "~/git/agenda/emacs.org")))
+
+  ;; Define the keywords for the agenda
+  (setq org-todo-keywords
+        '((sequence "TODO(t)"    "NEXT(n)" "|" "DONE(d)")
+          (sequence "WAITING(w)" "HOLD(h)" "|" "CANCELLED(c)")))
+
+  (setq org-log-done 'time)
+
+  ;; Set default column view headings: Task Total-Time Time-Stamp
+  (setq org-columns-default-format "%50ITEM(Task) %TIMESTAMP_IA")
+
+  ;; Colour the keywords
+  (setq org-todo-keyword-faces
+        (quote (("TODO"      :foreground "red"          :weight bold)
+                ("NEXT"      :foreground "blue"         :weight bold)
+                ("DONE"      :foreground "forest green" :weight bold)
+                ("WAITING"   :foreground "orange"       :weight bold)
+                ("HOLD"      :foreground "magenta"      :weight bold)
+                ("CANCELLED" :foreground "forest green" :weight bold))))
+#+end_src
+
+*** Packages
+**** org-bullets
+#+BEGIN_SRC emacs-lisp
+  ;; Org bullets makes things look pretty
+  (use-package org-bullets
+    :ensure t
+    :config
+    (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+  #+END_SRC
+**** toc-org
+In order to auto generate the table of contents of this file (and others) I'm using the [[https://github.com/snosov1/toc-org][toc-org]] package. Every time you save an org file, the first headline with a =:TOC:= tag will be updated with the current table of contents (=:TOC_2:= sets the max depth to 2).
+
+#+begin_src emacs-lisp
+  (use-package toc-org
+    :hook (org-mode . toc-org-enable))
+#+end_src
+* TODO Hydra
+could maybe be its own head?
+could put this is one of like (my own packages or my own lisp)
+** Minibuffer
+These packages make everything in the minibuffer nicer and easier.
+
+*** Ivy / Counsel / Swiper
+
+Swiper gives us a really efficient incremental search with regular expressions and Ivy/Counsel replace a lot of ido or helms completion functionality.
+
+#+begin_src emacs-lisp
+  (use-package counsel ;; installs ivy and swiper as dependancies
+    :config (ivy-mode)
+
+    :custom
+    (ivy-use-virtual-buffers t)
+    (ivy-display-style 'fancy)
+    (ivy-wrap t)
+
+    ;; should_ speed swiper up
+    (swiper-use-visual-line nil)
+    (swiper-use-visual-line-p (lambda (a) nil))
+
+    ;; ignore certain files in find-file
+    (counsel-find-file-ignore-regexp "\\(?:\\.DS_Store\\)")
+    (ivy-extra-directories nil) ;; /. and /..
+
+    :bind (("C-x b"   . ivy-switch-buffer)
+           ("M-w"     . ivy-kill-ring-save)
+           ("M-x"     . counsel-M-x)
+           ("C-x C-f" . counsel-find-file)
+           ("M-y"     . counsel-yank-pop)
+           ("C-h f"   . counsel-describe-function)
+           ("C-h v"   . counsel-describe-variable)
+           ("C-h l"   . counsel-find-library)
+           ("C-s"     . swiper)
+           ;; (global-set-key (kbd "C-r") 'swiper) ;; using this for quary-replace
+           ("s-s"     . counsel-ag)
+           ("M-i"     . counsel-imenu)))
+#+end_src
+
+*** which key
+Display possible key bindings following incomplete command.
+
+#+begin_src emacs-lisp
+  (use-package which-key
+    :custom (which-key-idle-delay 0.5)
+    :config (which-key-mode))
+#+end_src
+*** amx
+Alternative interface for =M-x=. Prioritizes most used commands and shows keyboard shortcuts
+
+#+begin_src emacs-lisp
+  (use-package amx
+    :custom
+    (amx-backend 'auto)
+    :config
+    (amx-mode 1))
+#+end_src
+*** TODO marginalia
+What does this do?
+
+#+begin_src emacs-lisp
+  (use-package marginalia
+    :after ivy
+    :init (marginalia-mode)
+    :custom
+    (marginalia-annotators '(marginalia-annotators-heavy marginalia-annotators-light nil)))
+#+end_src
+** Navigation
+Section dedicated to managing buffers, files, and windows on GNU Emacs to provide a more pleasant experience.
+
+*** Buffers
+**** Ibuffer
+
+Buffers can quickly become a mess to manage. To manage them better, I use the =ibuffer= built-in package instead of buffer-menu, to have a nicer visual interface with a syntax color.
+
+#+begin_src emacs-lisp
+  (use-package ibuffer
+    :ensure nil
+    :bind ("C-x C-b" . ibuffer)
+    :config
+    ;; (setq ibuffer-default-sorting-mode 'major-mode)
+    (setq ibuffer-show-empty-filter-groups nil))
+#+end_src
+
+**** ibuffer-vc
+
+I organise my ibuffer by git repos. Evenentually would like to do this by projectile so it's more generic.
+
+#+begin_src emacs-lisp
+  (use-package ibuffer-vc
+    :after ibuffer)
+
+  (defun ibuffer-apply-filter-groups ()
+    "Combine my saved ibuffer filter groups with those generated
+       by `ibuffer-vc-generate-filter-groups-by-vc-root' taken from `https://github.com/reinh/dotemacs/blob/master/conf/init.org#ido'"
+    (interactive)
+    (setq ibuffer-filter-groups
+          (append
+           (ibuffer-vc-generate-filter-groups-by-vc-root)
+           ibuffer-saved-filter-groups))
+    (message "ibuffer-vc: groups set")
+    (let ((ibuf (get-buffer "*Ibuffer*")))
+      (when ibuf
+        (with-current-buffer ibuf
+          (pop-to-buffer ibuf)
+          (ibuffer-update nil t)))))
+
+  ;; Tell ibuffer to load the group automatically
+  (add-hook 'ibuffer-hook 'ibuffer-apply-filter-groups)
+#+end_src
+
+**** imenu-list
+
+[[https://github.com/bmag/imenu-list][imenu-list]] provides a really nice view of the structure of a file.
+
+#+begin_src emacs-lisp
+  (use-package imenu-list
+    :ensure t)
+
+  (global-set-key (kbd "s-i") #'imenu-list-smart-toggle)
+  (setq imenu-list-focus-after-activation t)
+  (setq imenu-list-auto-resize t)
+
+  (setq imenu-list-after-jump-hook nil)
+  (add-hook 'imenu-list-after-jump-hook #'top)
+#+end_src
+*** Windows
+**** ace windows
+#+BEGIN_SRC emacs-lisp
+  ;; for easy window switching between multiple windows
+  (use-package ace-window
+    :init
+    (progn
+      ;; bind ace-window to M-o
+      (global-set-key (kbd "M-o") 'ace-window)
+      ;; set window lables to home row
+      (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
+      (custom-set-faces
+       '(aw-leading-char-face
+     ((t (:inherit ace-jump-face-foreground :height 3.0)))))
+      ))
+#+END_SRC
+
+**** TODO Avy
+
+Add link.
+
+For quicker navigation around windows.
+
+#+Begin_SRC emacs-lisp
+  (use-package avy
+    :ensure t
+    :bind
+    ("M-s"     . avy-goto-word-1)
+    ("M-g M-g" . 'avy-goto-line))
+#+end_src
+**** Focus on new windows
+
+Most of the time, I want to split a window and put the focus on it to perform an action. By default GNU Emacs does not give the focus to this new window. I have no idea why this is not the default behavior, but we can easily set this behavior.
+
+#+begin_src emacs-lisp
+(use-package window
+  :ensure nil
+  :bind (("C-x 2" . vsplit-last-buffer)
+         ("C-x 3" . hsplit-last-buffer)
+         ;; Don't ask before killing a buffer.
+         ([remap kill-buffer] . kill-this-buffer))
+  :preface
+  (defun hsplit-last-buffer ()
+    "Focus to the last created horizontal window."
+    (interactive)
+    (split-window-horizontally)
+    (other-window 1))
+
+  (defun vsplit-last-buffer ()
+    "Focus to the last created vertical window."
+    (interactive)
+    (split-window-vertically)
+    (other-window 1)))
+#+end_src
+
+*** Treemacs
+#+begin_src emacs-lisp
+  (use-package treemacs
+    :config
+    (progn
+      (setq treemacs-hide-dot-git-directory          t
+            treemacs-move-files-by-mouse-dragging    t
+            treemacs-sorting                         'alphabetic-asc
+            treemacs-width                           28)
+      (treemacs-project-follow-mode t)
+      (treemacs-resize-icons 24))
+    :bind
+    (:map global-map
+          ("M-0"       . treemacs-select-window)
+          ("C-x t 1"   . treemacs-delete-other-windows)
+          ("C-x t d"   . treemacs-select-directory)
+          ("C-x t t"   . treemacs)
+          ("C-x t B"   . treemacs-bookmark)
+          ("C-x t C-t" . treemacs-find-file)
+          ("C-x t M-t" . treemacs-find-tag)))
+
+  (use-package treemacs-projectile
+    :after treemacs)
+
+  (use-package treemacs-magit
+    :after treemacs)
+
+  (use-package treemacs-all-the-icons
+    :after treemacs all-the-icons
+    :config (treemacs-load-theme "all-the-icons"))
+#+end_src
+
+*** Scrolling
+#+begin_src emacs-lisp
+  (use-package ultra-scroll
+  :init
+  (setq scroll-conservatively 3 ; or whatever value you prefer, since v0.4
+        scroll-margin 0)        ; important: scroll-margin>0 not yet supported
+  :config
+  (ultra-scroll-mode 1))
+#+end_src
+
+** TODO Editing
+TODO write short description of these
+TODO: need to expand on the description of all these packages
+
+*** drag-stuff
+
+It is useful to be able to move a line or a region up and down without having to =kill-region= (=C-w=) and =yank (C-y)=. The [[https://github.com/rejeep/drag-stuff.el][drag-stuff]] package allows you to moves the current work, line or if marked, the current region.
+
+#+begin_src emacs-lisp
+  (use-package drag-stuff
+    :ensure t
+    :config
+    (drag-stuff-global-mode 1)
+    (global-set-key (kbd "s-<down>") 'drag-stuff-down)
+    (global-set-key (kbd "s-<up>") 'drag-stuff-up)
+    (global-set-key (kbd "s-<right>") 'drag-stuff-right)
+    (global-set-key (kbd "s-<left>") 'drag-stuff-left))
+#+end_src
+*** TODO yasnippet
+
+TODO: expand intro with some links. could add a keybinding for ivy.
+
+To make editting a coding easier.
+
+#+begin_src emacs-lisp
+  (use-package yasnippet-snippets
+    :after yasnippet
+    :config (yasnippet-snippets-initialize))
+
+  (use-package yasnippet
+    :config (yas-global-mode))
+
+  (use-package ivy-yasnippet :after yasnippet)
+#+end_src
+
+*** TODO iedit
+
+TODO
+
+#+begin_src emacs-lisp
+  (use-package iedit
+    :bind
+    ("C-r" . iedit-mode)
+    :config
+    (define-key iedit-mode-keymap (kbd "C-;") nil)) ;; unbind as used for commend-line
+#+end_src
+*** undo-tree
+#+begin_src emacs-lisp
+  (use-package undo-tree
+    :init
+    (global-undo-tree-mode)
+    :config
+    (setq undo-tree-visualizer-diff t) ;; show difs
+    (setq undo-tree-auto-save-history t) ;; save history to file
+    (setq undo-tree-visualizer-timestamps t) ;; show timestamps
+
+    ;; Create the undo history directory if it doesn't exist
+    (let ((undo-history-dir (expand-file-name "undo-history" user-emacs-directory)))
+      (unless (file-directory-p undo-history-dir)
+    (make-directory undo-history-dir)))
+
+    ;; Set the directory for undo history files
+    (setq undo-tree-history-directory-alist
+      `((".*" . ,(expand-file-name "undo-history" user-emacs-directory)))))
+#+end_src
+
+*** multiple-cursors
+
+TODO
+
+#+begin_src emacs-lisp
+  (use-package multiple-cursors
+    :bind
+    ;; (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
+    ;; (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
+    ("C->" . mc/mark-next-like-this)
+    ("C-<" . mc/mark-previous-like-this))
+
+    #+end_src
+*** expand-region
+
+Expand the marked region in semantic increments (C-- C-= to reduce region).
+
+#+begin_src emacs-lisp
+  (use-package expand-region
+    :bind
+    ("C-=" . er/expand-region))
 #+end_src
