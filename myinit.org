@@ -19,10 +19,10 @@ This is my =.emacsd= folder to load my preferred Emacs configuration. Although i
   - [[#duplicate-line][Duplicate line]]
   - [[#makefile-commands][Makefile Commands]]
   - [[#kill-buff][Kill buff]]
-  - [[#scroll][Scroll]]
   - [[#comment-line][Comment line]]
 - [[#ui][UI]]
   - [[#theme][Theme]]
+  - [[#modeline][Modeline]]
   - [[#dashboard][Dashboard]]
 - [[#general-packages][General packages]]
   - [[#from-mimimal-emacs][From mimimal emacs]]
@@ -67,7 +67,6 @@ This cookie tells Emacs to use lexical scoping for variables which is now the de
 
 ** Minimal-Emacs
 The [[https://github.com/KaiRJ/minimal-emacs.d?tab=readme-ov-file#customizations-packages-post-initel][minimal-emacs.d]] project is a lightweight and optimized Emacs base (init.el and early-init.el) that gives you full control over your configuration (without the complexity of, for instance, Doom Emacs or Spacemacs). It provides better defaults, an optimized startup, and a clean foundation for building your own vanilla Emacs setup. See the linked page for more details of the defaults set.
-
 ** use-package
 =use-package= is automatically set up by =minimal-emacs=, but to save some typing I'm also turning on always using =ensure t=:
 
@@ -166,7 +165,10 @@ Some keybinding changes to how I like it.
     ;; Remap quary replace so its not on M-% which is screenshot on mac
     ("M-r" . quary-repace)
     ;; Bind comment-line to C-; instead of C-x C-;
-    ("C-;" . comment-line))
+    ("C-;" . comment-line)
+    ;; So I can scroll with one chord easily
+    ("M-n" . scroll-up-line)
+    ("M-p" . scroll-down-line))
 #+end_src
 
 ** Split window
@@ -235,13 +237,6 @@ Kill the current buffer instead of having to pick it.
 
   (keymap-global-set "C-x k" 'kai/kill-this-buffer)
 #+end_src
-** Scroll
-Scroll window up/down by one line using single chords.
-
-#+begin_src emacs-lisp
-  (keymap-global-set "M-n" '(kbd "C-u 1 C-v"))
-  (keymap-global-set "M-p" '(kbd "C-u 1 M-v"))
-#+end_src
 ** Comment line
 I prefer the point to stay in place when I comment a line.
 
@@ -256,8 +251,10 @@ I prefer the point to stay in place when I comment a line.
   (keymap-global-set "C-;" 'kai/comment-line-stay)
 #+end_src
 * UI
+Most the small UI changes are made by [[https://github.com/KaiRJ/minimal-emacs.d?tab=readme-ov-file#customizations-packages-post-initel][minimal-emacs.d]], here I am just adding a new theme and adjusting the modeline.
+
 ** Theme
-I'm using the [[https://github.com/doomemacs/themes][doom-one]] theme:
+Here I have the [[https://github.com/doomemacs/themes][doom-one]] and [[https://github.com/sellout/emacs-color-theme-solarized][solarized]] themes, un-disable the one you want:
 
 #+begin_src emacs-lisp
   (use-package doom-themes
@@ -267,14 +264,16 @@ I'm using the [[https://github.com/doomemacs/themes][doom-one]] theme:
     (doom-themes-org-config))        ;; Corrects (and improves) org-mode's native fontification.
 #+end_src
 
+** Modeline
 And the [[https://github.com/seagle0128/doom-modeline][doom-modeline]]:
 
 #+begin_src emacs-lisp
   (use-package doom-modeline
-    :init (doom-modeline-mode)
+    :hook
+    (after-init . doom-modeline-mode)
     :custom
     (doom-modeline-icon (display-graphic-p))
-    (doom-modeline-mu4e t)
+    (doom-modeline-mu4e nil)
     (doom-modeline-buffer-modification-icon nil)
     (doom-modeline-buffer-file-name-style 'file-name-with-project)
     (doom-modeline-position-column-line-format '("L%l"))
@@ -303,74 +302,31 @@ This package gives a nicer startup menu using the [[https://github.com/emacs-das
 #+end_src
 
 * TODO General packages
-TODO write short description
-TODO all these need tidied up and put into a sub headings
+These are the packages that aren't really tied to a specific mode, and more general to my entire Emacs workflow.
+** From mimimal emacs
+The =recentf=, =savehist=, =saveplace=, and =auto-revert= built-in packages are already configured by [[https://github.com/KaiRJ/minimal-emacs.d?tab=readme-ov-file#customizations-packages-post-initel][minimal-emacs.d]]. They just need to be activated (depending on which you want).
 
-** TODO From mimimal emacs
-TODO split these up and write proper intro to them
+=savehist= is an Emacs feature that preserves the minibuffer history between sessions. It saves the history of inputs in the minibuffer, such as commands, search strings, and other prompts, to a file. This retains their minibuffer history across Emacs restarts.
 
 #+begin_src emacs-lisp
-  ;; Auto-revert in Emacs is a feature that automatically updates the
-  ;; contents of a buffer to reflect changes made to the underlying file
-  ;; on disk.
-  (use-package autorevert
-    :ensure nil
-    :commands (auto-revert-mode global-auto-revert-mode)
-    :hook
-    (after-init . global-auto-revert-mode)
-    :custom
-    (auto-revert-interval 3)
-    (auto-revert-remote-files nil)
-    (auto-revert-use-notify t)
-    (auto-revert-avoid-polling nil)
-    (auto-revert-verbose t))
+    (use-package savehist
+      :ensure nil
+      :commands (savehist-mode savehist-save)
+      :hook
+      (after-init . savehist-mode)
+      :custom
+      (savehist-autosave-interval 600)
+      (savehist-additional-variables
+       '(kill-ring                        ; clipboard
+         register-alist                   ; macros
+         mark-ring global-mark-ring       ; marks
+         search-ring regexp-search-ring)))
+  #+end_src
 
-  ;; Recentf is an Emacs package that maintains a list of recently
-  ;; accessed files, making it easier to reopen files you have worked on
-  ;; recently.
-  (use-package recentf
-    :ensure nil
-    :commands (recentf-mode recentf-cleanup)
-    :hook
-    (after-init . recentf-mode)
+  =save-place-mode= enables Emacs to remember the last location within a file
+  upon reopening.
 
-    :custom
-    (recentf-auto-cleanup (if (daemonp) 300 'never))
-    (recentf-exclude
-     (list "\\.tar$" "\\.tbz2$" "\\.tbz$" "\\.tgz$" "\\.bz2$"
-           "\\.bz$" "\\.gz$" "\\.gzip$" "\\.xz$" "\\.zip$"
-           "\\.7z$" "\\.rar$"
-           "COMMIT_EDITMSG\\'"
-           "\\.\\(?:gz\\|gif\\|svg\\|png\\|jpe?g\\|bmp\\|xpm\\)$"
-           "-autoloads\\.el$" "autoload\\.el$"))
-
-    :config
-    ;; A cleanup depth of -90 ensures that `recentf-cleanup' runs before
-    ;; `recentf-save-list', allowing stale entries to be removed before the list
-    ;; is saved by `recentf-save-list', which is automatically added to
-    ;; `kill-emacs-hook' by `recentf-mode'.
-    (add-hook 'kill-emacs-hook #'recentf-cleanup -90))
-
-  ;; savehist is an Emacs feature that preserves the minibuffer history between
-  ;; sessions. It saves the history of inputs in the minibuffer, such as commands,
-  ;; search strings, and other prompts, to a file. This allows users to retain
-  ;; their minibuffer history across Emacs restarts.
-  (use-package savehist
-    :ensure nil
-    :commands (savehist-mode savehist-save)
-    :hook
-    (after-init . savehist-mode)
-    :custom
-    (savehist-autosave-interval 600)
-    (savehist-additional-variables
-     '(kill-ring                        ; clipboard
-       register-alist                   ; macros
-       mark-ring global-mark-ring       ; marks
-       search-ring regexp-search-ring)))
-
-  ;; save-place-mode enables Emacs to remember the last location within a file
-  ;; upon reopening. This feature is particularly beneficial for resuming work at
-  ;; the precise point where you previously left off.
+  #+begin_src emacs-lisp
   (use-package saveplace
     :ensure nil
     :commands (save-place-mode save-place-local-mode)
@@ -379,18 +335,20 @@ TODO split these up and write proper intro to them
     :custom
     (save-place-limit 400))
 #+end_src
+
 ** Try
-Try different packages without having to install them.
+The [[https://github.com/larstvei/Try][Try]] package lets you try different packages without having to install them.
 
 #+begin_src emacs-lisp
-  (use-package try)
+  (use-package try
+    :commands try)
 #+end_src
+
 ** TODO Projectile
 TODO look into built in version of this, project.el i think
 
 #+begin_src emacs-lisp
   (use-package projectile
-    :ensure t
     :init
     (projectile-mode +1)
     :bind (:map projectile-mode-map
@@ -836,9 +794,11 @@ I was running into problems with lsp-mode and C++, where it would should errors 
 
 #+begin_src emacs-lisp
   (use-package lsp-mode
-    :commands (lsp lsp-deferred)
-    :hook ((prog-mode . lsp-deferred)
-           (lsp-mode . lsp-enable-which-key-integration))
+    :commands
+    (lsp lsp-deferred)
+    :hook
+    ((prog-mode . lsp-deferred)
+     (lsp-mode . lsp-enable-which-key-integration))
     :custom
     (lsp-enable-folding nil)
     (lsp-enable-links nil)
@@ -846,10 +806,9 @@ I was running into problems with lsp-mode and C++, where it would should errors 
     (lsp-keymap-prefix "C-c l")
     (lsp-prefer-capf t)                  ;; Use completion-at-point-functions
     (lsp-headerline-breadcrumb-enable t) ;; Show breadcrumbs
-    (lsp-clients-clangd-executable "/usr/bin/clangd-20")
-    (lsp-clients-clangd-args ("--header-insertion=never")))
+    (lsp-clangd-binary-path "/usr/bin/clangd-20"))
 
-    ;; Clangd is fast
+  ;; Clangd is fast
   (setq gc-cons-threshold (* 100 1024 1024)
         read-process-output-max (* 1024 1024)
         treemacs-space-between-root-nodes nil
@@ -1084,12 +1043,15 @@ Need to learn how to use this. Might only be good to use strict mode with emacs 
     ("M-]" . sp-unwrap-sexp))
 #+end_src
 
-** Indentation
+** TODO Indentation
+TODO maybe make a formatting section
+
 My setup for dealing with indentation
 
 *** aggressive-indent
 #+begin_src emacs-lisp
   (use-package aggressive-indent
+    :disabled
     :custom
     (aggressive-indent-comments-too t))
 #+end_src
@@ -1135,6 +1097,9 @@ I was using [[https://github.com/antonj/Highlight-Indentation-for-Emacs][highlig
 ** Languages
 *** TODO C++
 TODO Need to set this all up better
+TODO auto formatting is so bad
+- new line doesnt indent at right spot
+- and i dont like the auto formatting i have
 
 #+begin_src emacs-lisp
   ;; make sure up to date
