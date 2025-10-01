@@ -10,11 +10,10 @@ This is my =.emacsd= folder to load my preferred Emacs configuration. Although i
   - [[#minimal-emacs][Minimal-Emacs]]
   - [[#use-package][use-package]]
   - [[#auto-save][auto-save]]
-  - [[#my-defaults][My defaults]]
   - [[#shell-environment][Shell environment]]
   - [[#misc-requirements][Misc requirements]]
 - [[#custom-changes][Custom changes]]
-  - [[#redefine-keybindings][Redefine keybindings]]
+  - [[#my-defaults][My defaults]]
   - [[#split-window][Split window]]
   - [[#duplicate-line][Duplicate line]]
   - [[#makefile-commands][Makefile Commands]]
@@ -29,13 +28,12 @@ This is my =.emacsd= folder to load my preferred Emacs configuration. Although i
   - [[#try][Try]]
   - [[#helpful][Helpful]]
 - [[#programming-packages][Programming packages]]
-  - [[#my-defaults-1][My defaults]]
+  - [[#git][Git]]
   - [[#lsp][LSP]]
-  - [[#tree-sitter][Tree-sitter]]
   - [[#flycheck][flycheck]]
   - [[#dap-mode][dap-mode]]
+  - [[#tree-sitter][Tree-sitter]]
   - [[#company-mode][company-mode]]
-  - [[#git][Git]]
   - [[#parenthesis][Parenthesis]]
   - [[#indentation][Indentation]]
   - [[#languages][Languages]]
@@ -47,7 +45,12 @@ This is my =.emacsd= folder to load my preferred Emacs configuration. Although i
   - [[#writegood-mode][writegood-mode]]
   - [[#latex][LaTeX]]
 - [[#org-mode][Org mode]]
+  - [[#tweaks][Tweaks]]
+  - [[#keybindings][Keybindings]]
+  - [[#agenda][Agenda]]
+  - [[#packages][Packages]]
 - [[#hydra][Hydra]]
+  - [[#git-sync][Git sync]]
   - [[#minibuffer][Minibuffer]]
   - [[#navigation][Navigation]]
   - [[#editing][Editing]]
@@ -98,30 +101,6 @@ When auto-save-visited-mode is enabled, Emacs will auto-save file-visiting buffe
   (auto-save-visited-mode 1)
 #+end_src
 
-** My defaults
-On top of the [[https://github.com/KaiRJ/minimal-emacs.d?tab=readme-ov-file#customizations-packages-post-initel][minimal-emacs.d]] defaults these are some additional values I use:
-
-#+begin_src emacs-lisp
-  (use-package emacs
-    :ensure nil
-    :hook
-    ;; Clean up white space when file is saved
-    (before-save-hook . whitespace-cleanup)
-    :custom
-    ;; Merge system's and Emacs' clipboard
-    (select-enable-clipboard t)
-    ;; Save current (system) clipboard before replacing
-    (save-interprogram-paste-before-kill t)
-    ;; C-n adds new line if reaches end of buffer
-    (next-line-add-newlines t)
-    ;; Delete highlighted text by typing
-    (delete-selection-mode 1)
-    ;; don't compact font caches during GC.
-    (inhibit-compacting-font-caches t)
-    :config
-    ;; Font size
-    (set-face-attribute 'default nil :height 140))
-#+end_src
 ** Shell environment
 I'm using the [[https://github.com/purcell/exec-path-from-shell][exec-path-from-shell]] package so that my terminal and Emacs enviroments are the same:
 
@@ -154,20 +133,36 @@ These are instructions you may need for a fresh install of Emacs using this init
 * TODO Custom changes
 This section contains my elisp code and some small keybinding changes that I use frequently in my workflow. Note, I change package specific keybindings when I install that package.
 
-** Redefine keybindings
-Some keybinding changes to how I like it.
+** My defaults
+On top of the [[https://github.com/KaiRJ/minimal-emacs.d?tab=readme-ov-file#customizations-packages-post-initel][minimal-emacs.d]] defaults these are some additional values I use:
 
 #+begin_src emacs-lisp
-  (use-package keybindings
+  (use-package emacs
     :ensure nil
-    :bind
-    ;; Remap quary replace so its not on M-% which is screenshot on mac
-    ("M-r" . quary-repace)
-    ;; Bind comment-line to C-; instead of C-x C-;
-    ("C-;" . comment-line)
-    ;; So I can scroll with one chord easily
-    ("M-n" . scroll-up-line)
-    ("M-p" . scroll-down-line))
+    :hook (;; Clean up white space when file is saved
+           (before-save-hook . whitespace-cleanup)
+           ;; Add line numbers to progam modes
+           (prog-mode . display-line-numbers-mode)
+           ;; Add column fill indicator
+           (prog-mode . display-fill-column-indicator-mode)
+           ;; Line Wrappings
+           (prog-mode . (lambda () (setq truncate-lines t))))
+    :bind (;; Remap quary replace so its not on M-% which is screenshot on mac
+           ("M-r" . quary-repace)
+           ;; Bind comment-line to C-; instead of C-x C-;
+           ("C-;" . comment-line)
+           ;; So I can scroll with one chord easily
+           ("M-n" . scroll-up-line)
+           ("M-p" . scroll-down-line))
+    :custom ((select-enable-clipboard t "Merge system's and Emacs' clipboard")
+             (save-interprogram-paste-before-kill t "Save current (system) clipboard before replacing")
+             (next-line-add-newlines t "C-n adds new line if reaches end of buffer")
+             (delete-selection-mode 1 "Delete highlighted text by typing")
+             (inhibit-compacting-font-caches t "Don't compact font caches during GC")
+             (global-subword-mode 1 "Treat CamelCase as distinct words"))
+    :custom-face
+    ;; Font size
+    (default ((t (:height 130)))))
 #+end_src
 
 ** Split window
@@ -361,26 +356,38 @@ To have a more user-friendly documentation I use the [[https://github.com/Wilfre
 #+end_src
 
 * TODO Programming packages
-INTRO
+This section contains all the packages I am using for programming. Including a dedicated section for specific [[*Languages][Languages]].
 
-** TODO My defaults
-Could maybe just move these to the general emacs defaults. need to have a think about this.
-
-Here are some defaults that I prefer to have:
+** Git
+*** magit
+[[https://magit.vc/][Magit]] makes working with git in Emacs, very very easy.
 
 #+begin_src emacs-lisp
-  (use-package programming
-    :ensure nil
-    :hook
-    (;; Add line numbers to progam modes
-     (prog-mode . display-line-numbers-mode)
-     ;; Add column fill indicator
-     (prog-mode . display-fill-column-indicator-mode)
-     ;; Line Wrappings
-     (prog-mode . (lambda () (setq truncate-lines t))))
+  (use-package magit
+    :commands magit-status-mode)
+#+end_src
+
+*** git-gutter and git-gutter-fringe
+[[https://github.com/emacsorphanage/git-gutter][git-gutter]] is a simple package that shows the git difs to the side of each line that there is a change. I'm also using the [[https://github.com/emacsorphanage/git-gutter-fringe][git-gutter-fringe]] package to make this look similar to VScode (as per [[https://ianyepan.github.io/posts/emacs-git-gutter/][this]] demo).
+
+#+begin_src emacs-lisp
+  (use-package git-gutter
+    :custom ((global-git-gutter-mode 1 "Turn on for every mode")
+             (git-gutter:update-interval 0.2 "If too small causes lagging")))
+
+  (use-package git-gutter-fringe
+    :after git-gutter
     :custom
-    ;; Treat CamelCase as distinct words
-    (global-subword-mode 1))
+    (global-git-gutter-mode 1 "Turn on for every mode")
+    :custom-face
+    (git-gutter-fr:modified ((t (:foreground "#2375B3"))))
+    ;; (git-gutter-fr:added    ((t (:foreground "blue"))))
+    ;; (git-gutter-fr:deleted  ((t (:foreground "white"))))
+    :config
+    (define-fringe-bitmap 'git-gutter-fr:added [224] nil nil '(center repeated))
+    (define-fringe-bitmap 'git-gutter-fr:modified [224] nil nil '(center repeated))
+    (define-fringe-bitmap 'git-gutter-fr:deleted [128 192 224 240] nil nil 'bottom))
+
 #+end_src
 
 ** TODO LSP
@@ -458,24 +465,6 @@ For treemacs integrating with lsp-mode.
     :config
     (lsp-treemacs-sync-mode 1))
 #+end_src
-** TODO Tree-sitter
-
-[[https://tree-sitter.github.io/tree-sitter/][Tree-sitter]] is a fast, incremental parsing library that gives Emacs (and other editors) rich, real-time syntax trees of your code. It lets your editor understand code like a compiler does - with actual structure, not just regex-y color rules. As of Emacs 29 it is built in.
-
-I am currently using [[https://github.com/renzmann/treesit-auto][treesit-auto]] to make the setup easier.
-
-Disabled for now as couldn't figure out how to use the correct C++ style.
-
-#+begin_src emacs-lisp
-  (use-package treesit-auto
-    :disabled
-    :custom
-    (treesit-auto-install 'prompt)
-    :config
-    (treesit-auto-add-to-auto-mode-alist 'all)
-    (global-treesit-auto-mode))
-#+end_src
-
 ** flycheck
 #+begin_src emacs-lisp
   (use-package flycheck
@@ -516,6 +505,24 @@ Disabled for now as couldn't figure out how to use the correct C++ style.
            :cwd "${workspaceFolder}"
            :externalConsole t)))
 #+end_src
+** TODO Tree-sitter
+
+[[https://tree-sitter.github.io/tree-sitter/][Tree-sitter]] is a fast, incremental parsing library that gives Emacs (and other editors) rich, real-time syntax trees of your code. It lets your editor understand code like a compiler does - with actual structure, not just regex-y color rules. As of Emacs 29 it is built in.
+
+I am currently using [[https://github.com/renzmann/treesit-auto][treesit-auto]] to make the setup easier.
+
+Disabled for now as couldn't figure out how to use the correct C++ style.
+
+#+begin_src emacs-lisp
+  (use-package treesit-auto
+    :disabled
+    :custom
+    (treesit-auto-install 'prompt)
+    :config
+    (treesit-auto-add-to-auto-mode-alist 'all)
+    (global-treesit-auto-mode))
+#+end_src
+
 ** TODO company-mode
 TODO try corfu as company boxes messes with pop os auto tiling
 
@@ -541,73 +548,6 @@ Auto-completion with GNU Emacs is mainly combined with LSP mode. Therefore the d
     :init (setq company-box-icons-alist 'company-box-icons-all-the-icons)
     :hook (company-mode . company-box-mode))
 #+end_src
-** Git
-*** TODO magit
-Is magit not build in? is there any other settings i should use
-
-#+begin_src emacs-lisp
-  (use-package magit)
-#+end_src
-*** git-gutter
-
-These packages are showing the git difference. I have set it to be similar to VScode.
-
-#+begin_src emacs-lisp
-  (use-package git-gutter
-    :ensure t
-    :hook ((prog-mode . git-gutter-mode)
-       (org-mode . git-gutter-mode))
-    :config
-    (setq git-gutter:update-interval 0.5)) ;; if too small causes lagging
-
-  ;; makes it prettier
-  (use-package git-gutter-fringe
-    :ensure t
-    :config
-    (define-fringe-bitmap 'git-gutter-fr:added [224] nil nil '(center repeated))
-    (define-fringe-bitmap 'git-gutter-fr:modified [224] nil nil '(center repeated))
-    (define-fringe-bitmap 'git-gutter-fr:deleted [128 192 224 240] nil nil 'bottom))
-
-  ;; Customize the git-gutter:modified face to use different colours
-  (set-face-foreground 'git-gutter-fr:modified "#2375B3")
-  ;; (set-face-foreground 'git-gutter-fr:added    "blue")
-  ;; (set-face-foreground 'git-gutter-fr:deleted  "white")
-#+end_src
-
-*** Git sync
-This hydra command lets me quickly sync repos to the correct server
-
-#+begin_src emacs-lisp
-  ;; Define a hydra to choose the target server (nersc or deucalion)
-  (defhydra hydra-sync-git (:color blue)
-    "
-  Sync to which server?
-  _n_ NERSC
-  _d_ Deucalion
-  _q_ Quit
-  "
-    ("n" (run-sync-git-tracked-script "nersc"))
-    ("d" (run-sync-git-tracked-script "deucalion"))
-    ("q" nil "quit"))
-
-  ;; Function to run the sync script with an argument
-  (defun run-sync-git-tracked-script (target)
-    "Run the sync_git_tracked.sh script with the specified TARGET argument."
-    (interactive "sTarget (nersc or deucalion): ") ;; Allow the hydra to pass this value
-    (let ((default-directory (locate-dominating-file default-directory ".git")))
-      (if default-directory
-          (progn
-            ;; Run the sync script with the argument based on the hydra choice
-            (let ((script (concat "~/git/scripts/sync_git_tracked.sh")))
-              (if (file-executable-p script)
-                  (call-process-shell-command (concat script " " target) nil "*scratch*")
-                (message "Error: sync_git_tracked.sh not found or not executable."))))
-        (message "Error: Not inside a Git repository!"))))
-
-  ;; Bind the hydra to a keyboard shortcut
-  (global-set-key (kbd "C-c s") 'hydra-sync-git/body)
-#+end_src
-
 ** Parenthesis
 *** TODO rainbow-delimiters
 
@@ -931,7 +871,7 @@ and check out https://github.com/org-roam/org-roam
 
 A lot of these changes are based of [[https://doc.norang.ca/org-mode.html#HowToUseThisDocument][this]].
 
-*** Tweaks
+** Tweaks
 #+begin_src emacs-lisp
   ;; indent with tabs for better readability
   (add-hook 'org-mode-hook #'org-indent-mode)
@@ -943,7 +883,7 @@ A lot of these changes are based of [[https://doc.norang.ca/org-mode.html#HowToU
     org-confirm-babel-evaluate nil)
 #+end_src
 
-*** Keybindings
+** Keybindings
 #+begin_src emacs-lisp
   ;; Standard key bindings
   ;; (global-set-key (kbd "\C-c l") 'org-store-link)
@@ -952,7 +892,7 @@ A lot of these changes are based of [[https://doc.norang.ca/org-mode.html#HowToU
   (global-set-key (kbd "\C-c b") 'org-iswitchb)
 #+end_src
 
-*** Agenda
+** Agenda
 #+begin_src emacs-lisp
   ;;
   (setq org-agenda-files (quote ("~/git/agenda/phd/simulations.org"
@@ -980,8 +920,8 @@ A lot of these changes are based of [[https://doc.norang.ca/org-mode.html#HowToU
                 ("CANCELLED" :foreground "forest green" :weight bold))))
 #+end_src
 
-*** Packages
-**** org-bullets
+** Packages
+*** org-bullets
 #+BEGIN_SRC emacs-lisp
   ;; Org bullets makes things look pretty
   (use-package org-bullets
@@ -989,7 +929,7 @@ A lot of these changes are based of [[https://doc.norang.ca/org-mode.html#HowToU
     :config
     (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
   #+END_SRC
-**** toc-org
+*** toc-org
 In order to auto generate the table of contents of this file (and others) I'm using the [[https://github.com/snosov1/toc-org][toc-org]] package. Every time you save an org file, the first headline with a =:TOC:= tag will be updated with the current table of contents (=:TOC_2:= sets the max depth to 2).
 
 #+begin_src emacs-lisp
@@ -997,8 +937,43 @@ In order to auto generate the table of contents of this file (and others) I'm us
     :hook (org-mode . toc-org-enable))
 #+end_src
 * TODO Hydra
-could maybe be its own head?
+could maybe be its own head? - maybe move back cause i lit never use it so kinda dont think i should spend ages on it
 could put this is one of like (my own packages or my own lisp)
+also think maybe it makes more sense for these to be with their packages
+** Git sync
+This hydra command lets me quickly sync repos to the correct server
+
+#+begin_src emacs-lisp
+  ;; Define a hydra to choose the target server (nersc or deucalion)
+  (defhydra hydra-sync-git (:color blue)
+    "
+  Sync to which server?
+  _n_ NERSC
+  _d_ Deucalion
+  _q_ Quit
+  "
+    ("n" (run-sync-git-tracked-script "nersc"))
+    ("d" (run-sync-git-tracked-script "deucalion"))
+    ("q" nil "quit"))
+
+  ;; Function to run the sync script with an argument
+  (defun run-sync-git-tracked-script (target)
+    "Run the sync_git_tracked.sh script with the specified TARGET argument."
+    (interactive "sTarget (nersc or deucalion): ") ;; Allow the hydra to pass this value
+    (let ((default-directory (locate-dominating-file default-directory ".git")))
+      (if default-directory
+          (progn
+            ;; Run the sync script with the argument based on the hydra choice
+            (let ((script (concat "~/git/scripts/sync_git_tracked.sh")))
+              (if (file-executable-p script)
+                  (call-process-shell-command (concat script " " target) nil "*scratch*")
+                (message "Error: sync_git_tracked.sh not found or not executable."))))
+        (message "Error: Not inside a Git repository!"))))
+
+  ;; Bind the hydra to a keyboard shortcut
+  (global-set-key (kbd "C-c s") 'hydra-sync-git/body)
+#+end_src
+
 ** Minibuffer
 These packages make everything in the minibuffer nicer and easier.
 
