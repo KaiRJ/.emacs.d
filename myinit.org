@@ -27,6 +27,27 @@ This is my =.emacsd= folder to load my preferred Emacs configuration. Although i
   - [[#from-mimimal-emacs][From mimimal emacs]]
   - [[#try][Try]]
   - [[#helpful][Helpful]]
+- [[#minibuffer-packages][Minibuffer packages]]
+  - [[#vertico][Vertico]]
+  - [[#orderless][Orderless]]
+  - [[#marginalia][Marginalia]]
+  - [[#consult][Consult]]
+  - [[#embark][Embark]]
+  - [[#which-key][which key]]
+- [[#buffer-packages][Buffer packages]]
+  - [[#ibuffer][ibuffer]]
+  - [[#treemacs][Treemacs]]
+  - [[#ace-window][ace window]]
+  - [[#avy][Avy]]
+  - [[#focus-on-new-windows][Focus on new windows]]
+  - [[#scrolling][Scrolling]]
+- [[#editing][Editing]]
+  - [[#drag-stuff][drag-stuff]]
+  - [[#yasnippet][yasnippet]]
+  - [[#iedit][iedit]]
+  - [[#undo-tree][undo-tree]]
+  - [[#multiple-cursors][multiple-cursors]]
+  - [[#expand-region][expand-region]]
 - [[#programming-packages][Programming packages]]
   - [[#git][Git]]
   - [[#lsp][LSP]]
@@ -51,9 +72,6 @@ This is my =.emacsd= folder to load my preferred Emacs configuration. Although i
   - [[#packages][Packages]]
 - [[#hydra][Hydra]]
   - [[#git-sync][Git sync]]
-  - [[#minibuffer][Minibuffer]]
-  - [[#navigation][Navigation]]
-  - [[#editing][Editing]]
 
 * Initialisation
 This section contains the basic commands to initialize your GNU Emacs with some of my default preferences.
@@ -106,7 +124,7 @@ I'm using the [[https://github.com/purcell/exec-path-from-shell][exec-path-from-
 
 #+begin_src emacs-lisp
   (use-package exec-path-from-shell
-    :defer t
+    :commands (shell eshell)
     :config
     (exec-path-from-shell-initialize))
 #+end_src
@@ -139,30 +157,31 @@ On top of the [[https://github.com/KaiRJ/minimal-emacs.d?tab=readme-ov-file#cust
 #+begin_src emacs-lisp
   (use-package emacs
     :ensure nil
-    :hook (;; Clean up white space when file is saved
-           (before-save-hook . whitespace-cleanup)
-           ;; Add line numbers to progam modes
-           (prog-mode . display-line-numbers-mode)
-           ;; Add column fill indicator
-           (prog-mode . display-fill-column-indicator-mode)
-           ;; Line Wrappings
-           (prog-mode . (lambda () (setq truncate-lines t))))
-    :bind (;; Remap quary replace so its not on M-% which is screenshot on mac
-           ("M-r" . quary-repace)
-           ;; Bind comment-line to C-; instead of C-x C-;
-           ("C-;" . comment-line)
-           ;; So I can scroll with one chord easily
-           ("M-n" . scroll-up-line)
-           ("M-p" . scroll-down-line))
-    :custom ((select-enable-clipboard t "Merge system's and Emacs' clipboard")
-             (save-interprogram-paste-before-kill t "Save current (system) clipboard before replacing")
-             (next-line-add-newlines t "C-n adds new line if reaches end of buffer")
-             (delete-selection-mode 1 "Delete highlighted text by typing")
-             (inhibit-compacting-font-caches t "Don't compact font caches during GC")
-             (global-subword-mode 1 "Treat CamelCase as distinct words"))
+
+    :hook
+    ((before-save-hook . whitespace-cleanup) ;; Clean up white space when file is saved
+     (prog-mode . display-line-numbers-mode) ;; Add line numbers to progam modes
+     (prog-mode . display-fill-column-indicator-mode) ;; Add column fill indicator
+     (prog-mode . (lambda () (setq truncate-lines t)))) ;; Line Wrappings
+
+    :bind
+    (("M-r" . quary-repace)
+     ("C-;" . comment-line) ;; Bind comment-line to C-; instead of C-x C-;
+     ("M-n" . scroll-up-line) ;; So I can scroll with one chord easily
+     ("M-p" . scroll-down-line)
+     ("C-z" . nil)) ;; Don't like this suspend window keybinding
+
+    :custom
+    ((select-enable-clipboard t "Merge system's and Emacs' clipboard")
+     (save-interprogram-paste-before-kill t "Save system clipboard before replacing")
+     (next-line-add-newlines t "C-n adds new line if reaches end of buffer")
+     (delete-selection-mode 1 "Delete highlighted text by typing")
+     (inhibit-compacting-font-caches t "Don't compact font caches during GC")
+     (global-subword-mode 1 "Treat CamelCase as distinct words")
+     (package-install-upgrade-built-in t "Allow Emacs to upgrade built-in packages"))
+
     :custom-face
-    ;; Font size
-    (default ((t (:height 130)))))
+    (default ((t (:height 130))))) ;; Font size
 #+end_src
 
 ** Split window
@@ -296,7 +315,7 @@ This package gives a nicer startup menu using the [[https://github.com/emacs-das
 #+end_src
 
 * General packages
-These are the packages that aren't really tied to a specific mode, and more general to my entire Emacs workflow.
+These are the packages that aren't really tied to a specific mode, and more general to all of Emacs.
 
 ** From mimimal emacs
 The =recentf=, =savehist=, =saveplace=, and =auto-revert= built-in packages are already configured by [[https://github.com/KaiRJ/minimal-emacs.d?tab=readme-ov-file#customizations-packages-post-initel][minimal-emacs.d]]. They just need to be activated (depending on which you want).
@@ -318,8 +337,7 @@ The =recentf=, =savehist=, =saveplace=, and =auto-revert= built-in packages are 
          search-ring regexp-search-ring)))
   #+end_src
 
-  =save-place-mode= enables Emacs to remember the last location within a file
-  upon reopening.
+  =save-place-mode= enables Emacs to remember the last location within a file upon reopening.
 
   #+begin_src emacs-lisp
   (use-package saveplace
@@ -353,6 +371,397 @@ To have a more user-friendly documentation I use the [[https://github.com/Wilfre
     ("C-h x" . helpful-command)
     ("C-h ." . helpful-at-point)
     ("C-h o" . helpful-symbol))
+#+end_src
+
+* TODO Minibuffer packages
+These packages make everything in the minibuffer nicer and easier.
+
+** Vertico
+[[https://github.com/minad/vertico][Vertico]] provides a vertical completion interface, making it easier to navigate and select from completion candidates (e.g., when =M-x= is pressed). It is recommended to also enable the =savehist= package, which I have done.
+
+#+begin_src emacs-lisp
+  (use-package vertico
+    :config
+    (vertico-mode))
+#+end_src
+
+** Orderless
+Vertico leverages [[https://github.com/oantolin/orderless][Orderless]]' flexible matching capabilities, allowing the input of multiple patterns separated by spaces.
+
+#+begin_src emacs-lisp
+  (use-package orderless
+    :custom
+    (completion-styles '(orderless basic))
+    (completion-category-defaults nil)
+    (completion-category-overrides '((file (styles partial-completion))))
+    (completion-pcm-leading-wildcard t))
+#+end_src
+
+** Marginalia
+[[https://github.com/minad/marginalia][Marginalia]] allows Embark to offer you preconfigured actions in more contexts. In addition to that, Marginalia also enhances Vertico by adding rich annotations to the completion candidates displayed in Vertico's interface.
+
+#+begin_src emacs-lisp
+  (use-package marginalia
+    :commands (marginalia-mode marginalia-cycle)
+    :hook (after-init . marginalia-mode))
+#+end_src
+
+** TODO Consult
+TODO should learn to use this more, and shorted the config to what i use and need
+
+[[https://github.com/minad/consult][Consult]] offers a suite of commands for efficient searching, previewing, and interacting with buffers, file contents, and more, improving various tasks.
+
+#+begin_src emacs-lisp
+  (use-package consult
+    :bind
+    (;; C-c bindings in `mode-specific-map'
+     ("C-c M-x" . consult-mode-command)
+     ("C-c h" . consult-history)
+     ("C-c k" . consult-kmacro)
+     ("C-c m" . consult-man)
+     ("C-c i" . consult-info)
+     ([remap Info-search] . consult-info)
+     ;; C-x bindings in `ctl-x-map'
+     ("C-x M-:" . consult-complex-command)
+     ("C-x b" . consult-buffer)
+     ("C-x 4 b" . consult-buffer-other-window)
+     ("C-x 5 b" . consult-buffer-other-frame)
+     ("C-x t b" . consult-buffer-other-tab)
+     ("C-x r b" . consult-bookmark)
+     ("C-x p b" . consult-project-buffer)
+     ;; Custom M-# bindings for fast register access
+     ("M-#" . consult-register-load)
+     ("M-'" . consult-register-store)
+     ("C-M-#" . consult-register)
+     ;; Other custom bindings
+     ("M-y" . consult-yank-pop)
+     ;; M-g bindings in `goto-map'
+     ("M-g e" . consult-compile-error)
+     ("M-g f" . consult-flymake)
+     ("M-g g" . consult-goto-line)
+     ("M-g o" . consult-outline)
+     ("M-g m" . consult-mark)
+     ("M-g k" . consult-global-mark)
+     ("M-g i" . consult-imenu)
+     ("M-g I" . consult-imenu-multi)
+     ;; M-s bindings in `search-map'
+     ("M-s d" . consult-find)
+     ("M-s c" . consult-locate)
+     ("M-s g" . consult-grep)
+     ("M-s G" . consult-git-grep)
+     ("M-s r" . consult-ripgrep)
+     ("M-s l" . consult-line)
+     ("M-s L" . consult-line-multi)
+     ("M-s k" . consult-keep-lines)
+     ("M-s u" . consult-focus-lines)
+     ;; Isearch integration
+     ("M-s e" . consult-isearch-history)
+     :map isearch-mode-map
+     ("M-e" . consult-isearch-history)
+     ("M-s e" . consult-isearch-history)
+     ("M-s l" . consult-line)
+     ("M-s L" . consult-line-multi)
+     ;; Minibuffer history
+     :map minibuffer-local-map
+     ("M-s" . consult-history)
+     ("M-r" . consult-history))
+
+    ;; Enable automatic preview at point in the *Completions* buffer.
+    :hook (completion-list-mode . consult-preview-at-point-mode)
+
+    :init
+    ;; Optionally configure the register formatting. This improves the register
+    (setq register-preview-delay 0.5
+          register-preview-function #'consult-register-format)
+
+    ;; Optionally tweak the register preview window.
+    (advice-add #'register-preview :override #'consult-register-window)
+
+    ;; Use Consult to select xref locations with preview
+    (setq xref-show-xrefs-function #'consult-xref
+          xref-show-definitions-function #'consult-xref)
+
+    ;; Aggressive asynchronous that yield instantaneous results. (suitable for
+    ;; high-performance systems.) Note: Minad, the author of Consult, does not
+    ;; recommend aggressive values.
+    ;; Read: https://github.com/minad/consult/discussions/951
+    ;;
+    ;; However, the author of minimal-emacs.d uses these parameters to achieve
+    ;; immediate feedback from Consult.
+    ;; (setq consult-async-input-debounce 0.02
+    ;;       consult-async-input-throttle 0.05
+    ;;       consult-async-refresh-delay 0.02)
+
+    :config
+    (consult-customize
+     consult-theme :preview-key '(:debounce 0.2 any)
+     consult-ripgrep consult-git-grep consult-grep
+     consult-bookmark consult-recent-file consult-xref
+     consult--source-bookmark consult--source-file-register
+     consult--source-recent-file consult--source-project-recent-file
+     ;; :preview-key "M-."
+     :preview-key '(:debounce 0.4 any))
+    (setq consult-narrow-key "<"))
+#+end_src
+
+** TODO Embark
+TODO should learn to learn this, see minimal-emacs for a larger config
+
+The [[https://github.com/oantolin/embark][Embark]] package acts like a context menu (or right-click) to perform context-sensitive actions on selected items directly from the completion interface.
+
+#+begin_src emacs-lisp
+  (use-package embark
+    :bind
+    (("C-." . embark-act)
+     ("C-h B" . embark-bindings))) ;; alternative for `describe-bindings'
+
+  (use-package embark-consult
+    :hook
+    (embark-collect-mode . consult-preview-at-point-mode))
+#+end_src
+
+** which key
+Display possible key bindings following incomplete command.
+
+#+begin_src emacs-lisp
+  (use-package which-key
+    :ensure nil ; builtin
+    :commands which-key-mode
+    :hook (after-init . which-key-mode)
+    :custom
+    (which-key-idle-delay 0.5)
+    (which-key-idle-secondary-delay 0.25)
+    (which-key-add-column-padding 1)
+    (which-key-max-description-length 40))
+#+end_src
+
+* TODO Buffer packages
+This section contains some packages that make navigating between and around buffers and files easier.
+
+** ibuffer
+The =ibuffer= built-in package provides better buffer management over =buffer-menu=, with a nicer visual interface and syntax colour.
+
+#+begin_src emacs-lisp
+  (use-package ibuffer
+    :ensure nil
+    :bind ("C-x C-b" . ibuffer)
+    :hook (ibuffer . kai/ibuffer-apply-filter-groups)
+    :custom
+    ;; (setq ibuffer-default-sorting-mode 'major-mode)
+    (ibuffer-show-empty-filter-groups nil))
+#+end_src
+
+To organise the =ibuffer= menu, I use either the [[https://github.com/purcell/ibuffer-v][ibuffer-vc]] or the [[https://github.com/muffinmad/emacs-ibuffer-project/blob/master/README.md][ibuffer-project]] package to sort the buffers by git repository or  project, respectively. To set which is in use, just =:disbaled= the one you don't want.
+
+#+begin_src emacs-lisp
+  (use-package ibuffer-vc
+    :disabled
+    :after ibuffer
+    :config
+    (setq ibuffer-generate-new-filter-groups_fn 'ibuffer-vc-generate-filter-groups-by-vc-root))
+
+  (use-package ibuffer-project
+    :after ibuffer
+    :config
+    (setq ibuffer-generate-new-filter-groups_fn 'ibuffer-project-generate-filter-groups))
+
+  (defun kai/ibuffer-apply-filter-groups ()
+    "Combine the current ibuffer filter groups with those in ibuffer-active-filter-group.
+    ibuffer-generate-new-filter-groups_fn is set in both the ibuffer-vc and ibuffer-project use-package config, and chosen by =:disabled= the ones you don't want to use. Function adapted from `https://github.com/reinh/dotemacs/blob/master/conf/init.org#ido'."
+    (let ((ibuf (get-buffer "*Ibuffer*")))
+      (when (and ibuf (boundp 'ibuffer-generate-new-filter-groups_fn))
+        (setq ibuffer-filter-groups
+              (append
+               (funcall ibuffer-generate-new-filter-groups_fn)
+               ibuffer-saved-filter-groups))
+        (with-current-buffer ibuf
+          (pop-to-buffer ibuf)
+          (ibuffer-update nil t)))))
+#+end_src
+
+** TODO Treemacs
+I am disabling this for now as I never use it.
+
+#+begin_src emacs-lisp
+  (use-package treemacs
+    :disabled
+    :config
+    (progn
+      (setq treemacs-hide-dot-git-directory          t
+            treemacs-move-files-by-mouse-dragging    t
+            treemacs-sorting                         'alphabetic-asc
+            treemacs-width                           28)
+      (treemacs-project-follow-mode t)
+      (treemacs-resize-icons 24))
+    :bind
+    (:map global-map
+          ("M-0"       . treemacs-select-window)
+          ("C-x t 1"   . treemacs-delete-other-windows)
+          ("C-x t d"   . treemacs-select-directory)
+          ("C-x t t"   . treemacs)
+          ("C-x t B"   . treemacs-bookmark)
+          ("C-x t C-t" . treemacs-find-file)
+          ("C-x t M-t" . treemacs-find-tag)))
+
+  (use-package treemacs-magit
+    :disabled
+    :after treemacs)
+
+  (use-package treemacs-all-the-icons
+    :disabled
+    :after treemacs all-the-icons
+    :config (treemacs-load-theme "all-the-icons"))
+#+end_src
+
+** ace window
+The [[https://github.com/abo-abo/ace-window][ace-window]] package makes switching between multiple windows much easier. I've also changed the keys used to select a window to the home row keys.
+
+#+begin_src emacs-lisp
+  (use-package ace-window
+    :bind
+    ("M-o" . ace-window)
+    :custom
+    (aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
+    :custom-face
+    (aw-leading-char-face
+     ((t (:inherit ace-jump-face-foreground :height 3.0 :foreground ,(doom-color 'blue))))))
+#+end_src
+
+** TODO Avy
+TODO Add link. And this to consult keybindings
+
+For quicker navigation around windows.
+
+#+Begin_SRC emacs-lisp
+  (use-package avy
+    :bind
+    ("M-s c" . avy-goto-word-1)
+    ("M-g M-g" . 'avy-goto-line))
+#+end_src
+** TODO Focus on new windows
+TODO move this into own functions? not sure if should collected all my elisp into one place or have it next to the stuff they relate to
+
+Most of the time, I want to split a window and put the focus on it to perform an action. By default GNU Emacs does not give the focus to this new window. I have no idea why this is not the default behavior, but we can easily set this behavior.
+
+#+begin_src emacs-lisp
+(use-package window
+  :ensure nil
+  :bind (("C-x 2" . vsplit-last-buffer)
+         ("C-x 3" . hsplit-last-buffer)
+         ;; Don't ask before killing a buffer.
+         ([remap kill-buffer] . kill-this-buffer))
+  :preface
+  (defun hsplit-last-buffer ()
+    "Focus to the last created horizontal window."
+    (interactive)
+    (split-window-horizontally)
+    (other-window 1))
+
+  (defun vsplit-last-buffer ()
+    "Focus to the last created vertical window."
+    (interactive)
+    (split-window-vertically)
+    (other-window 1)))
+#+end_src
+
+** TODO Scrolling
+#+begin_src emacs-lisp
+  (use-package ultra-scroll
+    :init
+    (setq scroll-conservatively 3
+          scroll-margin 0)
+    :config
+    (ultra-scroll-mode 1))
+#+end_src
+
+* TODO Editing
+TODO write short description of these
+TODO: need to expand on the description of all these packages
+TODO: dont think some of these should be here
+
+** TODO drag-stuff
+TODO this are all currently blocked on pop os
+
+It is useful to be able to move a line or a region up and down without having to =kill-region= (=C-w=) and =yank (C-y)=. The [[https://github.com/rejeep/drag-stuff.el][drag-stuff]] package allows you to moves the current work, line or if marked, the current region.
+
+#+begin_src emacs-lisp
+  (use-package drag-stuff
+    :ensure t
+    :config
+    (drag-stuff-global-mode 1)
+    (global-set-key (kbd "s-<down>") 'drag-stuff-down)
+    (global-set-key (kbd "s-<up>") 'drag-stuff-up)
+    (global-set-key (kbd "s-<right>") 'drag-stuff-right)
+    (global-set-key (kbd "s-<left>") 'drag-stuff-left))
+#+end_src
+** TODO yasnippet
+
+TODO: expand intro with some links. could add a keybinding for ivy.
+
+To make editting a coding easier.
+
+#+begin_src emacs-lisp
+  (use-package yasnippet-snippets
+    :after yasnippet
+    :config (yasnippet-snippets-initialize))
+
+  (use-package yasnippet
+    :config (yas-global-mode))
+
+  (use-package ivy-yasnippet :after yasnippet)
+#+end_src
+
+** TODO iedit
+TODO learn how to use
+
+#+begin_src emacs-lisp
+  (use-package iedit
+    :bind
+    ("C-r" . iedit-mode)
+    :config
+    (define-key iedit-mode-keymap (kbd "C-;") nil)) ;; unbind as used for commend-line
+#+end_src
+** undo-tree
+#+begin_src emacs-lisp
+  (use-package undo-tree
+    :init
+    (global-undo-tree-mode)
+    :config
+    (setq undo-tree-visualizer-diff t) ;; show difs
+    (setq undo-tree-auto-save-history t) ;; save history to file
+    (setq undo-tree-visualizer-timestamps t) ;; show timestamps
+
+    ;; Create the undo history directory if it doesn't exist
+    (let ((undo-history-dir (expand-file-name "undo-history" user-emacs-directory)))
+      (unless (file-directory-p undo-history-dir)
+    (make-directory undo-history-dir)))
+
+    ;; Set the directory for undo history files
+    (setq undo-tree-history-directory-alist
+      `((".*" . ,(expand-file-name "undo-history" user-emacs-directory)))))
+#+end_src
+
+** multiple-cursors
+
+TODO
+
+#+begin_src emacs-lisp
+  (use-package multiple-cursors
+    :bind
+    ;; (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
+    ;; (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
+    ("C->" . mc/mark-next-like-this)
+    ("C-<" . mc/mark-previous-like-this))
+
+    #+end_src
+** expand-region
+
+Expand the marked region in semantic increments (C-- C-= to reduce region).
+
+#+begin_src emacs-lisp
+  (use-package expand-region
+    :bind
+    ("C-=" . er/expand-region))
 #+end_src
 
 * TODO Programming packages
@@ -441,7 +850,6 @@ In addition to =lsp-mode=, it is possible to use =lsp-ui= to get additional info
 #+end_src
 
 *** TODO consult-lsp
-
 TODO learn how to use this
 
 When using =lsp=, it is likely that you will encounter programming errors. To navigate through these errors via the minibuffer, you can use a package for that. If like me, you use =consult= with your minibuffer completion, then =consult-lsp= is made for you.
@@ -972,315 +1380,4 @@ This hydra command lets me quickly sync repos to the correct server
 
   ;; Bind the hydra to a keyboard shortcut
   (global-set-key (kbd "C-c s") 'hydra-sync-git/body)
-#+end_src
-
-** Minibuffer
-These packages make everything in the minibuffer nicer and easier.
-
-*** Ivy / Counsel / Swiper
-
-Swiper gives us a really efficient incremental search with regular expressions and Ivy/Counsel replace a lot of ido or helms completion functionality.
-
-#+begin_src emacs-lisp
-  (use-package counsel ;; installs ivy and swiper as dependancies
-    :config (ivy-mode)
-
-    :custom
-    (ivy-use-virtual-buffers t)
-    (ivy-display-style 'fancy)
-    (ivy-wrap t)
-
-    ;; should_ speed swiper up
-    (swiper-use-visual-line nil)
-    (swiper-use-visual-line-p (lambda (a) nil))
-
-    ;; ignore certain files in find-file
-    (counsel-find-file-ignore-regexp "\\(?:\\.DS_Store\\)")
-    (ivy-extra-directories nil) ;; /. and /..
-
-    :bind (("C-x b"   . ivy-switch-buffer)
-           ("M-w"     . ivy-kill-ring-save)
-           ("M-x"     . counsel-M-x)
-           ("C-x C-f" . counsel-find-file)
-           ("M-y"     . counsel-yank-pop)
-           ("C-h f"   . counsel-describe-function)
-           ("C-h v"   . counsel-describe-variable)
-           ("C-h l"   . counsel-find-library)
-           ("C-s"     . swiper)
-           ;; (global-set-key (kbd "C-r") 'swiper) ;; using this for quary-replace
-           ("s-s"     . counsel-ag)
-           ("M-i"     . counsel-imenu)))
-#+end_src
-
-*** which key
-Display possible key bindings following incomplete command.
-
-#+begin_src emacs-lisp
-  (use-package which-key
-    :custom (which-key-idle-delay 0.5)
-    :config (which-key-mode))
-#+end_src
-*** amx
-Alternative interface for =M-x=. Prioritizes most used commands and shows keyboard shortcuts
-
-#+begin_src emacs-lisp
-  (use-package amx
-    :custom
-    (amx-backend 'auto)
-    :config
-    (amx-mode 1))
-#+end_src
-*** TODO marginalia
-What does this do?
-
-#+begin_src emacs-lisp
-  (use-package marginalia
-    :after ivy
-    :init (marginalia-mode)
-    :custom
-    (marginalia-annotators '(marginalia-annotators-heavy marginalia-annotators-light nil)))
-#+end_src
-** Navigation
-Section dedicated to managing buffers, files, and windows on GNU Emacs to provide a more pleasant experience.
-
-*** Buffers
-**** Ibuffer
-
-Buffers can quickly become a mess to manage. To manage them better, I use the =ibuffer= built-in package instead of buffer-menu, to have a nicer visual interface with a syntax color.
-
-#+begin_src emacs-lisp
-  (use-package ibuffer
-    :ensure nil
-    :bind ("C-x C-b" . ibuffer)
-    :config
-    ;; (setq ibuffer-default-sorting-mode 'major-mode)
-    (setq ibuffer-show-empty-filter-groups nil))
-#+end_src
-
-**** ibuffer-vc
-
-I organise my ibuffer by git repos. Evenentually would like to do this by projectile so it's more generic.
-
-#+begin_src emacs-lisp
-  (use-package ibuffer-vc
-    :after ibuffer)
-
-  (defun ibuffer-apply-filter-groups ()
-    "Combine my saved ibuffer filter groups with those generated
-       by `ibuffer-vc-generate-filter-groups-by-vc-root' taken from `https://github.com/reinh/dotemacs/blob/master/conf/init.org#ido'"
-    (interactive)
-    (setq ibuffer-filter-groups
-          (append
-           (ibuffer-vc-generate-filter-groups-by-vc-root)
-           ibuffer-saved-filter-groups))
-    (message "ibuffer-vc: groups set")
-    (let ((ibuf (get-buffer "*Ibuffer*")))
-      (when ibuf
-        (with-current-buffer ibuf
-          (pop-to-buffer ibuf)
-          (ibuffer-update nil t)))))
-
-  ;; Tell ibuffer to load the group automatically
-  (add-hook 'ibuffer-hook 'ibuffer-apply-filter-groups)
-#+end_src
-
-**** imenu-list
-
-[[https://github.com/bmag/imenu-list][imenu-list]] provides a really nice view of the structure of a file.
-
-#+begin_src emacs-lisp
-  (use-package imenu-list
-    :ensure t)
-
-  (global-set-key (kbd "s-i") #'imenu-list-smart-toggle)
-  (setq imenu-list-focus-after-activation t)
-  (setq imenu-list-auto-resize t)
-
-  (setq imenu-list-after-jump-hook nil)
-  (add-hook 'imenu-list-after-jump-hook #'top)
-#+end_src
-*** Windows
-**** ace windows
-#+BEGIN_SRC emacs-lisp
-  ;; for easy window switching between multiple windows
-  (use-package ace-window
-    :init
-    (progn
-      ;; bind ace-window to M-o
-      (global-set-key (kbd "M-o") 'ace-window)
-      ;; set window lables to home row
-      (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
-      (custom-set-faces
-       '(aw-leading-char-face
-     ((t (:inherit ace-jump-face-foreground :height 3.0)))))
-      ))
-#+END_SRC
-
-**** TODO Avy
-
-Add link.
-
-For quicker navigation around windows.
-
-#+Begin_SRC emacs-lisp
-  (use-package avy
-    :ensure t
-    :bind
-    ("M-s"     . avy-goto-word-1)
-    ("M-g M-g" . 'avy-goto-line))
-#+end_src
-**** Focus on new windows
-
-Most of the time, I want to split a window and put the focus on it to perform an action. By default GNU Emacs does not give the focus to this new window. I have no idea why this is not the default behavior, but we can easily set this behavior.
-
-#+begin_src emacs-lisp
-(use-package window
-  :ensure nil
-  :bind (("C-x 2" . vsplit-last-buffer)
-         ("C-x 3" . hsplit-last-buffer)
-         ;; Don't ask before killing a buffer.
-         ([remap kill-buffer] . kill-this-buffer))
-  :preface
-  (defun hsplit-last-buffer ()
-    "Focus to the last created horizontal window."
-    (interactive)
-    (split-window-horizontally)
-    (other-window 1))
-
-  (defun vsplit-last-buffer ()
-    "Focus to the last created vertical window."
-    (interactive)
-    (split-window-vertically)
-    (other-window 1)))
-#+end_src
-
-*** Treemacs
-#+begin_src emacs-lisp
-  (use-package treemacs
-    :config
-    (progn
-      (setq treemacs-hide-dot-git-directory          t
-            treemacs-move-files-by-mouse-dragging    t
-            treemacs-sorting                         'alphabetic-asc
-            treemacs-width                           28)
-      (treemacs-project-follow-mode t)
-      (treemacs-resize-icons 24))
-    :bind
-    (:map global-map
-          ("M-0"       . treemacs-select-window)
-          ("C-x t 1"   . treemacs-delete-other-windows)
-          ("C-x t d"   . treemacs-select-directory)
-          ("C-x t t"   . treemacs)
-          ("C-x t B"   . treemacs-bookmark)
-          ("C-x t C-t" . treemacs-find-file)
-          ("C-x t M-t" . treemacs-find-tag)))
-
-  (use-package treemacs-projectile
-    :after treemacs)
-
-  (use-package treemacs-magit
-    :after treemacs)
-
-  (use-package treemacs-all-the-icons
-    :after treemacs all-the-icons
-    :config (treemacs-load-theme "all-the-icons"))
-#+end_src
-
-*** Scrolling
-#+begin_src emacs-lisp
-  (use-package ultra-scroll
-  :init
-  (setq scroll-conservatively 3 ; or whatever value you prefer, since v0.4
-        scroll-margin 0)        ; important: scroll-margin>0 not yet supported
-  :config
-  (ultra-scroll-mode 1))
-#+end_src
-
-** TODO Editing
-TODO write short description of these
-TODO: need to expand on the description of all these packages
-
-*** drag-stuff
-
-It is useful to be able to move a line or a region up and down without having to =kill-region= (=C-w=) and =yank (C-y)=. The [[https://github.com/rejeep/drag-stuff.el][drag-stuff]] package allows you to moves the current work, line or if marked, the current region.
-
-#+begin_src emacs-lisp
-  (use-package drag-stuff
-    :ensure t
-    :config
-    (drag-stuff-global-mode 1)
-    (global-set-key (kbd "s-<down>") 'drag-stuff-down)
-    (global-set-key (kbd "s-<up>") 'drag-stuff-up)
-    (global-set-key (kbd "s-<right>") 'drag-stuff-right)
-    (global-set-key (kbd "s-<left>") 'drag-stuff-left))
-#+end_src
-*** TODO yasnippet
-
-TODO: expand intro with some links. could add a keybinding for ivy.
-
-To make editting a coding easier.
-
-#+begin_src emacs-lisp
-  (use-package yasnippet-snippets
-    :after yasnippet
-    :config (yasnippet-snippets-initialize))
-
-  (use-package yasnippet
-    :config (yas-global-mode))
-
-  (use-package ivy-yasnippet :after yasnippet)
-#+end_src
-
-*** TODO iedit
-
-TODO
-
-#+begin_src emacs-lisp
-  (use-package iedit
-    :bind
-    ("C-r" . iedit-mode)
-    :config
-    (define-key iedit-mode-keymap (kbd "C-;") nil)) ;; unbind as used for commend-line
-#+end_src
-*** undo-tree
-#+begin_src emacs-lisp
-  (use-package undo-tree
-    :init
-    (global-undo-tree-mode)
-    :config
-    (setq undo-tree-visualizer-diff t) ;; show difs
-    (setq undo-tree-auto-save-history t) ;; save history to file
-    (setq undo-tree-visualizer-timestamps t) ;; show timestamps
-
-    ;; Create the undo history directory if it doesn't exist
-    (let ((undo-history-dir (expand-file-name "undo-history" user-emacs-directory)))
-      (unless (file-directory-p undo-history-dir)
-    (make-directory undo-history-dir)))
-
-    ;; Set the directory for undo history files
-    (setq undo-tree-history-directory-alist
-      `((".*" . ,(expand-file-name "undo-history" user-emacs-directory)))))
-#+end_src
-
-*** multiple-cursors
-
-TODO
-
-#+begin_src emacs-lisp
-  (use-package multiple-cursors
-    :bind
-    ;; (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
-    ;; (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
-    ("C->" . mc/mark-next-like-this)
-    ("C-<" . mc/mark-previous-like-this))
-
-    #+end_src
-*** expand-region
-
-Expand the marked region in semantic increments (C-- C-= to reduce region).
-
-#+begin_src emacs-lisp
-  (use-package expand-region
-    :bind
-    ("C-=" . er/expand-region))
 #+end_src
