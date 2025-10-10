@@ -39,8 +39,8 @@ This is my =.emacsd= folder to load my preferred Emacs configuration. Although i
   - [[#treemacs][Treemacs]]
   - [[#ace-window][ace window]]
   - [[#avy][Avy]]
-  - [[#scrolling][Scrolling]]
-- [[#editing][Editing]]
+  - [[#ultra-scroll][ultra-scroll]]
+- [[#editing-packages][Editing packages]]
   - [[#drag-stuff][drag-stuff]]
   - [[#yasnippet][yasnippet]]
   - [[#iedit][iedit]]
@@ -64,7 +64,7 @@ This is my =.emacsd= folder to load my preferred Emacs configuration. Although i
   - [[#languagetools][LanguageTools]]
   - [[#writegood-mode][writegood-mode]]
   - [[#latex][LaTeX]]
-- [[#org-mode][Org mode]]
+- [[#org][Org]]
   - [[#tweaks][Tweaks]]
   - [[#keybindings][Keybindings]]
   - [[#agenda][Agenda]]
@@ -200,7 +200,7 @@ Duplicates the current line below.
       (yank)
       (open-line 1)
       (next-line 1)
-      (yank))
+      (yank)))
 #+end_src
 
 ** TODO Makefile Commands
@@ -548,7 +548,8 @@ Display possible key bindings following incomplete command.
 * TODO Buffer packages
 This section contains some packages that make navigating between and around buffers and files easier.
 
-** ibuffer
+** TODO ibuffer
+TODO I think this could be structured better (such as moving the function to the top). And making it possible to switch between the two.
 The =ibuffer= built-in package provides better buffer management over =buffer-menu=, with a nicer visual interface and syntax colour.
 
 #+begin_src emacs-lisp
@@ -646,64 +647,62 @@ The [[https://github.com/abo-abo/ace-window][ace-window]] package makes switchin
     ("M-s c" . avy-goto-word-1)
     ("M-g M-g" . 'avy-goto-line))
 #+end_src
-** TODO Scrolling
+** ultra-scroll
+[[https://github.com/jdtsmith/ultra-scroll][ultra-scroll]] is a simple package that provides smooth-scrolling.
+
 #+begin_src emacs-lisp
   (use-package ultra-scroll
-    :init
-    (setq scroll-conservatively 3
-          scroll-margin 0)
+    :custom
+    (scroll-conservatively 3)
+    (scroll-margin 0)
     :config
     (ultra-scroll-mode 1))
 #+end_src
 
-* TODO Editing
-TODO write short description of these
-TODO: need to expand on the description of all these packages
-TODO: dont think some of these should be here
+* TODO Editing packages
+These packages are specifically used for editing text inside a buffer. There are used in all major modes.
 
-** TODO drag-stuff
-TODO this are all currently blocked on pop os
-
+** drag-stuff
 It is useful to be able to move a line or a region up and down without having to =kill-region= (=C-w=) and =yank (C-y)=. The [[https://github.com/rejeep/drag-stuff.el][drag-stuff]] package allows you to moves the current work, line or if marked, the current region.
 
 #+begin_src emacs-lisp
   (use-package drag-stuff
-    :ensure t
-    :config
-    (drag-stuff-global-mode 1)
-    (global-set-key (kbd "s-<down>") 'drag-stuff-down)
-    (global-set-key (kbd "s-<up>") 'drag-stuff-up)
-    (global-set-key (kbd "s-<right>") 'drag-stuff-right)
-    (global-set-key (kbd "s-<left>") 'drag-stuff-left))
+    :bind
+    ("s-n" . drag-stuff-down)
+    ("s-p" . drag-stuff-up)
+    ("s-f" . drag-stuff-right)
+    ("s-b" . drag-stuff-left)
+    :custom
+    (drag-stuff-global-mode 1))
+
 #+end_src
 ** TODO yasnippet
-
-TODO: expand intro with some links. could add a keybinding for ivy.
-
-To make editting a coding easier.
+TODO: expand intro with some links. could add a keybinding for ivy (is there a consult version?)
+TODO To make editting a coding easier.
 
 #+begin_src emacs-lisp
+  (use-package yasnippet
+    :config (yas-global-mode))
+
   (use-package yasnippet-snippets
     :after yasnippet
     :config (yasnippet-snippets-initialize))
 
-  (use-package yasnippet
-    :config (yas-global-mode))
-
-  (use-package ivy-yasnippet :after yasnippet)
+  (use-package ivy-yasnippet
+    :after yasnippet)
 #+end_src
 
-** TODO iedit
-TODO learn how to use
+** iedit
+[[https://github.com/victorhge/iedit][iedit]] allows you to alter one occurrence of some text in a buffer (possibly narrowed) or region, and simultaneously have other occurrences changed in the same way, with visual feedback as you type. Once in iedit mode, you can select a region and hit =C-r= again to restrict the search area to the region.
 
 #+begin_src emacs-lisp
   (use-package iedit
     :bind
-    ("C-r" . iedit-mode)
-    :config
-    (define-key iedit-mode-keymap (kbd "C-;") nil)) ;; unbind as used for commend-line
+    ("C-r" . iedit-mode))
 #+end_src
-** undo-tree
+** TODO undo-tree
+TODO check the minimal emacs for this - as feel it should be there and set up a bunch of this
+
 #+begin_src emacs-lisp
   (use-package undo-tree
     :init
@@ -723,9 +722,7 @@ TODO learn how to use
       `((".*" . ,(expand-file-name "undo-history" user-emacs-directory)))))
 #+end_src
 
-** multiple-cursors
-
-TODO
+** TODO multiple-cursors
 
 #+begin_src emacs-lisp
   (use-package multiple-cursors
@@ -736,8 +733,8 @@ TODO
     ("C-<" . mc/mark-previous-like-this))
 
     #+end_src
-** expand-region
 
+** expand-region
 Expand the marked region in semantic increments (C-- C-= to reduce region).
 
 #+begin_src emacs-lisp
@@ -1254,12 +1251,14 @@ Finally, it is often useful to put our hands in a bibliography in LaTeX. The bui
     :hook ((bibtex-mode . lsp-deferred)
            (bibtex-mode . my/bibtex-fill-column)))
 #+end_src
-* TODO Org mode
+* TODO Org
 TODO needs a big tidy up (could be its own heading?, see https://github.com/rememberYou/.emacs.d/blob/master/config.org#org-mode
 
 and check out https://github.com/org-roam/org-roam
 
 A lot of these changes are based of [[https://doc.norang.ca/org-mode.html#HowToUseThisDocument][this]].
+
+When get onto this could be a great opportunity to finally learn orgmode, org agenda and org roam
 
 ** Tweaks
 #+begin_src emacs-lisp
@@ -1329,7 +1328,8 @@ In order to auto generate the table of contents of this file (and others) I'm us
 * TODO Hydra
 could maybe be its own head? - maybe move back cause i lit never use it so kinda dont think i should spend ages on it
 could put this is one of like (my own packages or my own lisp)
-also think maybe it makes more sense for these to be with their packages
+also think maybe it makes more sense for these to be with their packages - therefore move this to the start
+
 ** Git sync
 This hydra command lets me quickly sync repos to the correct server
 
