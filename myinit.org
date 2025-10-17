@@ -42,7 +42,7 @@ This is my =.emacsd= folder to load my preferred Emacs configuration. Although i
   - [[#ultra-scroll][ultra-scroll]]
 - [[#editing-packages][Editing packages]]
   - [[#drag-stuff][drag-stuff]]
-  - [[#yasnippet][yasnippet]]
+  - [[#yasnippet][YASnippet]]
   - [[#iedit][iedit]]
   - [[#undo-tree][undo-tree]]
   - [[#multiple-cursors][multiple-cursors]]
@@ -64,10 +64,10 @@ This is my =.emacsd= folder to load my preferred Emacs configuration. Although i
   - [[#languagetools][LanguageTools]]
   - [[#writegood-mode][writegood-mode]]
   - [[#latex][LaTeX]]
-- [[#org][Org]]
-  - [[#tweaks][Tweaks]]
-  - [[#keybindings][Keybindings]]
+- [[#org-mode][Org-mode]]
+  - [[#my-defaults-1][My defaults]]
   - [[#agenda][Agenda]]
+  - [[#roam][Roam]]
   - [[#packages][Packages]]
 - [[#hydra][Hydra]]
   - [[#git-sync][Git sync]]
@@ -109,6 +109,7 @@ Enabling auto-save-mode mitigates the risk of data loss in the event of a crash.
   (setq auto-save-default t)
   (setq auto-save-interval 300)
   (setq auto-save-timeout 30)
+  (setq auto-save-file-name-transforms `((".*" "~/.emacs.d/var/autosave/" t)))
 #+end_src
 
 When auto-save-visited-mode is enabled, Emacs will auto-save file-visiting buffers after a certain amount of idle time if the user forgets to save it with =save-buffer= or =C-x s= for example.
@@ -147,7 +148,7 @@ These are instructions you may need for a fresh install of Emacs using this init
 
 - For =dap-mode= a one-time step is required to download the extension and set it up automatically  =M-x dap-cpptools-setup= then you are good start debugging.
 
-* TODO Custom changes
+* Custom changes
 This section contains my elisp code and some small keybinding changes that I use frequently in my workflow. Note, I change package specific keybindings when I install that package.
 
 ** My defaults
@@ -383,7 +384,7 @@ To have a more user-friendly documentation I use the [[https://github.com/Wilfre
     ("C-h o" . helpful-symbol))
 #+end_src
 
-* TODO Minibuffer packages
+* Minibuffer packages
 These packages make everything in the minibuffer nicer and easier.
 
 ** Vertico
@@ -545,12 +546,11 @@ Display possible key bindings following incomplete command.
     (which-key-max-description-length 40))
 #+end_src
 
-* TODO Buffer packages
+* Buffer packages
 This section contains some packages that make navigating between and around buffers and files easier.
 
-** TODO ibuffer
-TODO I think this could be structured better (such as moving the function to the top). And making it possible to switch between the two.
-The =ibuffer= built-in package provides better buffer management over =buffer-menu=, with a nicer visual interface and syntax colour.
+** ibuffer
+The =ibuffer= built-in package provides better buffer management over =buffer-menu=, with a nicer visual interface and syntax colour. To organise the =ibuffer= menu, I use either the [[https://github.com/purcell/ibuffer-v][ibuffer-vc]] or the [[https://github.com/muffinmad/emacs-ibuffer-project/blob/master/README.md][ibuffer-project]] package to sort the buffers by git repository or  project, respectively. To set which is in use, just =:disbaled= the one you don't want.
 
 #+begin_src emacs-lisp
   (use-package ibuffer
@@ -560,11 +560,7 @@ The =ibuffer= built-in package provides better buffer management over =buffer-me
     :custom
     ;; (setq ibuffer-default-sorting-mode 'major-mode)
     (ibuffer-show-empty-filter-groups nil))
-#+end_src
 
-To organise the =ibuffer= menu, I use either the [[https://github.com/purcell/ibuffer-v][ibuffer-vc]] or the [[https://github.com/muffinmad/emacs-ibuffer-project/blob/master/README.md][ibuffer-project]] package to sort the buffers by git repository or  project, respectively. To set which is in use, just =:disbaled= the one you don't want.
-
-#+begin_src emacs-lisp
   (use-package ibuffer-vc
     :disabled
     :after ibuffer
@@ -659,7 +655,7 @@ The [[https://github.com/abo-abo/ace-window][ace-window]] package makes switchin
     (ultra-scroll-mode 1))
 #+end_src
 
-* TODO Editing packages
+* Editing packages
 These packages are specifically used for editing text inside a buffer. There are used in all major modes.
 
 ** drag-stuff
@@ -676,9 +672,8 @@ It is useful to be able to move a line or a region up and down without having to
     (drag-stuff-global-mode 1))
 
 #+end_src
-** TODO yasnippet
-TODO: expand intro with some links. could add a keybinding for ivy (is there a consult version?)
-TODO To make editting a coding easier.
+** YASnippet
+[[https://github.com/joaotavora/yasnippet][YASnippet]] is a template system for Emacs. It allows you to type an abbreviation and automatically expand it into function templates. [[https://github.com/AndreaCrotti/yasnippet-snippets][YASnippet-snippets]] contains a large collection of snippets to use.
 
 #+begin_src emacs-lisp
   (use-package yasnippet
@@ -686,10 +681,8 @@ TODO To make editting a coding easier.
 
   (use-package yasnippet-snippets
     :after yasnippet
-    :config (yasnippet-snippets-initialize))
-
-  (use-package ivy-yasnippet
-    :after yasnippet)
+    :config
+    (yasnippet-snippets-initialize))
 #+end_src
 
 ** iedit
@@ -700,8 +693,9 @@ TODO To make editting a coding easier.
     :bind
     ("C-r" . iedit-mode))
 #+end_src
-** TODO undo-tree
-TODO check the minimal emacs for this - as feel it should be there and set up a bunch of this
+
+** undo-tree
+The [[https://gitlab.com/tsc25/undo-tree][undo-tree]] package visualises the undo history as a tree for easy navigation.
 
 #+begin_src emacs-lisp
   (use-package undo-tree
@@ -723,19 +717,19 @@ TODO check the minimal emacs for this - as feel it should be there and set up a 
 #+end_src
 
 ** TODO multiple-cursors
+TODO This package is pretty large, need to spend some time learning how to use it fully. Start with the git page and [[https://emacsrocks.com/e13.html][this]] video.
+
+The [[https://github.com/magnars/multiple-cursors.el][multiple-cursors]] package adds the ability to add cursors all over the buffer to edit in lots of places at once.
 
 #+begin_src emacs-lisp
   (use-package multiple-cursors
     :bind
-    ;; (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
-    ;; (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
     ("C->" . mc/mark-next-like-this)
     ("C-<" . mc/mark-previous-like-this))
-
     #+end_src
 
 ** expand-region
-Expand the marked region in semantic increments (C-- C-= to reduce region).
+Expand the marked region in semantic increments (=C-- C-= to reduce region).
 
 #+begin_src emacs-lisp
   (use-package expand-region
@@ -911,7 +905,7 @@ Disabled for now as couldn't figure out how to use the correct C++ style.
 #+end_src
 
 ** TODO company-mode
-TODO try corfu as company boxes messes with pop os auto tiling
+TODO try corfu as company boxes messes with pop os auto tiling - see minimal emacs
 
 Auto-completion with GNU Emacs is mainly combined with LSP mode. Therefore the development of any programming language is made easier with auto-completion, which involves a completion at point followed by the display of a small pop-in containing the candidates. I am using [[https://github.com/company-mode/company-mode][company-mode]] which is easier and smoother to configure.
 
@@ -927,8 +921,8 @@ Auto-completion with GNU Emacs is mainly combined with LSP mode. Therefore the d
     (company-preview-frontend t)          ;; show first completion candidate inline
     (company-show-doc-buffer nil))
 
-  ;; for visuals
-  ;; this doesnt work with pop os auto tilling
+  ;; For visuals
+  ;; This doesnt work with pop os auto tilling
   (use-package company-box
     :disabled
     :after company
@@ -1036,15 +1030,6 @@ TODO auto formatting is so bad
 
   ;; set .h files to use c++ mode instead
   (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode))
-#+end_src
-
-If you follow [[https://google.github.io/styleguide/cppguide.html][Google's C/++ conventions]], the [[https://github.com/google/styleguide/blob/gh-pages/google-c-style.el][google-c-style]] package changes some default values to ensure that you follow these conventions as much as possible.
-
-#+begin_src emacs-lisp
-  (use-package google-c-style
-    :disabled
-    :hook (((c-mode c++-mode) . google-set-c-style)
-           (c-mode-common . google-make-newline-indent)))
 #+end_src
 
 *** Python
@@ -1251,16 +1236,14 @@ Finally, it is often useful to put our hands in a bibliography in LaTeX. The bui
     :hook ((bibtex-mode . lsp-deferred)
            (bibtex-mode . my/bibtex-fill-column)))
 #+end_src
-* TODO Org
+* TODO Org-mode
 TODO needs a big tidy up (could be its own heading?, see https://github.com/rememberYou/.emacs.d/blob/master/config.org#org-mode
-
-and check out https://github.com/org-roam/org-roam
 
 A lot of these changes are based of [[https://doc.norang.ca/org-mode.html#HowToUseThisDocument][this]].
 
-When get onto this could be a great opportunity to finally learn orgmode, org agenda and org roam
+** TODO My defaults
+TODO add these to a use-package
 
-** Tweaks
 #+begin_src emacs-lisp
   ;; indent with tabs for better readability
   (add-hook 'org-mode-hook #'org-indent-mode)
@@ -1272,7 +1255,6 @@ When get onto this could be a great opportunity to finally learn orgmode, org ag
     org-confirm-babel-evaluate nil)
 #+end_src
 
-** Keybindings
 #+begin_src emacs-lisp
   ;; Standard key bindings
   ;; (global-set-key (kbd "\C-c l") 'org-store-link)
@@ -1281,13 +1263,16 @@ When get onto this could be a great opportunity to finally learn orgmode, org ag
   (global-set-key (kbd "\C-c b") 'org-iswitchb)
 #+end_src
 
-** Agenda
+** TODO Agenda
+Lots to do here
+
 #+begin_src emacs-lisp
-  ;;
-  (setq org-agenda-files (quote ("~/git/agenda/phd/simulations.org"
-                                 "~/git/agenda/phd/prominence.org"
-                                 "~/git/agenda/personal.org"
-                                 "~/git/agenda/emacs.org")))
+  ;; Get all my agenda files
+  (setq org-agenda-files
+        (mapcar 'abbreviate-file-name
+                (split-string
+                 (shell-command-to-string "find ~/Documents/agenda -name \"*.org\"")
+                 "\n")))
 
   ;; Define the keywords for the agenda
   (setq org-todo-keywords
@@ -1309,15 +1294,43 @@ When get onto this could be a great opportunity to finally learn orgmode, org ag
                 ("CANCELLED" :foreground "forest green" :weight bold))))
 #+end_src
 
-** Packages
-*** org-bullets
-#+BEGIN_SRC emacs-lisp
+** TODO Roam
+TODO write intro
+TODO learn to use
+TODO learn to use dailies (when i make one its putting everything before the properties.
+
+#+begin_src emacs-lisp
+  (use-package org-roam
+    :custom
+    (org-roam-directory "~/Documents/RoamNodes")
+    (org-roam-dailies-directory "dailies/")
+    (org-roam-completion-everywhere t)
+    :bind (("C-c n l" . org-roam-buffer-toggle)
+           ("C-c n f" . org-roam-node-find)
+           ("C-c n i" . org-roam-node-insert)
+           :map org-mode-map
+           ("C-M-i" . completion-at-point)
+           :map org-roam-dailies-map
+           ("Y" . org-roam-dailies-capture-yesterday)
+           ("T" . org-roam-dailies-capture-tomorrow))
+    :bind-keymap
+    ("C-c n d" . org-roam-dailies-map)
+    :config
+    (org-roam-setup)
+    (require 'org-roam-dailies) ;; Ensure the keymap is available
+    (org-roam-db-autosync-mode))
+#+end_src
+
+*** TODO org-bullets
+TODO write intro
+
+#+begin_src emacs-lisp
   ;; Org bullets makes things look pretty
   (use-package org-bullets
-    :ensure t
-    :config
-    (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
-  #+END_SRC
+    :hook
+    (org-mode . (lambda ()
+                  (org-bullets-mode 1))))
+  #+end_src
 *** toc-org
 In order to auto generate the table of contents of this file (and others) I'm using the [[https://github.com/snosov1/toc-org][toc-org]] package. Every time you save an org file, the first headline with a =:TOC:= tag will be updated with the current table of contents (=:TOC_2:= sets the max depth to 2).
 
@@ -1325,6 +1338,7 @@ In order to auto generate the table of contents of this file (and others) I'm us
   (use-package toc-org
     :hook (org-mode . toc-org-enable))
 #+end_src
+** TODO Packages
 * TODO Hydra
 could maybe be its own head? - maybe move back cause i lit never use it so kinda dont think i should spend ages on it
 could put this is one of like (my own packages or my own lisp)
