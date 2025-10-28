@@ -1,7 +1,7 @@
 #+STARTUP: overview
 
 * Introduction
-This is my =.emacsd= folder to load my preferred Emacs configuration. Although it "should" work out of the box, I've added some extra steps I've needed in the past to the section [[*Misc requirements][Misc requirements]].
+This is my =.emacsd= folder to load my preferred Emacs configuration. Although it "should" work out of the box, I've added some extra steps I've needed in the past to the section [[#misc-requirements][Misc requirements]].
 
 * Contents                                                            :TOC_2:
 - [[#introduction][Introduction]]
@@ -57,7 +57,7 @@ This is my =.emacsd= folder to load my preferred Emacs configuration. Although i
   - [[#parenthesis][Parenthesis]]
   - [[#indentation][Indentation]]
   - [[#languages][Languages]]
-- [[#writing-packages][Writing packages]]
+- [[#waiting-writing-packages][WAITING Writing packages]]
   - [[#defaults][Defaults]]
   - [[#flyspell][Flyspell]]
   - [[#ispell][Ispell]]
@@ -65,10 +65,12 @@ This is my =.emacsd= folder to load my preferred Emacs configuration. Although i
   - [[#writegood-mode][writegood-mode]]
   - [[#latex][LaTeX]]
 - [[#org-mode][Org-mode]]
-  - [[#my-defaults-1][My defaults]]
+  - [[#defaults-1][Defaults]]
+  - [[#org-roam][Org-Roam]]
+  - [[#citar][Citar]]
+  - [[#citar-org-roam][citar-org-roam]]
   - [[#agenda][Agenda]]
-  - [[#roam][Roam]]
-  - [[#packages][Packages]]
+  - [[#other-packages][Other packages]]
 - [[#hydra][Hydra]]
   - [[#git-sync][Git sync]]
 
@@ -144,6 +146,10 @@ These are instructions you may need for a fresh install of Emacs using this init
 - For =lsp-mode= you will need to install all the language servers, eg. =sudo apt install clangd=. But emacs should prompt you to install them automatically anyway as you open files, if you run into issues just install them from the terminal.
   - On linux, I ran into an error of Emacs not being able to find =npm= to install for example the =bash-ls=.
   - I therefore had to install =nvm= in my terminal, following the instructions [[https://github.com/nvm-sh/nvm?tab=readme-ov-file#installing-and-updating][here]] (=apt= installs old versions that didn't work either).
+  - I also had to install =nodejs= to fix an error
+    #+begin_src bash
+      /usr/bin/env: 'node': No such file or directory"
+    #+end_src
   - For lsp-itex, the automatic install wasn't working but just try M-x lsp-install-server ltex-ls instead. Or if you download directly note to place the executable in =~/.emacs.d/.cache/lsp/ltex-ls/latest=.
 
 - For =dap-mode= a one-time step is required to download the extension and set it up automatically  =M-x dap-cpptools-setup= then you are good start debugging.
@@ -210,19 +216,19 @@ Check if there's a package to work with make projects. Also add these to use-pac
 Key bindings to quickly make and clean makefile projects.
 
 #+begin_src emacs-lisp
-  (defun kai/compile-build ()
+  (defun my/compile-build ()
     "Compile using 'make build'."
     (interactive)
     (compile "make build"))
 
-  (defun kai/compile-clean ()
+  (defun my/compile-clean ()
     "Clean using 'make clean'."
     (interactive)
     (compile "make clean"))
 
   ;; makefile keybindings
-  (keymap-global-set "<f5>" 'kai/compile-build)
-  (keymap-global-set "<f6>" 'kai/compile-clean)
+  (keymap-global-set "<f5>" 'my/compile-build)
+  (keymap-global-set "<f6>" 'my/compile-clean)
 #+end_src
 ** Kill buff
 Kill the current buffer instead of having to pick it.
@@ -737,8 +743,8 @@ Expand the marked region in semantic increments (=C-- C-= to reduce region).
     ("C-=" . er/expand-region))
 #+end_src
 
-* TODO Programming packages
-This section contains all the packages I am using for programming. Including a dedicated section for specific [[*Languages][Languages]].
+* Programming packages
+This section contains all the packages I am using for programming. Including a dedicated section for specific [[#languages][Languages]].
 
 ** Git
 *** magit
@@ -769,7 +775,6 @@ This section contains all the packages I am using for programming. Including a d
     (define-fringe-bitmap 'git-gutter-fr:added [224] nil nil '(center repeated))
     (define-fringe-bitmap 'git-gutter-fr:modified [224] nil nil '(center repeated))
     (define-fringe-bitmap 'git-gutter-fr:deleted [128 192 224 240] nil nil 'bottom))
-
 #+end_src
 
 ** TODO LSP
@@ -1050,8 +1055,11 @@ Look [[https://github.com/rememberYou/.emacs.d/blob/master/config.org#python][he
   (add-to-list 'auto-mode-alist '("Makefile" . makefile-mode))
 #+end_src
 
-* TODO Writing packages
+* WAITING Writing packages
+Update most of these when writing thesis.
+
 This packages are to improve all things writing.
+
 ** TODO Defaults
 TODO maybe update name, and add intro summary
 
@@ -1237,30 +1245,188 @@ Finally, it is often useful to put our hands in a bibliography in LaTeX. The bui
            (bibtex-mode . my/bibtex-fill-column)))
 #+end_src
 * TODO Org-mode
-TODO needs a big tidy up (could be its own heading?, see https://github.com/rememberYou/.emacs.d/blob/master/config.org#org-mode
-
 A lot of these changes are based of [[https://doc.norang.ca/org-mode.html#HowToUseThisDocument][this]].
 
-** TODO My defaults
+** TODO Defaults
 TODO add these to a use-package
 
 #+begin_src emacs-lisp
+  ;; TODO expand these to other packages and points that use paths
+  (defvar my/roam-directory "~/Documents/Org/RoamNodes"
+    "My main Org Roam directory.")
+
+  (defvar my/global-bibliography-file
+    (expand-file-name "biblio.bib" my/roam-directory)
+    "My main BibTex references file.")
+
+  (org-link-set-parameters "zotero"
+                           :follow (lambda (zpath)
+                                     (browse-url
+                                      (format "zotero:%s" zpath))))
+
   ;; indent with tabs for better readability
   (add-hook 'org-mode-hook #'org-indent-mode)
   ;; (setq org-indent-indentation-per-level 4)
 
   ;; When editing org-files with source-blocks, we want the source blocks to be themed as they would in their native mode.
   (setq org-src-fontify-natively t
-    org-src-tab-acts-natively t
-    org-confirm-babel-evaluate nil)
-#+end_src
+        org-src-tab-acts-natively t
+        org-confirm-babel-evaluate nil)
 
-#+begin_src emacs-lisp
   ;; Standard key bindings
   ;; (global-set-key (kbd "\C-c l") 'org-store-link)
   (global-set-key (kbd "\C-c a") 'org-agenda)
   (global-set-key (kbd "\C-c c") 'org-capture)
   (global-set-key (kbd "\C-c b") 'org-iswitchb)
+
+  (setq time-stamp-active t
+        time-stamp-start "#\\+last_modified:[ \t]*"
+        time-stamp-end "$"
+        time-stamp-format "[%Y-%m-%d %a %H:%M]")
+
+  (add-hook 'before-save-hook 'time-stamp)
+#+end_src
+
+** TODO Org-Roam
+Based on [[https://jethrokuan.github.io/org-roam-guide/][this]].
+and https://www.riccardopinosio.com/blog/posts/zotero_notes_article.html#citar
+
+could move a lot of this to own section for roam stuff
+and different one for agenda stuff
+
+#+begin_src emacs-lisp
+  (use-package org-roam
+    :bind (("C-c n l" . org-roam-buffer-toggle)
+           ("C-c n f" . org-roam-node-find)
+           ("C-c n i" . org-roam-node-insert)
+           :map org-mode-map
+           ("C-M-i" . completion-at-point)
+           :map org-roam-dailies-map
+           ("Y" . org-roam-dailies-capture-yesterday)
+           ("T" . org-roam-dailies-capture-tomorrow))
+    :bind-keymap
+    ("C-c n d" . org-roam-dailies-map)
+    :config
+    (org-roam-setup)
+    (require 'org-roam-dailies) ;; Ensure the keymap is available
+    (org-roam-db-autosync-mode)
+    :custom
+    (org-roam-directory my/roam-directory)
+    (org-roam-dailies-directory "dailies/")
+    (org-roam-completion-everywhere t)
+    ;; Add filetags to the node search
+    (org-roam-node-display-template (concat "${title:*} "
+                                            (propertize "${tags:10}" 'face 'org-tag)))
+    (org-roam-capture-templates
+     '(("m" "main" plain "%?"
+        :target (file+head "main/${slug}.org"
+                           "#+created: %U\n#+last_modified: %U\n#+title: ${title}\n#+filetags: :main:draft:\n\n")
+        :immediate-finish t
+        :unnarrowed t)
+       ("i" "inbox" plain "%?"
+        :target (file+head "inbox/${title}.org"
+                           "#+created: %U\n#+last_modified: %U\n#+title: ${title}\n#+filetags: :inbox:draft:\n\n")
+        :immediate-finish t
+        :unnarrowed t)
+       ("r" "reference" plain
+        (file "~/Documents/Org/Templates/ref-template.org")
+        :target (file+head "refs/${citar-citekey}.org" "")
+        :immediate-finish t
+        :unnarrowed t))))
+#+end_src
+
+** TODO Citar
+TODO
+
+#+begin_src elisp
+    (use-package citar
+      :bind
+      (:map org-mode-map :package org ("C-c b" . #'org-cite-insert))
+      :custom
+      (citar-bibliography my/global-bibliography-file)
+      (org-cite-insert-processor 'citar)
+      (org-cite-follow-processor 'citar)
+      (org-cite-activate-processor 'citar))
+
+
+  (defun riccardo/citar-file-trust-zotero (oldfun &rest args)
+    "Leave Zotero-generated file paths alone, especially zotero://..."
+    (if (boundp 'native-comp-deferred-compilation-enabled)
+        (let ((native-comp-deferred-compilation-enabled nil))
+          (cl-letf (((symbol-function 'file-exists-p) #'always)
+                    ((symbol-function 'expand-file-name)
+                     (lambda (first &rest _) first)))
+            (apply oldfun args)))
+      (cl-letf (((symbol-function 'file-exists-p) #'always)
+                ((symbol-function 'expand-file-name)
+                 (lambda (first &rest _) first)))
+        (apply oldfun args))))
+
+    ;; Add the advice around the functions
+    (advice-add 'citar-file-open :around #'riccardo/citar-file-trust-zotero)
+    (advice-add 'citar-file--find-files-in-dirs :around #'riccardo/citar-file-trust-zotero)
+
+    (add-to-list 'citar-file-open-functions '("pdf" . citar-file-open-external))
+
+
+
+    (setq citar-templates
+          '((main    . "${title:48}   ${author editor:30%etal}    ${date year issued:4}")
+            (suffix  . "    ${=key= id:15}    ${=type=:12}    ${tags keywords:*}")
+            (preview . "${author editor:%sn%etal} (${year issued date}) ${title}, ${journal journaltitle publisher container-title collection-title}.\n")
+            (note    . "Notes on ${author editor:%etal}, ${title}")))
+
+    (defvar citar-indicator-notes-icons
+      (citar-indicator-create
+       :symbol (nerd-icons-mdicon
+                "nf-md-notebook"
+                :face 'nerd-icons-blue
+                :v-adjust -0.3)
+       :function #'citar-has-notes
+       :padding "  "
+       :tag "has:notes"))
+
+    (defvar citar-indicator-links-icons
+      (citar-indicator-create
+       :symbol (nerd-icons-octicon
+                "nf-oct-link"
+                :face 'nerd-icons-orange
+                :v-adjust -0.1)
+       :function #'citar-has-links
+       :padding "  "
+       :tag "has:links"))
+
+    (defvar citar-indicator-files-icons
+      (citar-indicator-create
+       :symbol (nerd-icons-faicon
+                "nf-fa-file"
+                :face 'nerd-icons-green
+                :v-adjust -0.1)
+       :function #'citar-has-files
+       :padding "  "
+       :tag "has:files"))
+
+    (setq citar-indicators
+          (list citar-indicator-files-icons
+                citar-indicator-notes-icons
+                citar-indicator-links-icons))
+#+end_src
+
+** TODO citar-org-roam
+org roam integration
+
+#+begin_src elisp
+  (use-package citar-org-roam
+    :after (citar org-roam)
+    :config
+    (citar-org-roam-mode)
+    (add-to-list 'citar-org-roam-template-fields '(:citar-url . ("url" "doi")))
+    (add-to-list 'citar-org-roam-template-fields '(:citar-file . ("file")))
+    (add-to-list 'citar-org-roam-template-fields '(:citar-abstract . ("abstract")))
+    :custom
+    (citar-org-roam-subdir "refs")
+    (citar-org-roam-capture-template-key "r")
+    (citar-org-roam-note-title-template "${title}"))
 #+end_src
 
 ** TODO Agenda
@@ -1271,7 +1437,7 @@ Lots to do here
   (setq org-agenda-files
         (mapcar 'abbreviate-file-name
                 (split-string
-                 (shell-command-to-string "find ~/Documents/agenda -name \"*.org\"")
+                 (shell-command-to-string "find ~/Documents/Org/Agenda -name \"*.org\"")
                  "\n")))
 
   ;; Define the keywords for the agenda
@@ -1279,6 +1445,7 @@ Lots to do here
         '((sequence "TODO(t)"    "NEXT(n)" "|" "DONE(d)")
           (sequence "WAITING(w)" "HOLD(h)" "|" "CANCELLED(c)")))
 
+  ;; Add time when mark something as done
   (setq org-log-done 'time)
 
   ;; Set default column view headings: Task Total-Time Time-Stamp
@@ -1293,34 +1460,7 @@ Lots to do here
                 ("HOLD"      :foreground "magenta"      :weight bold)
                 ("CANCELLED" :foreground "forest green" :weight bold))))
 #+end_src
-
-** TODO Roam
-TODO write intro
-TODO learn to use
-TODO learn to use dailies (when i make one its putting everything before the properties.
-
-#+begin_src emacs-lisp
-  (use-package org-roam
-    :custom
-    (org-roam-directory "~/Documents/RoamNodes")
-    (org-roam-dailies-directory "dailies/")
-    (org-roam-completion-everywhere t)
-    :bind (("C-c n l" . org-roam-buffer-toggle)
-           ("C-c n f" . org-roam-node-find)
-           ("C-c n i" . org-roam-node-insert)
-           :map org-mode-map
-           ("C-M-i" . completion-at-point)
-           :map org-roam-dailies-map
-           ("Y" . org-roam-dailies-capture-yesterday)
-           ("T" . org-roam-dailies-capture-tomorrow))
-    :bind-keymap
-    ("C-c n d" . org-roam-dailies-map)
-    :config
-    (org-roam-setup)
-    (require 'org-roam-dailies) ;; Ensure the keymap is available
-    (org-roam-db-autosync-mode))
-#+end_src
-
+** Other packages
 *** TODO org-bullets
 TODO write intro
 
@@ -1338,7 +1478,6 @@ In order to auto generate the table of contents of this file (and others) I'm us
   (use-package toc-org
     :hook (org-mode . toc-org-enable))
 #+end_src
-** TODO Packages
 * TODO Hydra
 could maybe be its own head? - maybe move back cause i lit never use it so kinda dont think i should spend ages on it
 could put this is one of like (my own packages or my own lisp)
