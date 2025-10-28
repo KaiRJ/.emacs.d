@@ -15,7 +15,6 @@ This is my =.emacsd= folder to load my preferred Emacs configuration. Although i
 - [[#custom-changes][Custom changes]]
   - [[#my-defaults][My defaults]]
   - [[#duplicate-line][Duplicate line]]
-  - [[#makefile-commands][Makefile Commands]]
   - [[#kill-buff][Kill buff]]
   - [[#comment-line][Comment line]]
   - [[#focus-on-new-split-window][Focus on new split window]]
@@ -27,6 +26,10 @@ This is my =.emacsd= folder to load my preferred Emacs configuration. Although i
   - [[#from-mimimal-emacs][From mimimal emacs]]
   - [[#try][Try]]
   - [[#helpful][Helpful]]
+- [[#org-packages][Org packages]]
+  - [[#org-mode][Org-mode]]
+  - [[#org-roam][Org-roam]]
+  - [[#org-agenda][Org-agenda]]
 - [[#minibuffer-packages][Minibuffer packages]]
   - [[#vertico][Vertico]]
   - [[#orderless][Orderless]]
@@ -64,13 +67,6 @@ This is my =.emacsd= folder to load my preferred Emacs configuration. Although i
   - [[#languagetools][LanguageTools]]
   - [[#writegood-mode][writegood-mode]]
   - [[#latex][LaTeX]]
-- [[#org-mode][Org-mode]]
-  - [[#defaults-1][Defaults]]
-  - [[#org-roam][Org-Roam]]
-  - [[#citar][Citar]]
-  - [[#citar-org-roam][citar-org-roam]]
-  - [[#agenda][Agenda]]
-  - [[#other-packages][Other packages]]
 - [[#hydra][Hydra]]
   - [[#git-sync][Git sync]]
 
@@ -210,26 +206,6 @@ Duplicates the current line below.
       (yank)))
 #+end_src
 
-** TODO Makefile Commands
-Check if there's a package to work with make projects. Also add these to use-package like others
-
-Key bindings to quickly make and clean makefile projects.
-
-#+begin_src emacs-lisp
-  (defun my/compile-build ()
-    "Compile using 'make build'."
-    (interactive)
-    (compile "make build"))
-
-  (defun my/compile-clean ()
-    "Clean using 'make clean'."
-    (interactive)
-    (compile "make clean"))
-
-  ;; makefile keybindings
-  (keymap-global-set "<f5>" 'my/compile-build)
-  (keymap-global-set "<f6>" 'my/compile-clean)
-#+end_src
 ** Kill buff
 Kill the current buffer instead of having to pick it.
 
@@ -390,6 +366,241 @@ To have a more user-friendly documentation I use the [[https://github.com/Wilfre
     ("C-h o" . helpful-symbol))
 #+end_src
 
+* TODO Org packages
+TODO need to have a think of the best way to organise all these packages
+
+This section...
+
+First I'm defining some directories that I use for all my Org files.
+
+#+begin_src elisp
+  (defvar my/roam-directory "~/Documents/Org/RoamNodes"
+    "My main Org Roam directory.")
+
+  (defvar my/global-bibliography-file
+    (expand-file-name "biblio.bib" my/roam-directory)
+    "My main BibTex references file.")
+#+end_src
+
+** TODO Org-mode
+TODO add these to a use-package
+
+#+begin_src emacs-lisp
+  ;; TODO move this to citar as its really with that part of the work flow
+  (org-link-set-parameters "zotero"
+                           :follow (lambda (zpath)
+                                     (browse-url
+                                      (format "zotero:%s" zpath))))
+
+  ;; indent with tabs for better readability
+  (add-hook 'org-mode-hook #'org-indent-mode)
+  ;; (setq org-indent-indentation-per-level 4)
+
+  ;; When editing org-files with source-blocks, we want the source blocks to be themed as they would in their native mode.
+  (setq org-src-fontify-natively t
+        org-src-tab-acts-natively t
+        org-confirm-babel-evaluate nil)
+
+  ;; Standard key bindings
+  ;; (global-set-key (kbd "\C-c l") 'org-store-link)
+  (global-set-key (kbd "\C-c a") 'org-agenda)
+  (global-set-key (kbd "\C-c c") 'org-capture)
+  (global-set-key (kbd "\C-c b") 'org-iswitchb)
+
+  (setq time-stamp-active t
+        time-stamp-start "#\\+last_modified:[ \t]*"
+        time-stamp-end "$"
+        time-stamp-format "[%Y-%m-%d %a %H:%M]")
+
+  (add-hook 'before-save-hook 'time-stamp)
+#+end_src
+
+*** TODO org-bullets
+TODO write intro
+
+#+begin_src emacs-lisp
+  ;; Org bullets makes things look pretty
+  (use-package org-bullets
+    :hook
+    (org-mode . (lambda ()
+                  (org-bullets-mode 1))))
+  #+end_src
+*** toc-org
+In order to auto generate the table of contents of this file (and others) I'm using the [[https://github.com/snosov1/toc-org][toc-org]] package. Every time you save an org file, the first headline with a =:TOC:= tag will be updated with the current table of contents (=:TOC_2:= sets the max depth to 2).
+
+#+begin_src emacs-lisp
+  (use-package toc-org
+    :hook (org-mode . toc-org-enable))
+#+end_src
+** TODO Org-roam
+[[https://www.orgroam.com/manual.html][Org-roam]] provides utilities for maintaining a digital slip-box in [[https://orgmode.org/][Org-mode]]. This setup is based mostly on the workflows outlined [[https://jethrokuan.github.io/org-roam-guide/][here]] and [[https://www.riccardopinosio.com/blog/posts/zotero_notes_article.html][here]] (Note, the latter provides a snippet of [[https://www.riccardopinosio.com/blog/posts/zotero_notes_article.html#opening-zotero-pdf-from-org-roam][Javascript]] that needs to be added to Zotero to correct the =file= field in the bibliography so it opens in Zotero from Emacs).
+
+#+begin_src emacs-lisp
+  (use-package org-roam
+    :bind (("C-c n l" . org-roam-buffer-toggle)
+           ("C-c n f" . org-roam-node-find)
+           ("C-c n i" . org-roam-node-insert)
+           :map org-mode-map
+           ("C-M-i" . completion-at-point)
+           :map org-roam-dailies-map
+           ("Y" . org-roam-dailies-capture-yesterday)
+           ("T" . org-roam-dailies-capture-tomorrow))
+    :bind-keymap
+    ("C-c n d" . org-roam-dailies-map)
+    :config
+    (org-roam-setup)
+    (org-roam-db-autosync-mode)
+    (require 'org-roam-dailies) ;; Ensure the keymap is available
+    :custom
+    (org-roam-directory my/roam-directory)
+    (org-roam-dailies-directory "dailies/")
+    (org-roam-completion-everywhere t)
+    ;; Add filetags to the node search
+    (org-roam-node-display-template (concat "${title:*} "
+                                            (propertize "${tags:20}" 'face 'org-tag)))
+    (org-roam-capture-templates
+     '(("m" "main" plain "%?"
+        :target (file+head "main/${slug}.org"
+                           "#+created: %U\n#+last_modified: %U\n#+title: ${title}\n#+filetags: :main:draft:\n\n")
+        :immediate-finish t
+        :unnarrowed t)
+       ("i" "inbox" plain "%?"
+        :target (file+head "inbox/${title}.org"
+                           "#+created: %U\n#+last_modified: %U\n#+title: ${title}\n#+filetags: :inbox:draft:\n\n")
+        :immediate-finish t
+        :unnarrowed t)
+       ("r" "reference" plain
+        (file "~/Documents/Org/Templates/ref-template.org")
+        :target (file+head "refs/${citar-citekey}.org" "")
+        :immediate-finish t
+        :unnarrowed t))))
+#+end_src
+
+*** TODO citar
+TODO make sure understand the functions im defining and rename them
+TODO test if can move all setq into use-package and then define the functions all before (or in the config?)
+
+#+begin_src elisp
+  (use-package citar
+    :after org-roam
+    :bind
+    (:map org-mode-map :package org ("C-c b" . #'org-cite-insert))
+    :custom
+    (org-cite-global-bibliography '(my/global-bibliography-file))
+    (org-cite-insert-processor 'citar)
+    (org-cite-follow-processor 'citar)
+    (org-cite-activate-processor 'citar)
+    (citar-bibliography my/global-bibliography-file))
+
+  (defun riccardo/citar-file-trust-zotero (oldfun &rest args)
+    "Leave Zotero-generated file paths alone, especially zotero://..."
+    (if (boundp 'native-comp-deferred-compilation-enabled)
+        (let ((native-comp-deferred-compilation-enabled nil))
+          (cl-letf (((symbol-function 'file-exists-p) #'always)
+                    ((symbol-function 'expand-file-name)
+                     (lambda (first &rest _) first)))
+            (apply oldfun args)))
+      (cl-letf (((symbol-function 'file-exists-p) #'always)
+                ((symbol-function 'expand-file-name)
+                 (lambda (first &rest _) first)))
+        (apply oldfun args))))
+
+  ;; Add the advice around the functions
+  (advice-add 'citar-file-open :around #'riccardo/citar-file-trust-zotero)
+  (advice-add 'citar-file--find-files-in-dirs :around #'riccardo/citar-file-trust-zotero)
+
+  (add-to-list 'citar-file-open-functions '("pdf" . citar-file-open-external))
+
+  (setq citar-templates
+        '((main    . "${title:48}   ${author editor:30%etal}    ${date year issued:4}")
+          (suffix  . "    ${=key= id:15}    ${=type=:12}    ${tags keywords:*}")
+          (preview . "${author editor:%sn%etal} (${year issued date}) ${title}, ${journal journaltitle publisher container-title collection-title}.\n")
+          (note    . "Notes on ${author editor:%etal}, ${title}")))
+
+  (defvar citar-indicator-notes-icons
+    (citar-indicator-create
+     :symbol (nerd-icons-mdicon
+              "nf-md-notebook"
+              :face 'nerd-icons-blue
+              :v-adjust -0.3)
+     :function #'citar-has-notes
+     :padding "  "
+     :tag "has:notes"))
+
+  (defvar citar-indicator-links-icons
+    (citar-indicator-create
+     :symbol (nerd-icons-octicon
+              "nf-oct-link"
+              :face 'nerd-icons-orange
+              :v-adjust -0.1)
+     :function #'citar-has-links
+     :padding "  "
+     :tag "has:links"))
+
+  (defvar citar-indicator-files-icons
+    (citar-indicator-create
+     :symbol (nerd-icons-faicon
+              "nf-fa-file"
+              :face 'nerd-icons-green
+              :v-adjust -0.1)
+     :function #'citar-has-files
+     :padding "  "
+     :tag "has:files"))
+
+  (setq citar-indicators
+        (list citar-indicator-files-icons
+              citar-indicator-notes-icons
+              citar-indicator-links-icons))
+#+end_src
+
+*** TODO citar-org-roam
+TODO write this org roam integration
+
+#+begin_src elisp
+  (use-package citar-org-roam
+    :after (citar org-roam)
+    :config
+    (citar-org-roam-mode)
+    (add-to-list 'citar-org-roam-template-fields '(:citar-url . ("url" "doi")))
+    (add-to-list 'citar-org-roam-template-fields '(:citar-file . ("file")))
+    (add-to-list 'citar-org-roam-template-fields '(:citar-abstract . ("abstract")))
+    :custom
+    (citar-org-roam-subdir "refs")
+    (citar-org-roam-capture-template-key "r")
+    (citar-org-roam-note-title-template "${title}"))
+#+end_src
+
+** TODO Org-agenda
+A lot of these changes are based of [[https://doc.norang.ca/org-mode.html#HowToUseThisDocument][this]].
+
+#+begin_src emacs-lisp
+  ;; Get all my agenda files
+  (setq org-agenda-files
+        (mapcar 'abbreviate-file-name
+                (split-string
+                 (shell-command-to-string "find ~/Documents/Org/Agenda -name \"*.org\"")
+                 "\n")))
+
+  ;; Define the keywords for the agenda
+  (setq org-todo-keywords
+        '((sequence "TODO(t)"    "NEXT(n)" "|" "DONE(d)")
+          (sequence "WAITING(w)" "HOLD(h)" "|" "CANCELLED(c)")))
+
+  ;; Add time when mark something as done
+  (setq org-log-done 'time)
+
+  ;; Set default column view headings: Task Total-Time Time-Stamp
+  (setq org-columns-default-format "%50ITEM(Task) %TIMESTAMP_IA")
+
+  ;; Colour the keywords
+  (setq org-todo-keyword-faces
+        (quote (("TODO"      :foreground "red"          :weight bold)
+                ("NEXT"      :foreground "blue"         :weight bold)
+                ("DONE"      :foreground "forest green" :weight bold)
+                ("WAITING"   :foreground "orange"       :weight bold)
+                ("HOLD"      :foreground "magenta"      :weight bold)
+                ("CANCELLED" :foreground "forest green" :weight bold))))
+#+end_src
 * Minibuffer packages
 These packages make everything in the minibuffer nicer and easier.
 
@@ -426,7 +637,7 @@ Vertico leverages [[https://github.com/oantolin/orderless][Orderless]]' flexible
 ** TODO Consult
 TODO should learn to use this more, and shorted the config to what i use and need
 
-[[https://github.com/minad/consult][Consult]] offers a suite of commands for efficient searching, previewing, and interacting with buffers, file contents, and more, improving various tasks.
+[[https://github.com/minad/consult][Consult]] offers a suite of commands for efficient searching, previewing, and interacting with buffers, file contents, and more.
 
 #+begin_src emacs-lisp
   (use-package consult
@@ -523,6 +734,7 @@ TODO should learn to use this more, and shorted the config to what i use and nee
 
 ** TODO Embark
 TODO should learn to learn this, see minimal-emacs for a larger config
+Or remove it if not using
 
 The [[https://github.com/oantolin/embark][Embark]] package acts like a context menu (or right-click) to perform context-sensitive actions on selected items directly from the completion interface.
 
@@ -755,14 +967,19 @@ This section contains all the packages I am using for programming. Including a d
     :commands magit-status-mode)
 #+end_src
 
-*** git-gutter and git-gutter-fringe
-[[https://github.com/emacsorphanage/git-gutter][git-gutter]] is a simple package that shows the git difs to the side of each line that there is a change. I'm also using the [[https://github.com/emacsorphanage/git-gutter-fringe][git-gutter-fringe]] package to make this look similar to VScode (as per [[https://ianyepan.github.io/posts/emacs-git-gutter/][this]] demo).
+*** git-gutter
+[[https://github.com/emacsorphanage/git-gutter][git-gutter]] is a simple package that shows the git difs to the side of each line that there is a change.
 
 #+begin_src emacs-lisp
   (use-package git-gutter
     :custom ((global-git-gutter-mode 1 "Turn on for every mode")
              (git-gutter:update-interval 0.2 "If too small causes lagging")))
+  #+end_src
 
+*** git-gutter-fringe
+I'm also using the [[https://github.com/emacsorphanage/git-gutter-fringe][git-gutter-fringe]] package to make this look similar to VScode (as per [[https://ianyepan.github.io/posts/emacs-git-gutter/][this]] demo).
+
+  #+begin_src elisp
   (use-package git-gutter-fringe
     :after git-gutter
     :custom
@@ -1243,240 +1460,6 @@ Finally, it is often useful to put our hands in a bibliography in LaTeX. The bui
       (setq fill-column 120))
     :hook ((bibtex-mode . lsp-deferred)
            (bibtex-mode . my/bibtex-fill-column)))
-#+end_src
-* TODO Org-mode
-A lot of these changes are based of [[https://doc.norang.ca/org-mode.html#HowToUseThisDocument][this]].
-
-** TODO Defaults
-TODO add these to a use-package
-
-#+begin_src emacs-lisp
-  ;; TODO expand these to other packages and points that use paths
-  (defvar my/roam-directory "~/Documents/Org/RoamNodes"
-    "My main Org Roam directory.")
-
-  (defvar my/global-bibliography-file
-    (expand-file-name "biblio.bib" my/roam-directory)
-    "My main BibTex references file.")
-
-  (org-link-set-parameters "zotero"
-                           :follow (lambda (zpath)
-                                     (browse-url
-                                      (format "zotero:%s" zpath))))
-
-  ;; indent with tabs for better readability
-  (add-hook 'org-mode-hook #'org-indent-mode)
-  ;; (setq org-indent-indentation-per-level 4)
-
-  ;; When editing org-files with source-blocks, we want the source blocks to be themed as they would in their native mode.
-  (setq org-src-fontify-natively t
-        org-src-tab-acts-natively t
-        org-confirm-babel-evaluate nil)
-
-  ;; Standard key bindings
-  ;; (global-set-key (kbd "\C-c l") 'org-store-link)
-  (global-set-key (kbd "\C-c a") 'org-agenda)
-  (global-set-key (kbd "\C-c c") 'org-capture)
-  (global-set-key (kbd "\C-c b") 'org-iswitchb)
-
-  (setq time-stamp-active t
-        time-stamp-start "#\\+last_modified:[ \t]*"
-        time-stamp-end "$"
-        time-stamp-format "[%Y-%m-%d %a %H:%M]")
-
-  (add-hook 'before-save-hook 'time-stamp)
-#+end_src
-
-** TODO Org-Roam
-Based on [[https://jethrokuan.github.io/org-roam-guide/][this]].
-and https://www.riccardopinosio.com/blog/posts/zotero_notes_article.html#citar
-
-could move a lot of this to own section for roam stuff
-and different one for agenda stuff
-
-#+begin_src emacs-lisp
-  (use-package org-roam
-    :bind (("C-c n l" . org-roam-buffer-toggle)
-           ("C-c n f" . org-roam-node-find)
-           ("C-c n i" . org-roam-node-insert)
-           :map org-mode-map
-           ("C-M-i" . completion-at-point)
-           :map org-roam-dailies-map
-           ("Y" . org-roam-dailies-capture-yesterday)
-           ("T" . org-roam-dailies-capture-tomorrow))
-    :bind-keymap
-    ("C-c n d" . org-roam-dailies-map)
-    :config
-    (org-roam-setup)
-    (require 'org-roam-dailies) ;; Ensure the keymap is available
-    (org-roam-db-autosync-mode)
-    :custom
-    (org-roam-directory my/roam-directory)
-    (org-roam-dailies-directory "dailies/")
-    (org-roam-completion-everywhere t)
-    ;; Add filetags to the node search
-    (org-roam-node-display-template (concat "${title:*} "
-                                            (propertize "${tags:10}" 'face 'org-tag)))
-    (org-roam-capture-templates
-     '(("m" "main" plain "%?"
-        :target (file+head "main/${slug}.org"
-                           "#+created: %U\n#+last_modified: %U\n#+title: ${title}\n#+filetags: :main:draft:\n\n")
-        :immediate-finish t
-        :unnarrowed t)
-       ("i" "inbox" plain "%?"
-        :target (file+head "inbox/${title}.org"
-                           "#+created: %U\n#+last_modified: %U\n#+title: ${title}\n#+filetags: :inbox:draft:\n\n")
-        :immediate-finish t
-        :unnarrowed t)
-       ("r" "reference" plain
-        (file "~/Documents/Org/Templates/ref-template.org")
-        :target (file+head "refs/${citar-citekey}.org" "")
-        :immediate-finish t
-        :unnarrowed t))))
-#+end_src
-
-** TODO Citar
-TODO
-
-#+begin_src elisp
-    (use-package citar
-      :bind
-      (:map org-mode-map :package org ("C-c b" . #'org-cite-insert))
-      :custom
-      (citar-bibliography my/global-bibliography-file)
-      (org-cite-insert-processor 'citar)
-      (org-cite-follow-processor 'citar)
-      (org-cite-activate-processor 'citar))
-
-
-  (defun riccardo/citar-file-trust-zotero (oldfun &rest args)
-    "Leave Zotero-generated file paths alone, especially zotero://..."
-    (if (boundp 'native-comp-deferred-compilation-enabled)
-        (let ((native-comp-deferred-compilation-enabled nil))
-          (cl-letf (((symbol-function 'file-exists-p) #'always)
-                    ((symbol-function 'expand-file-name)
-                     (lambda (first &rest _) first)))
-            (apply oldfun args)))
-      (cl-letf (((symbol-function 'file-exists-p) #'always)
-                ((symbol-function 'expand-file-name)
-                 (lambda (first &rest _) first)))
-        (apply oldfun args))))
-
-    ;; Add the advice around the functions
-    (advice-add 'citar-file-open :around #'riccardo/citar-file-trust-zotero)
-    (advice-add 'citar-file--find-files-in-dirs :around #'riccardo/citar-file-trust-zotero)
-
-    (add-to-list 'citar-file-open-functions '("pdf" . citar-file-open-external))
-
-
-
-    (setq citar-templates
-          '((main    . "${title:48}   ${author editor:30%etal}    ${date year issued:4}")
-            (suffix  . "    ${=key= id:15}    ${=type=:12}    ${tags keywords:*}")
-            (preview . "${author editor:%sn%etal} (${year issued date}) ${title}, ${journal journaltitle publisher container-title collection-title}.\n")
-            (note    . "Notes on ${author editor:%etal}, ${title}")))
-
-    (defvar citar-indicator-notes-icons
-      (citar-indicator-create
-       :symbol (nerd-icons-mdicon
-                "nf-md-notebook"
-                :face 'nerd-icons-blue
-                :v-adjust -0.3)
-       :function #'citar-has-notes
-       :padding "  "
-       :tag "has:notes"))
-
-    (defvar citar-indicator-links-icons
-      (citar-indicator-create
-       :symbol (nerd-icons-octicon
-                "nf-oct-link"
-                :face 'nerd-icons-orange
-                :v-adjust -0.1)
-       :function #'citar-has-links
-       :padding "  "
-       :tag "has:links"))
-
-    (defvar citar-indicator-files-icons
-      (citar-indicator-create
-       :symbol (nerd-icons-faicon
-                "nf-fa-file"
-                :face 'nerd-icons-green
-                :v-adjust -0.1)
-       :function #'citar-has-files
-       :padding "  "
-       :tag "has:files"))
-
-    (setq citar-indicators
-          (list citar-indicator-files-icons
-                citar-indicator-notes-icons
-                citar-indicator-links-icons))
-#+end_src
-
-** TODO citar-org-roam
-org roam integration
-
-#+begin_src elisp
-  (use-package citar-org-roam
-    :after (citar org-roam)
-    :config
-    (citar-org-roam-mode)
-    (add-to-list 'citar-org-roam-template-fields '(:citar-url . ("url" "doi")))
-    (add-to-list 'citar-org-roam-template-fields '(:citar-file . ("file")))
-    (add-to-list 'citar-org-roam-template-fields '(:citar-abstract . ("abstract")))
-    :custom
-    (citar-org-roam-subdir "refs")
-    (citar-org-roam-capture-template-key "r")
-    (citar-org-roam-note-title-template "${title}"))
-#+end_src
-
-** TODO Agenda
-Lots to do here
-
-#+begin_src emacs-lisp
-  ;; Get all my agenda files
-  (setq org-agenda-files
-        (mapcar 'abbreviate-file-name
-                (split-string
-                 (shell-command-to-string "find ~/Documents/Org/Agenda -name \"*.org\"")
-                 "\n")))
-
-  ;; Define the keywords for the agenda
-  (setq org-todo-keywords
-        '((sequence "TODO(t)"    "NEXT(n)" "|" "DONE(d)")
-          (sequence "WAITING(w)" "HOLD(h)" "|" "CANCELLED(c)")))
-
-  ;; Add time when mark something as done
-  (setq org-log-done 'time)
-
-  ;; Set default column view headings: Task Total-Time Time-Stamp
-  (setq org-columns-default-format "%50ITEM(Task) %TIMESTAMP_IA")
-
-  ;; Colour the keywords
-  (setq org-todo-keyword-faces
-        (quote (("TODO"      :foreground "red"          :weight bold)
-                ("NEXT"      :foreground "blue"         :weight bold)
-                ("DONE"      :foreground "forest green" :weight bold)
-                ("WAITING"   :foreground "orange"       :weight bold)
-                ("HOLD"      :foreground "magenta"      :weight bold)
-                ("CANCELLED" :foreground "forest green" :weight bold))))
-#+end_src
-** Other packages
-*** TODO org-bullets
-TODO write intro
-
-#+begin_src emacs-lisp
-  ;; Org bullets makes things look pretty
-  (use-package org-bullets
-    :hook
-    (org-mode . (lambda ()
-                  (org-bullets-mode 1))))
-  #+end_src
-*** toc-org
-In order to auto generate the table of contents of this file (and others) I'm using the [[https://github.com/snosov1/toc-org][toc-org]] package. Every time you save an org file, the first headline with a =:TOC:= tag will be updated with the current table of contents (=:TOC_2:= sets the max depth to 2).
-
-#+begin_src emacs-lisp
-  (use-package toc-org
-    :hook (org-mode . toc-org-enable))
 #+end_src
 * TODO Hydra
 could maybe be its own head? - maybe move back cause i lit never use it so kinda dont think i should spend ages on it
