@@ -22,10 +22,12 @@ This is my =.emacsd= folder to load my preferred Emacs configuration. Although i
   - [[#theme][Theme]]
   - [[#modeline][Modeline]]
   - [[#dashboard][Dashboard]]
+  - [[#all-the-icons][all-the-icons]]
 - [[#general-packages][General packages]]
   - [[#from-mimimal-emacs][From mimimal emacs]]
   - [[#try][Try]]
   - [[#helpful][Helpful]]
+  - [[#auto-update-packages][Auto update packages]]
 - [[#org-packages][Org packages]]
   - [[#org-mode][Org-mode]]
   - [[#org-roam][Org-roam]]
@@ -37,9 +39,9 @@ This is my =.emacsd= folder to load my preferred Emacs configuration. Although i
   - [[#consult][Consult]]
   - [[#embark][Embark]]
   - [[#which-key][which key]]
+  - [[#hydra][Hydra]]
 - [[#buffer-packages][Buffer packages]]
   - [[#ibuffer][ibuffer]]
-  - [[#treemacs][Treemacs]]
   - [[#ace-window][ace window]]
   - [[#avy][Avy]]
   - [[#ultra-scroll][ultra-scroll]]
@@ -52,11 +54,10 @@ This is my =.emacsd= folder to load my preferred Emacs configuration. Although i
   - [[#expand-region][expand-region]]
 - [[#programming-packages][Programming packages]]
   - [[#git][Git]]
-  - [[#lsp][LSP]]
-  - [[#flycheck][flycheck]]
   - [[#dap-mode][dap-mode]]
+  - [[#eglot][eglot]]
+  - [[#waiting-corfu][WAITING Corfu]]
   - [[#tree-sitter][Tree-sitter]]
-  - [[#company-mode][company-mode]]
   - [[#parenthesis][Parenthesis]]
   - [[#indentation][Indentation]]
   - [[#languages][Languages]]
@@ -67,8 +68,6 @@ This is my =.emacsd= folder to load my preferred Emacs configuration. Although i
   - [[#languagetools][LanguageTools]]
   - [[#writegood-mode][writegood-mode]]
   - [[#latex][LaTeX]]
-- [[#hydra][Hydra]]
-  - [[#git-sync][Git sync]]
 
 * Initialisation
 This section contains the basic commands to initialize your GNU Emacs with some of my default preferences.
@@ -134,11 +133,6 @@ These are instructions you may need for a fresh install of Emacs using this init
 
 - For the [[https://github.com/seagle0128/doom-modeline][doom-modeline]] run =M-x nerd-icons-install-fonts= to install the necessary fonts.
 
-- Might need to also run =M-x all-the-icons-install-fonts=,
-#+begin_src emacs-lisp
-  (use-package all-the-icons)
-#+end_src
-
 - For =lsp-mode= you will need to install all the language servers, eg. =sudo apt install clangd=. But emacs should prompt you to install them automatically anyway as you open files, if you run into issues just install them from the terminal.
   - On linux, I ran into an error of Emacs not being able to find =npm= to install for example the =bash-ls=.
   - I therefore had to install =nvm= in my terminal, following the instructions [[https://github.com/nvm-sh/nvm?tab=readme-ov-file#installing-and-updating][here]] (=apt= installs old versions that didn't work either).
@@ -175,13 +169,15 @@ On top of the [[https://github.com/KaiRJ/minimal-emacs.d?tab=readme-ov-file#cust
      ([remap kill-buffer] . kill-this-buffer)) ;; Don't ask before killing a buffer.
 
     :custom
-    ((select-enable-clipboard t "Merge system's and Emacs' clipboard")
-     (save-interprogram-paste-before-kill t "Save system clipboard before replacing")
-     (next-line-add-newlines t "C-n adds new line if reaches end of buffer")
-     (delete-selection-mode 1 "Delete highlighted text by typing")
-     (inhibit-compacting-font-caches t "Don't compact font caches during GC")
-     (global-subword-mode 1 "Treat CamelCase as distinct words")
-     (package-install-upgrade-built-in t "Allow Emacs to upgrade built-in packages"))
+    ((select-enable-clipboard t) ;; Merge system's and Emacs' clipboard
+     (save-interprogram-paste-before-kill t) ;; Save system clipboard before replacing
+     (next-line-add-newlines t) ;; `C-n' adds new line if reaches end of buffer
+     (delete-selection-mode 1) ;; Delete highlighted text by typing
+     (inhibit-compacting-font-caches t) ;; Don't compact font caches during GC
+     (global-subword-mode 1) ;; Treat CamelCase as distinct words
+     (package-install-upgrade-built-in t) ;; Allow Emacs to upgrade built-in packages
+     (read-extended-command-predicate #'command-completion-default-include-p) ;; Hide commands in `M-x' which do not apply to the current mode
+     (tab-always-indent t)) ;; I just want tab to indent
 
     :custom-face
     (default ((t (:height 130))))) ;; Font size
@@ -269,7 +265,6 @@ I'm using the [[https://github.com/doomemacs/themes][doom-one]] theme:
     (doom-themes-visual-bell-config) ;; Enable flashing mode-line on errors
     (doom-themes-org-config))        ;; Corrects (and improves) org-mode's native fontification.
 #+end_src
-
 ** Modeline
 And the [[https://github.com/seagle0128/doom-modeline][doom-modeline]]:
 
@@ -305,6 +300,13 @@ This package gives a nicer startup menu using the [[https://github.com/emacs-das
     (dashboard-set-heading-icons t)
     (dashboard-set-navigator t)
     (dashboard-startup-banner 'official))
+#+end_src
+
+** all-the-icons
+This provides icons for files, directories, etc. Might need to also run =M-x all-the-icons-install-fonts=,
+
+#+begin_src elisp
+  (use-package all-the-icons)
 #+end_src
 
 * General packages
@@ -366,6 +368,21 @@ To have a more user-friendly documentation I use the [[https://github.com/Wilfre
     ("C-h o" . helpful-symbol))
 #+end_src
 
+** Auto update packages
+The [[https://github.com/rranelli/auto-package-update.el][auto-package-update]] package automates the process of updating installed packages managed by package.el. Instead of requiring users to manually invoke =package-list-packages= and update each package.
+
+#+begin_src elisp
+(use-package auto-package-update
+  :custom
+  (auto-package-update-interval 7) ;; days
+  (auto-package-update-hide-results t)
+  (auto-package-update-delete-old-versions t)
+  :config
+  ;; Run package updates automatically at startup, but only if the configured
+  ;; interval has elapsed.
+  (auto-package-update-maybe))
+#+end_src
+
 * TODO Org packages
 TODO need to have a think of the best way to organise all these packages
 
@@ -405,7 +422,6 @@ TODO add these to a use-package
   ;; (global-set-key (kbd "\C-c l") 'org-store-link)
   (global-set-key (kbd "\C-c a") 'org-agenda)
   (global-set-key (kbd "\C-c c") 'org-capture)
-  (global-set-key (kbd "\C-c b") 'org-iswitchb)
 
   (setq time-stamp-active t
         time-stamp-start "#\\+last_modified:[ \t]*"
@@ -413,6 +429,10 @@ TODO add these to a use-package
         time-stamp-format "[%Y-%m-%d %a %H:%M]")
 
   (add-hook 'before-save-hook 'time-stamp)
+
+  (setq org-preview-latex-default-process 'dvisvgm)
+
+  (setq org-format-latex-options (plist-put org-format-latex-options :scale 1.6))
 #+end_src
 
 *** TODO org-bullets
@@ -432,7 +452,17 @@ In order to auto generate the table of contents of this file (and others) I'm us
   (use-package toc-org
     :hook (org-mode . toc-org-enable))
 #+end_src
+*** org-fragtog
+Org mode supports inline image previews of LaTeX fragments. These can be toggled with =C-c C-x C-l=. [[https://github.com/io12/org-fragtog?tab=readme-ov-file][org-fragtog]] automates this, so fragment previews are disabled for editing when your cursor steps onto them, and re-enabled when the cursor leaves.
+
+#+begin_src emacs-lisp
+  (use-package org-fragtog
+    :hook (org-mode . org-fragtog-mode))
+#+end_src
+
 ** TODO Org-roam
+TODO just go over code and give a tidy
+
 [[https://www.orgroam.com/manual.html][Org-roam]] provides utilities for maintaining a digital slip-box in [[https://orgmode.org/][Org-mode]]. This setup is based mostly on the workflows outlined [[https://jethrokuan.github.io/org-roam-guide/][here]] and [[https://www.riccardopinosio.com/blog/posts/zotero_notes_article.html][here]] (Note, the latter provides a snippet of [[https://www.riccardopinosio.com/blog/posts/zotero_notes_article.html#opening-zotero-pdf-from-org-roam][Javascript]] that needs to be added to Zotero to correct the =file= field in the bibliography so it opens in Zotero from Emacs).
 
 #+begin_src emacs-lisp
@@ -461,7 +491,7 @@ In order to auto generate the table of contents of this file (and others) I'm us
     (org-roam-capture-templates
      '(("m" "main" plain "%?"
         :target (file+head "main/${slug}.org"
-                           "#+created: %U\n#+last_modified: %U\n#+title: ${title}\n#+filetags: :main:draft:\n\n")
+                           "#+created: %U\n#+last_modified: %U\n#+title: ${title}\n#+startup: latexpreview\n#+filetags: :main:draft:\n\n")
         :immediate-finish t
         :unnarrowed t)
        ("i" "inbox" plain "%?"
@@ -482,15 +512,22 @@ TODO test if can move all setq into use-package and then define the functions al
 
 #+begin_src elisp
   (use-package citar
-    :after org-roam
     :bind
-    (:map org-mode-map :package org ("C-c b" . #'org-cite-insert))
+    (:map org-mode-map ("C-c b" . #'org-cite-insert))
+
     :custom
     (org-cite-global-bibliography '(my/global-bibliography-file))
     (org-cite-insert-processor 'citar)
     (org-cite-follow-processor 'citar)
     (org-cite-activate-processor 'citar)
-    (citar-bibliography my/global-bibliography-file))
+    (citar-bibliography my/global-bibliography-file)
+
+    :config
+    ;; Add the advice around the functions
+    (advice-add 'citar-file-open :around #'riccardo/citar-file-trust-zotero)
+    (advice-add 'citar-file--find-files-in-dirs :around #'riccardo/citar-file-trust-zotero)
+    ;; Change how citar opens pdf files
+    (add-to-list 'citar-file-open-functions '("pdf" . citar-file-open-external)))
 
   (defun riccardo/citar-file-trust-zotero (oldfun &rest args)
     "Leave Zotero-generated file paths alone, especially zotero://..."
@@ -504,12 +541,6 @@ TODO test if can move all setq into use-package and then define the functions al
                 ((symbol-function 'expand-file-name)
                  (lambda (first &rest _) first)))
         (apply oldfun args))))
-
-  ;; Add the advice around the functions
-  (advice-add 'citar-file-open :around #'riccardo/citar-file-trust-zotero)
-  (advice-add 'citar-file--find-files-in-dirs :around #'riccardo/citar-file-trust-zotero)
-
-  (add-to-list 'citar-file-open-functions '("pdf" . citar-file-open-external))
 
   (setq citar-templates
         '((main    . "${title:48}   ${author editor:30%etal}    ${date year issued:4}")
@@ -583,8 +614,8 @@ A lot of these changes are based of [[https://doc.norang.ca/org-mode.html#HowToU
 
   ;; Define the keywords for the agenda
   (setq org-todo-keywords
-        '((sequence "TODO(t)"    "NEXT(n)" "|" "DONE(d)")
-          (sequence "WAITING(w)" "HOLD(h)" "|" "CANCELLED(c)")))
+        '((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d)")
+          (sequence "WAITING(w)"        "|" "CANCELLED(c)")))
 
   ;; Add time when mark something as done
   (setq org-log-done 'time)
@@ -598,10 +629,9 @@ A lot of these changes are based of [[https://doc.norang.ca/org-mode.html#HowToU
                 ("NEXT"      :foreground "blue"         :weight bold)
                 ("DONE"      :foreground "forest green" :weight bold)
                 ("WAITING"   :foreground "orange"       :weight bold)
-                ("HOLD"      :foreground "magenta"      :weight bold)
                 ("CANCELLED" :foreground "forest green" :weight bold))))
 #+end_src
-* Minibuffer packages
+* TODO Minibuffer packages
 These packages make everything in the minibuffer nicer and easier.
 
 ** Vertico
@@ -634,9 +664,17 @@ Vertico leverages [[https://github.com/oantolin/orderless][Orderless]]' flexible
     :hook (after-init . marginalia-mode))
 #+end_src
 
-** TODO Consult
-TODO should learn to use this more, and shorted the config to what i use and need
+[[https://github.com/iyefrat/all-the-icons-completion][all-the-icons-completion]] adds icons to completion candidates using the built in completion metadata functions.
 
+#+begin_src elisp
+  (use-package all-the-icons-completion
+    :after (marginalia all-the-icons)
+    :hook (marginalia-mode . all-the-icons-completion-marginalia-setup)
+    :init
+    (all-the-icons-completion-mode))
+#+end_src
+
+** Consult
 [[https://github.com/minad/consult][Consult]] offers a suite of commands for efficient searching, previewing, and interacting with buffers, file contents, and more.
 
 #+begin_src emacs-lisp
@@ -644,14 +682,14 @@ TODO should learn to use this more, and shorted the config to what i use and nee
     :bind
     (;; C-c bindings in `mode-specific-map'
      ("C-c M-x" . consult-mode-command)
-     ("C-c h" . consult-history)
-     ("C-c k" . consult-kmacro)
-     ("C-c m" . consult-man)
-     ("C-c i" . consult-info)
+     ("C-c h"   . consult-history)
+     ("C-c k"   . consult-kmacro)
+     ("C-c m"   . consult-man)
+     ("C-c i"   . consult-info)
      ([remap Info-search] . consult-info)
      ;; C-x bindings in `ctl-x-map'
      ("C-x M-:" . consult-complex-command)
-     ("C-x b" . consult-buffer)
+     ("C-x b"   . consult-buffer)
      ("C-x 4 b" . consult-buffer-other-window)
      ("C-x 5 b" . consult-buffer-other-frame)
      ("C-x t b" . consult-buffer-other-tab)
@@ -732,10 +770,7 @@ TODO should learn to use this more, and shorted the config to what i use and nee
     (setq consult-narrow-key "<"))
 #+end_src
 
-** TODO Embark
-TODO should learn to learn this, see minimal-emacs for a larger config
-Or remove it if not using
-
+** Embark
 The [[https://github.com/oantolin/embark][Embark]] package acts like a context menu (or right-click) to perform context-sensitive actions on selected items directly from the completion interface.
 
 #+begin_src emacs-lisp
@@ -762,6 +797,45 @@ Display possible key bindings following incomplete command.
     (which-key-idle-secondary-delay 0.25)
     (which-key-add-column-padding 1)
     (which-key-max-description-length 40))
+#+end_src
+
+** TODO Hydra
+could maybe be its own head? - maybe move back cause i lit never use it so kinda dont think i should spend ages on it
+could put this is one of like (my own packages or my own lisp)
+also think maybe it makes more sense for these to be with their packages - therefore move this to the start
+
+*** Git sync
+This hydra command lets me quickly sync repos to the correct server
+
+#+begin_src emacs-lisp
+  ;; Define a hydra to choose the target server (nersc or deucalion)
+  (defhydra hydra-sync-git (:color blue)
+    "
+  Sync to which server?
+  _n_ NERSC
+  _d_ Deucalion
+  _q_ Quit
+  "
+    ("n" (run-sync-git-tracked-script "nersc"))
+    ("d" (run-sync-git-tracked-script "deucalion"))
+    ("q" nil "quit"))
+
+  ;; Function to run the sync script with an argument
+  (defun run-sync-git-tracked-script (target)
+    "Run the sync_git_tracked.sh script with the specified TARGET argument."
+    (interactive "sTarget (nersc or deucalion): ") ;; Allow the hydra to pass this value
+    (let ((default-directory (locate-dominating-file default-directory ".git")))
+      (if default-directory
+          (progn
+            ;; Run the sync script with the argument based on the hydra choice
+            (let ((script (concat "~/git/scripts/sync_git_tracked.sh")))
+              (if (file-executable-p script)
+                  (call-process-shell-command (concat script " " target) nil "*scratch*")
+                (message "Error: sync_git_tracked.sh not found or not executable."))))
+        (message "Error: Not inside a Git repository!"))))
+
+  ;; Bind the hydra to a keyboard shortcut
+  (global-set-key (kbd "C-c s") 'hydra-sync-git/body)
 #+end_src
 
 * Buffer packages
@@ -802,40 +876,6 @@ The =ibuffer= built-in package provides better buffer management over =buffer-me
         (with-current-buffer ibuf
           (pop-to-buffer ibuf)
           (ibuffer-update nil t)))))
-#+end_src
-
-** TODO Treemacs
-I am disabling this for now as I never use it. Will need to edit all the code to use the best practices from use-package.
-
-#+begin_src emacs-lisp
-  (use-package treemacs
-    :disabled
-    :config
-    (progn
-      (setq treemacs-hide-dot-git-directory          t
-            treemacs-move-files-by-mouse-dragging    t
-            treemacs-sorting                         'alphabetic-asc
-            treemacs-width                           28)
-      (treemacs-project-follow-mode t)
-      (treemacs-resize-icons 24))
-    :bind
-    (:map global-map
-          ("M-0"       . treemacs-select-window)
-          ("C-x t 1"   . treemacs-delete-other-windows)
-          ("C-x t d"   . treemacs-select-directory)
-          ("C-x t t"   . treemacs)
-          ("C-x t B"   . treemacs-bookmark)
-          ("C-x t C-t" . treemacs-find-file)
-          ("C-x t M-t" . treemacs-find-tag)))
-
-  (use-package treemacs-magit
-    :disabled
-    :after treemacs)
-
-  (use-package treemacs-all-the-icons
-    :disabled
-    :after treemacs all-the-icons
-    :config (treemacs-load-theme "all-the-icons"))
 #+end_src
 
 ** ace window
@@ -934,9 +974,7 @@ The [[https://gitlab.com/tsc25/undo-tree][undo-tree]] package visualises the und
       `((".*" . ,(expand-file-name "undo-history" user-emacs-directory)))))
 #+end_src
 
-** TODO multiple-cursors
-TODO This package is pretty large, need to spend some time learning how to use it fully. Start with the git page and [[https://emacsrocks.com/e13.html][this]] video.
-
+** multiple-cursors
 The [[https://github.com/magnars/multiple-cursors.el][multiple-cursors]] package adds the ability to add cursors all over the buffer to edit in lots of places at once.
 
 #+begin_src emacs-lisp
@@ -955,7 +993,7 @@ Expand the marked region in semantic increments (=C-- C-= to reduce region).
     ("C-=" . er/expand-region))
 #+end_src
 
-* Programming packages
+* TODO Programming packages
 This section contains all the packages I am using for programming. Including a dedicated section for specific [[#languages][Languages]].
 
 ** Git
@@ -994,97 +1032,11 @@ I'm also using the [[https://github.com/emacsorphanage/git-gutter-fringe][git-gu
     (define-fringe-bitmap 'git-gutter-fr:deleted [128 192 224 240] nil nil 'bottom))
 #+end_src
 
-** TODO LSP
-TODO need to expand on all this and check them out - maybe switch to eglot, its built in and lighter
-
-The main benefit of using Language Server Protocol (LSP) to configure the management of your programming languages is that LSP servers are also used by other text editors, increasing contributions to these packages.
-
-*** lsp-mode
-
-That's where [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]] comes in!
-
-I was running into problems with lsp-mode and C++, where it would should errors in C++20 but would compile and run fine. I think this was due to the clangd downloaded by lsp-mode being too old, so I've directly set it to be my local download using =lsp-clients-clangd-executable=.
-
-#+begin_src emacs-lisp
-  (use-package lsp-mode
-    :commands
-    (lsp lsp-deferred)
-    :hook
-    ((prog-mode . lsp-deferred)
-     (lsp-mode . lsp-enable-which-key-integration))
-    :custom
-    (lsp-enable-folding nil)
-    (lsp-enable-links nil)
-    (lsp-enable-snippet nil)
-    (lsp-keymap-prefix "C-c l")
-    (lsp-prefer-capf t)                  ;; Use completion-at-point-functions
-    (lsp-headerline-breadcrumb-enable t) ;; Show breadcrumbs
-    (lsp-clangd-binary-path "/usr/bin/clangd-20"))
-
-  ;; Clangd is fast
-  (setq gc-cons-threshold (* 100 1024 1024)
-        read-process-output-max (* 1024 1024)
-        treemacs-space-between-root-nodes nil
-        company-idle-delay 0.500
-        company-minimum-prefix-length 1
-        lsp-idle-delay 0.1)  ;; clangd is fast
-#+end_src
-
-*** TODO lsp-ui
-TODO i think this is causing issues with pop os tiling
-
-In addition to =lsp-mode=, it is possible to use =lsp-ui= to get additional information (e.g., documentation) when hovering a variable or a function.
-
-#+begin_src emacs-lisp
-  (use-package lsp-ui
-    :hook (lsp-mode . lsp-ui-mode)
-    :custom
-    (lsp-ui-sideline-enable t)
-    (lsp-ui-doc-enable nil)
-    (lsp-ui-doc-position 'at-point))
-#+end_src
-
-*** TODO consult-lsp
-TODO learn how to use this
-
-When using =lsp=, it is likely that you will encounter programming errors. To navigate through these errors via the minibuffer, you can use a package for that. If like me, you use =consult= with your minibuffer completion, then =consult-lsp= is made for you.
-
-#+begin_src emacs-lisp
-  (use-package consult-lsp
-    :disabled
-    :commands (consult-lsp-diagnostics consult-lsp-symbols))
-#+end_src
-
-*** lsp-treemacs
-
-For treemacs integrating with lsp-mode.
-
-#+begin_src emacs-lisp
-  (use-package lsp-treemacs
-    :ensure t
-    :after (lsp-mode treemacs)
-    :bind
-    ("C-c l l" . lsp-treemacs-errors-list) ; TODO move to hydra table
-    :config
-    (lsp-treemacs-sync-mode 1))
-#+end_src
-** flycheck
-#+begin_src emacs-lisp
-  (use-package flycheck
-    :delight
-    :hook (lsp-mode . flycheck-mode)
-    :bind (:map flycheck-mode-map
-                ("M-'" . flycheck-previous-error)
-                ("M-\\" . flycheck-next-error))
-    :custom (flycheck-display-errors-delay .3))
-#+end_src
 ** dap-mode
-
 [[https://github.com/emacs-lsp/dap-mode][dap-mode]] uses the Debug Adapter Protocol wire protocol for communication between client and Debug Server. You won't find a better debugger.
 
 #+begin_src emacs-lisp
   (use-package dap-mode
-    :after lsp-mode
     :hook (dap-stopped . (lambda (arg) (call-interactively #'dap-hydra)))
     :config
     (dap-auto-configure-mode)  ;; Automatically configures dap-mode
@@ -1108,50 +1060,93 @@ For treemacs integrating with lsp-mode.
            :cwd "${workspaceFolder}"
            :externalConsole t)))
 #+end_src
-** TODO Tree-sitter
+** eglot
+The main benefit of using Language Server Protocol (LSP) to configure the management of your programming languages is that LSP servers are also used by other text editors, increasing contributions to these packages. I am using [[https://www.gnu.org/software/emacs/manual/html_mono/eglot.html][eglot]] as it is built into Emacs and is light weight.
 
-[[https://tree-sitter.github.io/tree-sitter/][Tree-sitter]] is a fast, incremental parsing library that gives Emacs (and other editors) rich, real-time syntax trees of your code. It lets your editor understand code like a compiler does - with actual structure, not just regex-y color rules. As of Emacs 29 it is built in.
+I have also added a =before-save-hook= that will run ~eglot-format-buffer~ only if there is a ~.clang-format~ file present in the =project-root= directory (this code is based on [[https://eklitzke.org/smarter-emacs-clang-format][blog]]).
 
-I am currently using [[https://github.com/renzmann/treesit-auto][treesit-auto]] to make the setup easier.
+#+begin_src elisp
+    (defun my/eglot-format-buffer-if-clang-format ()
+      "Format buffer with Eglot only if a .clang-format file exists in the project root."
+      (interactive)
+      (when (and (eglot-managed-p)
+                 (project-current)
+                 (file-exists-p
+                  (expand-file-name ".clang-format"
+                                    (project-root (project-current)))))
+        (eglot-format-buffer)))
 
-Disabled for now as couldn't figure out how to use the correct C++ style.
+    (defun my/clang-format-buffer-smart-on-save ()
+      "Add auto-save hook for my/eglot-format-buffer-if-clang-format."
+      (add-hook 'before-save-hook #'my/eglot-format-buffer-if-clang-format nil t))
 
-#+begin_src emacs-lisp
-  (use-package treesit-auto
-    :disabled
-    :custom
-    (treesit-auto-install 'prompt)
-    :config
-    (treesit-auto-add-to-auto-mode-alist 'all)
-    (global-treesit-auto-mode))
+    (use-package eglot
+      :ensure nil
+      :hook
+      (c-ts-mode . eglot-ensure)
+      (c-ts-mode . my/clang-format-buffer-smart-on-save)
+      (c++-ts-mode . eglot-ensure)
+      (c++-ts-mode . my/clang-format-buffer-smart-on-save)
+      :commands (eglot-ensure
+                 eglot-rename
+                 eglot-format-buffer)
+      :config
+      (add-to-list 'eglot-server-programs '((c++-ts-mode c-ts-mode) . ("clangd-20"
+                                                                       "--clang-tidy"))))
 #+end_src
 
-** TODO company-mode
-TODO try corfu as company boxes messes with pop os auto tiling - see minimal emacs
-
-Auto-completion with GNU Emacs is mainly combined with LSP mode. Therefore the development of any programming language is made easier with auto-completion, which involves a completion at point followed by the display of a small pop-in containing the candidates. I am using [[https://github.com/company-mode/company-mode][company-mode]] which is easier and smoother to configure.
+** WAITING Corfu
+[[https://github.com/minad/corfu][Corfu]] enhances in-buffer completion by displaying a compact popup with current candidates, positioned either below or above the point. Candidates can be selected by navigating up or down. Corfu is also built into Emacs.
 
 #+begin_src emacs-lisp
-  (use-package company
-    :after lsp-mode
-    :hook (prog-mode . company-mode)
+  (use-package corfu
+    :disabled
+    :commands (corfu-mode global-corfu-mode)
     :custom
-    (company-show-quick-access t)
+    (corfu-auto t)
+    (corfu-auto-prefix 2)
+    (corfu-auto-delay 0.25)
+    :init
+    (global-corfu-mode)
+    (corfu-history-mode))
+    ;; (corfu-popupinfo-mode))
+
+    (use-package kind-icon
+    :after corfu
+    :config
+    (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
+#+end_src
+
+Corfu uses child frames to display candidate which, because of the current Pop OS (COSMIC DE) autotiling, makes Corfu unusable for me. I am using [[https://company-mode.github.io/][company]] to replace the child frames with popups. Hopefully I can find a fix for this later.
+
+#+begin_src elisp
+  (use-package company
+    :hook
+    (after-init . global-company-mode)
+    :bind (:map company-active-map
+                ("<tab>" . company-complete-selection))
+    :custom
     (company-idle-delay 0.2)              ;; Delay before suggestions popup
     (company-minimum-prefix-length 1)     ;; Show suggestions after 1 char
     (company-tooltip-align-annotations t) ;; Align annotations (e.g., function signatures)
-    (company-preview-frontend t)          ;; show first completion candidate inline
-    (company-show-doc-buffer nil))
-
-  ;; For visuals
-  ;; This doesnt work with pop os auto tilling
-  (use-package company-box
-    :disabled
-    :after company
-    :init (setq company-box-icons-alist 'company-box-icons-all-the-icons)
-    :hook (company-mode . company-box-mode))
+    (company-preview-frontend t)          ;; Show first completion candidate inline
+    (company-show-doc-buffer nil)
+    (company-show-numbers nil))
 #+end_src
-** Parenthesis
+
+** Tree-sitter
+[[https://tree-sitter.github.io/tree-sitter/][Tree-sitter]] is a fast, incremental parsing library that gives Emacs (and other editors) rich, real-time syntax trees of your code. It lets your editor understand code like a compiler does - with actual structure, not just regex-y color rules. As of Emacs 29 it is built in. I am currently using [[https://github.com/renzmann/treesit-auto][treesit-auto]] to make the setup easier.
+
+#+begin_src emacs-lisp
+    (use-package treesit-auto
+      :custom
+      (treesit-auto-install 'prompt)
+      :config
+      (treesit-auto-add-to-auto-mode-alist 'all)
+      (global-treesit-auto-mode))
+#+end_src
+
+** TODO Parenthesis
 *** TODO rainbow-delimiters
 
 TODO add link
@@ -1170,7 +1165,6 @@ Need to learn how to use this. Might only be good to use strict mode with emacs 
 #+begin_src emacs-lisp
   (use-package smartparens
     :disabled
-    :ensure t
     :hook
     ( ;; (prog-mode . smartparens-strict-mode)
      (markdown-mode-hook . turn-on-smartparens-mode)) ;; can use strict-mode also
@@ -1239,39 +1233,26 @@ I was using [[https://github.com/antonj/Highlight-Indentation-for-Emacs][highlig
 ;;    (set-face-background 'highlight-indentation-face "#3f444a")
 ;;    (set-face-background 'highlight-indentation-current-column-face "#5f8787"))
 #+end_src
-** Languages
-*** TODO C++
-TODO Need to set this all up better
-TODO auto formatting is so bad
-- new line doesnt indent at right spot
-- and i dont like the auto formatting i have
+** TODO Languages
+All these could be tidied up
 
-#+begin_src emacs-lisp
-  ;; make sure up to date
-  (require 'cc-mode)
-
-  ;; set .h files to use c++ mode instead
-  (add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode))
-#+end_src
-
-*** Python
+*** TODO Python
 Look [[https://github.com/rememberYou/.emacs.d/blob/master/config.org#python][here]] when i need these
-*** cmake
+*** TODO cmake
 #+begin_src emacs-lisp
-  (use-package cmake-mode
-    :hook (cmake-mode . lsp-deferred)
-    :mode ("CMakeLists\\.txt\\'" "\\.cmake\\'"))
-
-  ;; for better sytax colours
-  (use-package cmake-font-lock
-    :hook (cmake-mode . cmake-font-lock-activate))
+  ;; (use-package cmake-mode
+  ;;   :hook (cmake-mode . lsp-deferred)
+  ;;   :mode ("CMakeLists\\.txt\\'" "\\.cmake\\'"))
+  ;;
+  ;; ;; for better sytax colours
+  ;; (use-package cmake-font-lock
+  ;;   :hook (cmake-mode . cmake-font-lock-activate))
 #+end_src
-*** make
+*** TODO make
 #+begin_src emacs-lisp
   ;; use makefile-mode for MakeFiles
-  (add-to-list 'auto-mode-alist '("Makefile" . makefile-mode))
+  ;; (add-to-list 'auto-mode-alist '("Makefile" . makefile-mode))
 #+end_src
-
 * WAITING Writing packages
 Update most of these when writing thesis.
 
@@ -1337,6 +1318,7 @@ Ispell is a spell-checking program that was one of the early tools for spell-che
     ;; Save words in the personal dictionary without asking.
     :custom
     (ispell-silently-savep t)
+    (text-mode-ispell-word-completion nil) ;; Disable Ispell completion function
     :config
     (setenv "LANG" "en_GB")
     (cond ((executable-find "hunspell")
@@ -1460,42 +1442,4 @@ Finally, it is often useful to put our hands in a bibliography in LaTeX. The bui
       (setq fill-column 120))
     :hook ((bibtex-mode . lsp-deferred)
            (bibtex-mode . my/bibtex-fill-column)))
-#+end_src
-* TODO Hydra
-could maybe be its own head? - maybe move back cause i lit never use it so kinda dont think i should spend ages on it
-could put this is one of like (my own packages or my own lisp)
-also think maybe it makes more sense for these to be with their packages - therefore move this to the start
-
-** Git sync
-This hydra command lets me quickly sync repos to the correct server
-
-#+begin_src emacs-lisp
-  ;; Define a hydra to choose the target server (nersc or deucalion)
-  (defhydra hydra-sync-git (:color blue)
-    "
-  Sync to which server?
-  _n_ NERSC
-  _d_ Deucalion
-  _q_ Quit
-  "
-    ("n" (run-sync-git-tracked-script "nersc"))
-    ("d" (run-sync-git-tracked-script "deucalion"))
-    ("q" nil "quit"))
-
-  ;; Function to run the sync script with an argument
-  (defun run-sync-git-tracked-script (target)
-    "Run the sync_git_tracked.sh script with the specified TARGET argument."
-    (interactive "sTarget (nersc or deucalion): ") ;; Allow the hydra to pass this value
-    (let ((default-directory (locate-dominating-file default-directory ".git")))
-      (if default-directory
-          (progn
-            ;; Run the sync script with the argument based on the hydra choice
-            (let ((script (concat "~/git/scripts/sync_git_tracked.sh")))
-              (if (file-executable-p script)
-                  (call-process-shell-command (concat script " " target) nil "*scratch*")
-                (message "Error: sync_git_tracked.sh not found or not executable."))))
-        (message "Error: Not inside a Git repository!"))))
-
-  ;; Bind the hydra to a keyboard shortcut
-  (global-set-key (kbd "C-c s") 'hydra-sync-git/body)
 #+end_src
