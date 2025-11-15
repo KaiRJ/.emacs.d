@@ -58,9 +58,8 @@ This is my =.emacsd= folder to load my preferred Emacs configuration. Although i
   - [[#eglot][eglot]]
   - [[#waiting-corfu][WAITING Corfu]]
   - [[#tree-sitter][Tree-sitter]]
+  - [[#indent-bars][indent-bars]]
   - [[#parenthesis][Parenthesis]]
-  - [[#indentation][Indentation]]
-  - [[#languages][Languages]]
 - [[#waiting-writing-packages][WAITING Writing packages]]
   - [[#defaults][Defaults]]
   - [[#flyspell][Flyspell]]
@@ -143,6 +142,8 @@ These are instructions you may need for a fresh install of Emacs using this init
   - For lsp-itex, the automatic install wasn't working but just try M-x lsp-install-server ltex-ls instead. Or if you download directly note to place the executable in =~/.emacs.d/.cache/lsp/ltex-ls/latest=.
 
 - For =dap-mode= a one-time step is required to download the extension and set it up automatically  =M-x dap-cpptools-setup= then you are good start debugging.
+
+- For =tree-sitter= if you don't already have the grammars installed you will need to run ~M-x tree-sitter-langs-install-grammars~.
 
 * Custom changes
 This section contains my elisp code and some small keybinding changes that I use frequently in my workflow. Note, I change package specific keybindings when I install that package.
@@ -1144,14 +1145,28 @@ Corfu uses child frames to display candidate which, because of the current Pop O
       :config
       (treesit-auto-add-to-auto-mode-alist 'all)
       (global-treesit-auto-mode))
+
+    ;; Override
+    (setq treesit-language-source-alist
+          '((c . ("https://github.com/tree-sitter/tree-sitter-c.git" "v0.23.6"))
+            (bash . ("https://github.com/tree-sitter/tree-sitter-bash.git" "v0.23.3"))))
+#+end_src
+
+** indent-bars
+Currently using [[https://github.com/jdtsmith/indent-bars][indent-bars]] for my indentation highlight as its easy to use and supports treesitter and showing bars on blank lines:
+
+#+begin_src emacs-lisp
+  (use-package indent-bars
+    :hook ((prog-mode) . indent-bars-mode)
+    :custom
+    (indent-bars-starting-column 0)
+    (indent-bars-treesit-support t)
+    (indent-bars-treesit-wrap '((c argument_list parameter_list init_declarator parenthesized_expression))))
 #+end_src
 
 ** TODO Parenthesis
-*** TODO rainbow-delimiters
-
-TODO add link
-
-Highlights delimiters according to their depth.
+*** rainbow-delimiters
+[[https://github.com/Fanael/rainbow-delimiters][rainbow-delimiters]] is a small package that highlights delimiters according to their depth to make it easier to see what matches what.
 
 #+begin_src emacs-lisp
   (use-package rainbow-delimiters
@@ -1182,77 +1197,6 @@ Need to learn how to use this. Might only be good to use strict mode with emacs 
     ("M-]" . sp-unwrap-sexp))
 #+end_src
 
-** TODO Indentation
-TODO maybe make a formatting section
-
-My setup for dealing with indentation
-
-*** aggressive-indent
-#+begin_src emacs-lisp
-  (use-package aggressive-indent
-    :disabled
-    :custom
-    (aggressive-indent-comments-too t))
-#+end_src
-
-*** highlight-indentation-guides
-
-Currently using [[https://github.com/DarthFennec/highlight-indent-guides][highlight-indentation-guides]] for my indentation highlight as its easy to use. Although I'd like to eventually find a solution to highlight blank spaces as well.
-
-#+begin_src emacs-lisp
-(use-package highlight-indent-guides
-  :hook (prog-mode . highlight-indent-guides-mode)
-  :config
-  ;; Use thin character style
-  (setq highlight-indent-guides-method 'character)
-  (setq highlight-indent-guides-character ?|) ;; Unicode thin vertical bar
-  (setq highlight-indent-guides-responsive 'top) ;; Active indent
-  (setq highlight-indent-guides-auto-enabled t)
-
-  ;; Show guides even on blank lines
-  (setq highlight-indent-guides-show-leading-blank-lines t)
-
-  ;; Customize colors to fit doom-one
-  (set-face-foreground 'highlight-indent-guides-character-face "#3f444a")
-  (set-face-foreground 'highlight-indent-guides-top-character-face "#875faf")
-  (set-face-foreground 'highlight-indent-guides-stack-character-face "#5c5f77"))
-#+end_src
-
-*** highlight-indentation
-
-I was using [[https://github.com/antonj/Highlight-Indentation-for-Emacs][highlight-indentation]] but it didn't look nice and the active highlighting was buggy. But it did highlight empty lines.
-
-#+begin_src emacs-lisp
-;; (use-package highlight-indentation
-;;   :hook ((prog-mode . highlight-indentation-mode)
-;;          (prog-mode . highlight-indentation-current-column-mode))
-;;    :custom
-;;    (highlight-indentation-blank-lines t) ;; Enable highlighting of blank lines.
-;;    :config
-;;    ;; Customize the face for the indent guides
-;;    (set-face-background 'highlight-indentation-face "#3f444a")
-;;    (set-face-background 'highlight-indentation-current-column-face "#5f8787"))
-#+end_src
-** TODO Languages
-All these could be tidied up
-
-*** TODO Python
-Look [[https://github.com/rememberYou/.emacs.d/blob/master/config.org#python][here]] when i need these
-*** TODO cmake
-#+begin_src emacs-lisp
-  ;; (use-package cmake-mode
-  ;;   :hook (cmake-mode . lsp-deferred)
-  ;;   :mode ("CMakeLists\\.txt\\'" "\\.cmake\\'"))
-  ;;
-  ;; ;; for better sytax colours
-  ;; (use-package cmake-font-lock
-  ;;   :hook (cmake-mode . cmake-font-lock-activate))
-#+end_src
-*** TODO make
-#+begin_src emacs-lisp
-  ;; use makefile-mode for MakeFiles
-  ;; (add-to-list 'auto-mode-alist '("Makefile" . makefile-mode))
-#+end_src
 * WAITING Writing packages
 Update most of these when writing thesis.
 
