@@ -385,11 +385,7 @@ The [[https://github.com/rranelli/auto-package-update.el][auto-package-update]] 
 #+end_src
 
 * TODO Org packages
-TODO need to have a think of the best way to organise all these packages
-
-This section...
-
-First I'm defining some directories that I use for all my Org files.
+This section sets up all my Org-mode based packages. First I'm defining some directories that I use for all my Org files.
 
 #+begin_src elisp
   (defvar my/roam-directory "~/Documents/Org/RoamNodes"
@@ -400,51 +396,48 @@ First I'm defining some directories that I use for all my Org files.
     "My main BibTex references file.")
 #+end_src
 
-** TODO Org-mode
-TODO add these to a use-package
+** Org-mode
+These are the settings for a general Org file.
 
 #+begin_src emacs-lisp
-  ;; TODO move this to citar as its really with that part of the work flow
-  (org-link-set-parameters "zotero"
-                           :follow (lambda (zpath)
-                                     (browse-url
-                                      (format "zotero:%s" zpath))))
+  (use-package org-mode
+    :ensure nil
+    :bind
+    (("C-c a" . org-agenda)
+     ("C-c c" . org-capture)
+     ("C-c l" . org-store-link))
 
-  ;; indent with tabs for better readability
-  (add-hook 'org-mode-hook #'org-indent-mode)
-  ;; (setq org-indent-indentation-per-level 4)
+    :hook
+    (org-mode . org-indent-mode)
+    (before-save . time-stamp)
 
-  ;; When editing org-files with source-blocks, we want the source blocks to be themed as they would in their native mode.
-  (setq org-src-fontify-natively t
-        org-src-tab-acts-natively t
-        org-confirm-babel-evaluate nil)
+    :custom
+    ;; theme source-blocks as they would in their native mode
+    (org-src-fontify-natively t)
+    (org-src-tab-acts-natively t)
+    (org-confirm-babel-evaluate nil)
 
-  ;; Standard key bindings
-  ;; (global-set-key (kbd "\C-c l") 'org-store-link)
-  (global-set-key (kbd "\C-c a") 'org-agenda)
-  (global-set-key (kbd "\C-c c") 'org-capture)
+    ;; inline latex settings
+    (org-preview-latex-default-process 'dvisvgm)
+    (org-format-latex-options (plist-put org-format-latex-options :scale 1.6))
 
-  (setq time-stamp-active t
-        time-stamp-start "#\\+last_modified:[ \t]*"
-        time-stamp-end "$"
-        time-stamp-format "[%Y-%m-%d %a %H:%M]")
+    ;; indent with tabs for better readability
+    ;; (setq org-indent-indentation-per-level 4)
 
-  (add-hook 'before-save-hook 'time-stamp)
-
-  (setq org-preview-latex-default-process 'dvisvgm)
-
-  (setq org-format-latex-options (plist-put org-format-latex-options :scale 1.6))
+    ;; for automatically setting the timestamps in files
+    (time-stamp-active t)
+    (time-stamp-start "#\\+last_modified:[ \t]*")
+    (time-stamp-end "$")
+    (time-stamp-format "[%Y-%m-%d %a %H:%M]"))
 #+end_src
 
-*** TODO org-bullets
-TODO write intro
+*** org-bullets
+The [[https://github.com/sabof/org-bullets][org-bullets]] package simply shows org-mode bullets as UTF-8 characters.
 
 #+begin_src emacs-lisp
-  ;; Org bullets makes things look pretty
   (use-package org-bullets
     :hook
-    (org-mode . (lambda ()
-                  (org-bullets-mode 1))))
+    (org-mode . org-bullets-mode))
   #+end_src
 *** toc-org
 In order to auto generate the table of contents of this file (and others) I'm using the [[https://github.com/snosov1/toc-org][toc-org]] package. Every time you save an org file, the first headline with a =:TOC:= tag will be updated with the current table of contents (=:TOC_2:= sets the max depth to 2).
@@ -461,38 +454,37 @@ Org mode supports inline image previews of LaTeX fragments. These can be toggled
     :hook (org-mode . org-fragtog-mode))
 #+end_src
 
-** TODO Org-roam
-TODO just go over code and give a tidy
-
+** Org-roam
 [[https://www.orgroam.com/manual.html][Org-roam]] provides utilities for maintaining a digital slip-box in [[https://orgmode.org/][Org-mode]]. This setup is based mostly on the workflows outlined [[https://jethrokuan.github.io/org-roam-guide/][here]] and [[https://www.riccardopinosio.com/blog/posts/zotero_notes_article.html][here]] (Note, the latter provides a snippet of [[https://www.riccardopinosio.com/blog/posts/zotero_notes_article.html#opening-zotero-pdf-from-org-roam][Javascript]] that needs to be added to Zotero to correct the =file= field in the bibliography so it opens in Zotero from Emacs).
 
 #+begin_src emacs-lisp
   (use-package org-roam
-    :bind (("C-c n l" . org-roam-buffer-toggle)
-           ("C-c n f" . org-roam-node-find)
-           ("C-c n i" . org-roam-node-insert)
-           :map org-mode-map
-           ("C-M-i" . completion-at-point)
-           :map org-roam-dailies-map
-           ("Y" . org-roam-dailies-capture-yesterday)
-           ("T" . org-roam-dailies-capture-tomorrow))
+    :bind
+    (("C-c n l" . org-roam-buffer-toggle)
+     ("C-c n f" . org-roam-node-find)
+     ("C-c n i" . org-roam-node-insert)
+     :map org-mode-map
+     ("C-M-i" . completion-at-point)
+     :map org-roam-dailies-map
+     ("Y" . org-roam-dailies-capture-yesterday)
+     ("T" . org-roam-dailies-capture-tomorrow))
+
     :bind-keymap
     ("C-c n d" . org-roam-dailies-map)
-    :config
-    (org-roam-setup)
-    (org-roam-db-autosync-mode)
-    (require 'org-roam-dailies) ;; Ensure the keymap is available
+
     :custom
     (org-roam-directory my/roam-directory)
     (org-roam-dailies-directory "dailies/")
     (org-roam-completion-everywhere t)
+
     ;; Add filetags to the node search
     (org-roam-node-display-template (concat "${title:*} "
                                             (propertize "${tags:20}" 'face 'org-tag)))
+
     (org-roam-capture-templates
      '(("m" "main" plain "%?"
         :target (file+head "main/${slug}.org"
-                           "#+created: %U\n#+last_modified: %U\n#+title: ${title}\n#+startup: latexpreview\n#+filetags: :main:draft:\n\n")
+                           "#+created: %U\n#+last_modified: %U\n#+title: ${title}\n#+startup: latexpreview entitiespretty\n#+filetags: :main:draft:\n\n")
         :immediate-finish t
         :unnarrowed t)
        ("i" "inbox" plain "%?"
@@ -504,7 +496,12 @@ TODO just go over code and give a tidy
         (file "~/Documents/Org/Templates/ref-template.org")
         :target (file+head "refs/${citar-citekey}.org" "")
         :immediate-finish t
-        :unnarrowed t))))
+        :unnarrowed t)))
+
+    :config
+    (org-roam-setup)
+    (org-roam-db-autosync-mode)
+    (require 'org-roam-dailies)) ;; Ensure the keymap is available)
 #+end_src
 
 *** TODO citar
@@ -542,6 +539,12 @@ TODO test if can move all setq into use-package and then define the functions al
                 ((symbol-function 'expand-file-name)
                  (lambda (first &rest _) first)))
         (apply oldfun args))))
+
+  ;; Opens files in zotero
+  (org-link-set-parameters "zotero"
+                           :follow (lambda (zpath)
+                                     (browse-url
+                                      (format "zotero:%s" zpath))))
 
   (setq citar-templates
         '((main    . "${title:48}   ${author editor:30%etal}    ${date year issued:4}")
@@ -602,8 +605,27 @@ TODO write this org roam integration
     (citar-org-roam-note-title-template "${title}"))
 #+end_src
 
+*** org-roam-UI
+[[https://github.com/org-roam/org-roam-ui][Org-Roam-UI]] is a frontend for exploring and interacting with org-roam notes. Use ~M-x org-roam-ui-mode~ to enable the global mode. It will start a web server on http://127.0.0.1:35901/ and connect to it via a WebSocket for real-time updates.
+
+#+begin_src emacs-lisp
+  (use-package org-roam-ui
+              :after org-roam
+              :commands org-roam-ui-mode
+              :custom
+              (org-roam-ui-sync-theme t)
+              (org-roam-ui-follow t)
+              (org-roam-ui-update-on-save t)
+              (org-roam-ui-open-on-start t))
+
+  (use-package websocket
+    :after org-roam-ui)
+#+end_src
+
 ** TODO Org-agenda
 A lot of these changes are based of [[https://doc.norang.ca/org-mode.html#HowToUseThisDocument][this]].
+
+TODO move into an agenda use package
 
 #+begin_src emacs-lisp
   ;; Get all my agenda files
@@ -631,7 +653,80 @@ A lot of these changes are based of [[https://doc.norang.ca/org-mode.html#HowToU
                 ("DONE"      :foreground "forest green" :weight bold)
                 ("WAITING"   :foreground "orange"       :weight bold)
                 ("CANCELLED" :foreground "forest green" :weight bold))))
+
+
+
 #+end_src
+
+*** TODO org-super-agenda
+TODO need to write this
+
+#+begin_src emacs-lisp
+  (use-package org-super-agenda
+    :hook (org-agenda . org-super-agenda-mode)
+    :commands (org-agenda)
+    :custom
+    ;; Set the header title of this custom view
+    (org-super-agenda-header '((t (:foreground "#51afef" :weight bold :height 1.2))))
+
+    :config
+    ;; Define custom agenda views
+    (setq org-agenda-custom-commands
+          '(("z" "Super view"
+             ((agenda ""
+                      ((org-agenda-span 'week)
+                       (org-agenda-start-day nil) ;; start today
+                       (org-agenda-overriding-header "Weekly Agenda")
+                       ;; Show only file name as prefix
+                       (org-agenda-prefix-format '((agenda . "  %-18c ")))
+                       ;; Remove DONE entries
+                       (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+                       (org-agenda-hide-tags-regexp ".*")))
+
+              (alltodo ""
+                       ((org-agenda-overriding-header "")
+                        (org-super-agenda-groups
+                         '(
+                           ;; (:discard (:todo "WAITING"))
+                           (:name "Overdue"
+                                  :order 10
+                                  :deadline past)
+                           (:name "General"
+                                  :order 20
+                                  :and (:tag "general" :not (:todo "WAITING")))
+                           (:name "Pulse Prominence"
+                                  :order 30
+                                  :and (:tag "prominence" :not (:todo "WAITING")))
+                           (:name "Shells Simulation"
+                                  :order 40
+                                  :and (:tag "shells" :not (:todo "WAITING")))
+                           (:name "Xe137 Tagging"
+                                  :order 45
+                                  :and (:tag "xe137" :not (:todo "WAITING")))
+                           (:name "XLZD Sandbox"
+                                  :order 50
+                                  :and (:tag "xlzd" :not (:todo "WAITING")))
+                           (:name "Thesis"
+                                  :order 60
+                                  :and (:tag "thesis" :not (:todo "WAITING")))
+                           (:name "Emacs"
+                                  :order 70
+                                  :and (:tag "emacs" :not (:todo "WAITING")))
+                           (:name "Waiting"
+                                  :order 99
+                                  :todo "WAITING")
+                           ))
+                        ;; Remove file/category prefix only in this view
+                        (org-agenda-prefix-format
+                         '((todo . "  %s")
+                           (tags . "  %s")
+                           (search . "  %s")
+                           (agenda . "  %-12t %s")))
+                        ;; Hide tags from agenda entries
+                        (org-agenda-hide-tags-regexp ".*")
+                        )))))))
+#+end_src
+
 * TODO Minibuffer packages
 These packages make everything in the minibuffer nicer and easier.
 
@@ -995,7 +1090,7 @@ Expand the marked region in semantic increments (=C-- C-= to reduce region).
 #+end_src
 
 * TODO Programming packages
-This section contains all the packages I am using for programming. Including a dedicated section for specific [[#languages][Languages]].
+This section contains all the packages I am using for programming.
 
 ** Git
 *** magit
