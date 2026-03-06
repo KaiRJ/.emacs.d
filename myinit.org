@@ -29,9 +29,10 @@ This is my =.emacsd= folder to load my preferred Emacs configuration. Although i
   - [[#helpful][Helpful]]
   - [[#auto-update-packages][Auto update packages]]
 - [[#org-packages][Org packages]]
-  - [[#org-mode][Org-mode]]
-  - [[#org-roam][Org-roam]]
-  - [[#org-agenda][Org-agenda]]
+  - [[#org-mode][org-mode]]
+  - [[#org-roam][org-roam]]
+  - [[#org-agenda][org-agenda]]
+  - [[#org-super-agenda][org-super-agenda]]
 - [[#minibuffer-packages][Minibuffer packages]]
   - [[#vertico][Vertico]]
   - [[#orderless][Orderless]]
@@ -216,6 +217,7 @@ Kill the current buffer instead of having to pick it.
       (interactive)
       (kill-buffer (current-buffer))))
 #+end_src
+
 ** Comment line
 I prefer the point to stay in place when I comment a line.
 
@@ -385,23 +387,17 @@ The [[https://github.com/rranelli/auto-package-update.el][auto-package-update]] 
 #+end_src
 
 * TODO Org packages
-This section sets up all my Org-mode based packages. First I'm defining some directories that I use for all my Org files.
 
-#+begin_src elisp
-  (defvar my/roam-directory "~/Documents/Org/RoamNodes"
-    "My main Org Roam directory.")
+This section sets up all my =Org-mode= based packages.
 
-  (defvar my/global-bibliography-file
-    (expand-file-name "biblio.bib" my/roam-directory)
-    "My main BibTex references file.")
-#+end_src
+** org-mode
 
-** Org-mode
 These are the settings for a general Org file.
 
 #+begin_src emacs-lisp
-  (use-package org-mode
+  (use-package org
     :ensure nil
+
     :bind
     (("C-c a" . org-agenda)
      ("C-c c" . org-capture)
@@ -416,6 +412,8 @@ These are the settings for a general Org file.
     (org-src-fontify-natively t)
     (org-src-tab-acts-natively t)
     (org-confirm-babel-evaluate nil)
+    (org-startup-with-inline-images t)
+    (org-image-actual-width nil)
 
     ;; inline latex settings
     (org-preview-latex-default-process 'dvisvgm)
@@ -428,7 +426,17 @@ These are the settings for a general Org file.
     (time-stamp-active t)
     (time-stamp-start "#\\+last_modified:[ \t]*")
     (time-stamp-end "$")
-    (time-stamp-format "[%Y-%m-%d %a %H:%M]"))
+    (time-stamp-format "[%Y-%m-%d %a %H:%M]")
+
+    :config
+    (defvar my/roam-directory
+      "~/Documents/Org/RoamNodes"
+      "My main Org Roam directory.")
+
+    (defvar my/global-bibliography-file
+      (expand-file-name "biblio.bib" my/roam-directory)
+      "My main BibTex references file.")
+    )
 #+end_src
 
 *** org-bullets
@@ -436,14 +444,15 @@ The [[https://github.com/sabof/org-bullets][org-bullets]] package simply shows o
 
 #+begin_src emacs-lisp
   (use-package org-bullets
-    :hook
-    (org-mode . org-bullets-mode))
+    :after org
+    :hook (org-mode . org-bullets-mode))
   #+end_src
 *** toc-org
 In order to auto generate the table of contents of this file (and others) I'm using the [[https://github.com/snosov1/toc-org][toc-org]] package. Every time you save an org file, the first headline with a =:TOC:= tag will be updated with the current table of contents (=:TOC_2:= sets the max depth to 2).
 
 #+begin_src emacs-lisp
   (use-package toc-org
+    :after org
     :hook (org-mode . toc-org-enable))
 #+end_src
 *** org-fragtog
@@ -454,11 +463,14 @@ Org mode supports inline image previews of LaTeX fragments. These can be toggled
     :hook (org-mode . org-fragtog-mode))
 #+end_src
 
-** Org-roam
+** org-roam
+
 [[https://www.orgroam.com/manual.html][Org-roam]] provides utilities for maintaining a digital slip-box in [[https://orgmode.org/][Org-mode]]. This setup is based mostly on the workflows outlined [[https://jethrokuan.github.io/org-roam-guide/][here]] and [[https://www.riccardopinosio.com/blog/posts/zotero_notes_article.html][here]] (Note, the latter provides a snippet of [[https://www.riccardopinosio.com/blog/posts/zotero_notes_article.html#opening-zotero-pdf-from-org-roam][Javascript]] that needs to be added to Zotero to correct the =file= field in the bibliography so it opens in Zotero from Emacs).
 
 #+begin_src emacs-lisp
   (use-package org-roam
+    :after org
+
     :bind
     (("C-c n l" . org-roam-buffer-toggle)
      ("C-c n f" . org-roam-node-find)
@@ -510,6 +522,8 @@ TODO test if can move all setq into use-package and then define the functions al
 
 #+begin_src elisp
   (use-package citar
+    :after org-roam
+
     :bind
     (:map org-mode-map ("C-c b" . #'org-cite-insert))
 
@@ -622,54 +636,61 @@ TODO write this org roam integration
     :after org-roam-ui)
 #+end_src
 
-** TODO Org-agenda
+** org-agenda
+
 A lot of these changes are based of [[https://doc.norang.ca/org-mode.html#HowToUseThisDocument][this]].
 
-TODO move into an agenda use package
-
 #+begin_src emacs-lisp
-  ;; Get all my agenda files
-  (setq org-agenda-files
-        (mapcar 'abbreviate-file-name
-                (split-string
-                 (shell-command-to-string "find ~/Documents/Org/Agenda -name \"*.org\"")
-                 "\n")))
+  (use-package org-agenda
+    :ensure nil
+    :after org
+    :commands (org-agenda)
 
-  ;; Define the keywords for the agenda
-  (setq org-todo-keywords
-        '((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d)")
-          (sequence "WAITING(w)"        "|" "CANCELLED(c)")))
+    :config
+    ;; Get all my agenda files
+    (setq org-agenda-files
+          (mapcar 'abbreviate-file-name
+                  (split-string
+                   (shell-command-to-string "find ~/Documents/Org/Agenda -name \"*.org\"")
+                   "\n")))
 
-  ;; Add time when mark something as done
-  (setq org-log-done 'time)
+    ;; Define the keywords for the agenda
+    (setq org-todo-keywords
+          '((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d)")
+            (sequence "WAITING(w)"        "|" "CANCELLED(c)")))
 
-  ;; Set default column view headings: Task Total-Time Time-Stamp
-  (setq org-columns-default-format "%50ITEM(Task) %TIMESTAMP_IA")
+    ;; Add time when mark something as done
+    (setq org-log-done 'time)
 
-  ;; Colour the keywords
-  (setq org-todo-keyword-faces
-        (quote (("TODO"      :foreground "red"          :weight bold)
-                ("NEXT"      :foreground "blue"         :weight bold)
-                ("DONE"      :foreground "forest green" :weight bold)
-                ("WAITING"   :foreground "orange"       :weight bold)
-                ("CANCELLED" :foreground "forest green" :weight bold))))
+    ;; Set default column view headings: Task Total-Time Time-Stamp
+    (setq org-columns-default-format "%50ITEM(Task) %TIMESTAMP_IA")
 
-
-
+    ;; Colour the keywords
+    (setq org-todo-keyword-faces
+          (quote (("TODO"      :foreground "red"          :weight bold)
+                  ("NEXT"      :foreground "blue"         :weight bold)
+                  ("DONE"      :foreground "forest green" :weight bold)
+                  ("WAITING"   :foreground "orange"       :weight bold)
+                  ("CANCELLED" :foreground "forest green" :weight bold))))
+    )
 #+end_src
 
-*** TODO org-super-agenda
-TODO need to write this
+** org-super-agenda
+
+[[https://github.com/alphapapa/org-super-agenda?tab=readme-ov-file#org-super-agenda][org-super-agenda]] lets me see all my TODOs alongside my agenda, I find this very useful for planning out my week.
 
 #+begin_src emacs-lisp
   (use-package org-super-agenda
-    :hook (org-agenda . org-super-agenda-mode)
-    :commands (org-agenda)
+    :after org-agenda
+
     :custom
     ;; Set the header title of this custom view
     (org-super-agenda-header '((t (:foreground "#51afef" :weight bold :height 1.2))))
 
     :config
+    ;; To make available the custom agenda
+    (org-super-agenda-mode)
+
     ;; Define custom agenda views
     (setq org-agenda-custom-commands
           '(("z" "Super view"
@@ -706,6 +727,9 @@ TODO need to write this
                            (:name "XLZD Sandbox"
                                   :order 50
                                   :and (:tag "xlzd" :not (:todo "WAITING")))
+                           (:name "Xenon Activation"
+                                  :order 55
+                                  :and (:tag "activation" :not (:todo "WAITING")))
                            (:name "Thesis"
                                   :order 60
                                   :and (:tag "thesis" :not (:todo "WAITING")))
@@ -859,8 +883,8 @@ Vertico leverages [[https://github.com/oantolin/orderless][Orderless]]' flexible
      consult-theme :preview-key '(:debounce 0.2 any)
      consult-ripgrep consult-git-grep consult-grep
      consult-bookmark consult-recent-file consult-xref
-     consult--source-bookmark consult--source-file-register
-     consult--source-recent-file consult--source-project-recent-file
+     consult-source-bookmark consult-source-file-register
+     consult-source-recent-file consult-source-project-recent-file
      ;; :preview-key "M-."
      :preview-key '(:debounce 0.4 any))
     (setq consult-narrow-key "<"))
@@ -876,8 +900,7 @@ The [[https://github.com/oantolin/embark][Embark]] package acts like a context m
      ("C-h B" . embark-bindings))) ;; alternative for `describe-bindings'
 
   (use-package embark-consult
-    :hook
-    (embark-collect-mode . consult-preview-at-point-mode))
+    :hook (embark-collect-mode . consult-preview-at-point-mode))
 #+end_src
 
 ** which key
@@ -931,7 +954,7 @@ This hydra command lets me quickly sync repos to the correct server
         (message "Error: Not inside a Git repository!"))))
 
   ;; Bind the hydra to a keyboard shortcut
-  (global-set-key (kbd "C-c s") 'hydra-sync-git/body)
+  (global-set-key (kbd "C-x s") 'hydra-sync-git/body)
 #+end_src
 
 * Buffer packages
@@ -1128,11 +1151,14 @@ I'm also using the [[https://github.com/emacsorphanage/git-gutter-fringe][git-gu
     (define-fringe-bitmap 'git-gutter-fr:deleted [128 192 224 240] nil nil 'bottom))
 #+end_src
 
-** dap-mode
+** TODO dap-mode
+learn how to use this properly
+
 [[https://github.com/emacs-lsp/dap-mode][dap-mode]] uses the Debug Adapter Protocol wire protocol for communication between client and Debug Server. You won't find a better debugger.
 
 #+begin_src emacs-lisp
   (use-package dap-mode
+    :disabled
     :hook (dap-stopped . (lambda (arg) (call-interactively #'dap-hydra)))
     :config
     (dap-auto-configure-mode)  ;; Automatically configures dap-mode
@@ -1378,13 +1404,14 @@ Ispell is a spell-checking program that was one of the early tools for spell-che
     (add-to-list 'ispell-skip-region-alist '(":\\(PROPERTIES\\|LOGBOOK\\):" . ":END:")))
 #+end_src
 
-** LanguageTools
+** TODO LanguageTools
 [[https://languagetool.org/][LanguageTool]] is great for correcting your grammar while you are writing or saving your buffer. To use LanguageTool with LSP mode, the [[https://github.com/emacs-languagetool/lsp-ltex][lsp-ltex]] package is what you need. The first time you use it, it will download the [[https://github.com/valentjn/ltex-ls][LTEX Language Server]] LSP server for you.
 
 *NOTE:* I don't hook =lsp-ltex= to =text-mode= since it would process the =config.org= file which has too many errors to be processed properly.
 
 #+begin_src emacs-lisp
   (use-package lsp-ltex
+    :disabled
     :after lsp-mode
     :hook ((latex-mode) . (lambda ()
                             (require 'lsp-ltex)
