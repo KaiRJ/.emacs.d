@@ -646,32 +646,35 @@ A lot of these changes are based of [[https://doc.norang.ca/org-mode.html#HowToU
     :after org
     :commands (org-agenda)
 
-    :config
+    :custom
     ;; Get all my agenda files
-    (setq org-agenda-files
-          (mapcar 'abbreviate-file-name
-                  (split-string
-                   (shell-command-to-string "find ~/Documents/Org/Agenda -name \"*.org\"")
-                   "\n")))
+    (org-agenda-files
+     (mapcar 'abbreviate-file-name
+             (split-string
+              (shell-command-to-string "find ~/Documents/Org/Agenda -name \"*.org\"")
+              "\n")))
 
     ;; Define the keywords for the agenda
-    (setq org-todo-keywords
-          '((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d)")
-            (sequence "WAITING(w)"        "|" "CANCELLED(c)")))
+    (org-todo-keywords
+     '((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d)")
+       (sequence "WAITING(w)"        "|" "CANCELLED(c)")))
+
+    (org-agenda-prefix-format '((agenda . "  %-18c "))) ;; Shorten prefix to just file name
+    (org-agenda-hide-tags-regexp ".*") ;; Remove catagoies at end of entries
 
     ;; Add time when mark something as done
-    (setq org-log-done 'time)
+    (org-log-done 'time)
 
     ;; Set default column view headings: Task Total-Time Time-Stamp
-    (setq org-columns-default-format "%50ITEM(Task) %TIMESTAMP_IA")
+    (org-columns-default-format "%50ITEM(Task) %TIMESTAMP_IA")
 
     ;; Colour the keywords
-    (setq org-todo-keyword-faces
-          (quote (("TODO"      :foreground "red"          :weight bold)
-                  ("NEXT"      :foreground "blue"         :weight bold)
-                  ("DONE"      :foreground "forest green" :weight bold)
-                  ("WAITING"   :foreground "orange"       :weight bold)
-                  ("CANCELLED" :foreground "forest green" :weight bold))))
+    (org-todo-keyword-faces
+     (quote (("TODO"      :foreground "red"          :weight bold)
+             ("NEXT"      :foreground "blue"         :weight bold)
+             ("DONE"      :foreground "forest green" :weight bold)
+             ("WAITING"   :foreground "orange"       :weight bold)
+             ("CANCELLED" :foreground "forest green" :weight bold))))
     )
 #+end_src
 
@@ -687,68 +690,66 @@ A lot of these changes are based of [[https://doc.norang.ca/org-mode.html#HowToU
     ;; Set the header title of this custom view
     (org-super-agenda-header '((t (:foreground "#51afef" :weight bold :height 1.2))))
 
-    :config
-    ;; To make available the custom agenda
-    (org-super-agenda-mode)
-
     ;; Define custom agenda views
-    (setq org-agenda-custom-commands
-          '(("z" "Super view"
-             ((agenda ""
-                      ((org-agenda-span 'week)
-                       (org-agenda-start-day nil) ;; start today
-                       (org-agenda-overriding-header "Weekly Agenda")
-                       ;; Show only file name as prefix
-                       (org-agenda-prefix-format '((agenda . "  %-18c ")))
-                       ;; Remove DONE entries
-                       (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
-                       (org-agenda-hide-tags-regexp ".*")))
+    (org-agenda-custom-commands
+     '(("z" "Super view"
+        ((agenda ""
+                 ((org-agenda-span 'week)
+                  (org-agenda-start-day nil) ;; start today
+                  (org-agenda-overriding-header "Weekly Agenda")
+                  (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done)) ;; Remove DONE entries
+                  ))
 
-              (alltodo ""
-                       ((org-agenda-overriding-header "")
-                        (org-super-agenda-groups
-                         '(
-                           ;; (:discard (:todo "WAITING"))
-                           (:name "Overdue"
-                                  :order 10
-                                  :deadline past)
-                           (:name "General"
-                                  :order 20
-                                  :and (:tag "general" :not (:todo "WAITING")))
-                           (:name "Pulse Prominence"
-                                  :order 30
-                                  :and (:tag "prominence" :not (:todo "WAITING")))
-                           (:name "Shells Simulation"
-                                  :order 40
-                                  :and (:tag "shells" :not (:todo "WAITING")))
-                           (:name "Xe137 Tagging"
-                                  :order 45
-                                  :and (:tag "xe137" :not (:todo "WAITING")))
-                           (:name "XLZD Sandbox"
-                                  :order 50
-                                  :and (:tag "xlzd" :not (:todo "WAITING")))
-                           (:name "Xenon Activation"
-                                  :order 55
-                                  :and (:tag "activation" :not (:todo "WAITING")))
-                           (:name "Thesis"
-                                  :order 60
-                                  :and (:tag "thesis" :not (:todo "WAITING")))
-                           (:name "Emacs"
-                                  :order 70
-                                  :and (:tag "emacs" :not (:todo "WAITING")))
-                           (:name "Waiting"
-                                  :order 99
-                                  :todo "WAITING")
-                           ))
-                        ;; Remove file/category prefix only in this view
-                        (org-agenda-prefix-format
-                         '((todo . "  %s")
-                           (tags . "  %s")
-                           (search . "  %s")
-                           (agenda . "  %-12t %s")))
-                        ;; Hide tags from agenda entries
-                        (org-agenda-hide-tags-regexp ".*")
-                        )))))))
+         (alltodo ""
+                  ((org-agenda-overriding-header "")
+                   (org-super-agenda-groups
+                    '(
+                      ;; (:discard (:todo "WAITING"))
+                      (:name "Overdue"
+                             :order 10
+                             :deadline past)
+                      (:name "General"
+                             :order 20
+                             :and (:tag "general" :not (:todo "WAITING")))
+                      (:name "Pulse Prominence"
+                             :order 30
+                             :and (:tag "prominence" :not (:todo "WAITING")))
+                      (:name "Shells Simulation"
+                             :order 40
+                             :and (:tag "shells" :not (:todo "WAITING")))
+                      (:name "Xe137 Tagging"
+                             :order 45
+                             :and (:tag "xe137" :not (:todo "WAITING")))
+                      (:name "XLZD Sandbox"
+                             :order 50
+                             :and (:tag "xlzd" :not (:todo "WAITING")))
+                      (:name "Xenon Activation"
+                             :order 55
+                             :and (:tag "activation" :not (:todo "WAITING")))
+                      (:name "Thesis"
+                             :order 60
+                             :and (:tag "thesis" :not (:todo "WAITING")))
+                      (:name "Emacs"
+                             :order 70
+                             :and (:tag "emacs" :not (:todo "WAITING")))
+                      (:name "Waiting"
+                             :order 99
+                             :todo "WAITING")
+                      ))
+                   ;; Remove file/category prefix only in this view
+                   (org-agenda-prefix-format
+                    '((todo . "  %s")
+                      (tags . "  %s")
+                      (search . "  %s")
+                      (agenda . "  %-12t %s")))
+                   ;; Hide tags from agenda entries
+                   (org-agenda-hide-tags-regexp ".*")
+                   ))))))
+
+    :config
+    ;; To make available the custom agenda on startup
+    (org-super-agenda-mode)
+    )
 #+end_src
 
 * TODO Minibuffer packages
