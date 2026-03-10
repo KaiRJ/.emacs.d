@@ -388,12 +388,10 @@ The [[https://github.com/rranelli/auto-package-update.el][auto-package-update]] 
   (auto-package-update-maybe))
 #+end_src
 
-* TODO Org packages
-
+* Org packages
 This section sets up all my =Org-mode= based packages.
 
 ** org-mode
-
 These are the settings for a general Org file.
 
 #+begin_src emacs-lisp
@@ -466,7 +464,6 @@ Org mode supports inline image previews of LaTeX fragments. These can be toggled
 #+end_src
 
 ** org-roam
-
 [[https://www.orgroam.com/manual.html][Org-roam]] provides utilities for maintaining a digital slip-box in [[https://orgmode.org/][Org-mode]]. This setup is based mostly on the workflows outlined [[https://jethrokuan.github.io/org-roam-guide/][here]] and [[https://www.riccardopinosio.com/blog/posts/zotero_notes_article.html][here]] (Note, the latter provides a snippet of [[https://www.riccardopinosio.com/blog/posts/zotero_notes_article.html#opening-zotero-pdf-from-org-roam][Javascript]] that needs to be added to Zotero to correct the =file= field in the bibliography so it opens in Zotero from Emacs).
 
 #+begin_src emacs-lisp
@@ -518,56 +515,12 @@ Org mode supports inline image previews of LaTeX fragments. These can be toggled
     (require 'org-roam-dailies)) ;; Ensure the keymap is available)
 #+end_src
 
-*** TODO citar
-TODO make sure understand the functions im defining and rename them
-TODO test if can move all setq into use-package and then define the functions all before (or in the config?)
+*** citar
+[[https://github.com/emacs-citar/citar][citar]] makes browsing and inserting references in org-roam very easy.
+
+Before setting up citar I defining a couple of variables used to set the icons in the citar references buffer:
 
 #+begin_src elisp
-  (use-package citar
-    :after org-roam
-
-    :bind
-    (:map org-mode-map ("C-c b" . #'org-cite-insert))
-
-    :custom
-    (org-cite-global-bibliography '(my/global-bibliography-file))
-    (org-cite-insert-processor 'citar)
-    (org-cite-follow-processor 'citar)
-    (org-cite-activate-processor 'citar)
-    (citar-bibliography my/global-bibliography-file)
-
-    :config
-    ;; Add the advice around the functions
-    (advice-add 'citar-file-open :around #'riccardo/citar-file-trust-zotero)
-    (advice-add 'citar-file--find-files-in-dirs :around #'riccardo/citar-file-trust-zotero)
-    ;; Change how citar opens pdf files
-    (add-to-list 'citar-file-open-functions '("pdf" . citar-file-open-external)))
-
-  (defun riccardo/citar-file-trust-zotero (oldfun &rest args)
-    "Leave Zotero-generated file paths alone, especially zotero://..."
-    (if (boundp 'native-comp-deferred-compilation-enabled)
-        (let ((native-comp-deferred-compilation-enabled nil))
-          (cl-letf (((symbol-function 'file-exists-p) #'always)
-                    ((symbol-function 'expand-file-name)
-                     (lambda (first &rest _) first)))
-            (apply oldfun args)))
-      (cl-letf (((symbol-function 'file-exists-p) #'always)
-                ((symbol-function 'expand-file-name)
-                 (lambda (first &rest _) first)))
-        (apply oldfun args))))
-
-  ;; Opens files in zotero
-  (org-link-set-parameters "zotero"
-                           :follow (lambda (zpath)
-                                     (browse-url
-                                      (format "zotero:%s" zpath))))
-
-  (setq citar-templates
-        '((main    . "${title:48}   ${author editor:30%etal}    ${date year issued:4}")
-          (suffix  . "    ${=key= id:15}    ${=type=:12}    ${tags keywords:*}")
-          (preview . "${author editor:%sn%etal} (${year issued date}) ${title}, ${journal journaltitle publisher container-title collection-title}.\n")
-          (note    . "Notes on ${author editor:%etal}, ${title}")))
-
   (defvar citar-indicator-notes-icons
     (citar-indicator-create
      :symbol (nerd-icons-mdicon
@@ -597,15 +550,70 @@ TODO test if can move all setq into use-package and then define the functions al
      :function #'citar-has-files
      :padding "  "
      :tag "has:files"))
-
-  (setq citar-indicators
-        (list citar-indicator-files-icons
-              citar-indicator-notes-icons
-              citar-indicator-links-icons))
 #+end_src
 
-*** TODO citar-org-roam
-TODO write this org roam integration
+I'm also using this function, copied from [[https://www.riccardopinosio.com/blog/posts/zotero_notes_article.html][this blog]], for opening Zotero files from citar:
+
+#+begin_src elisp
+  (defun riccardo/citar-file-trust-zotero (oldfun &rest args)
+  "Leave Zotero-generated file paths alone, especially zotero://..."
+  (if (boundp 'native-comp-deferred-compilation-enabled)
+      (let ((native-comp-deferred-compilation-enabled nil))
+        (cl-letf (((symbol-function 'file-exists-p) #'always)
+                  ((symbol-function 'expand-file-name)
+                   (lambda (first &rest _) first)))
+          (apply oldfun args)))
+    (cl-letf (((symbol-function 'file-exists-p) #'always)
+              ((symbol-function 'expand-file-name)
+               (lambda (first &rest _) first)))
+      (apply oldfun args))))
+#+end_src
+
+Finally set up citar:
+
+#+begin_src elisp
+  (use-package citar
+    :after org-roam
+
+    :bind
+    (:map org-mode-map ("C-c b" . #'org-cite-insert))
+
+    :custom
+    (org-cite-global-bibliography '(my/global-bibliography-file))
+    (org-cite-insert-processor 'citar)
+    (org-cite-follow-processor 'citar)
+    (org-cite-activate-processor 'citar)
+    (citar-bibliography my/global-bibliography-file)
+
+    ;; My default citar templete when browsing references
+    (citar-templates
+     '((main    . "${title:48}   ${author editor:30%etal}    ${date year issued:4}")
+       (suffix  . "    ${=key= id:15}    ${=type=:12}    ${tags keywords:*}")
+       (preview . "${author editor:%sn%etal} (${year issued date}) ${title}, ${journal journaltitle publisher container-title collection-title}.\n")
+       (note    . "Notes on ${author editor:%etal}, ${title}")))
+
+    :config
+    ;; Add the advice around the functions
+    (advice-add 'citar-file-open :around #'riccardo/citar-file-trust-zotero)
+    (advice-add 'citar-file--find-files-in-dirs :around #'riccardo/citar-file-trust-zotero)
+    ;; Change how citar opens pdf files
+    (add-to-list 'citar-file-open-functions '("pdf" . citar-file-open-external))
+
+    ;; Opens files in zotero
+    (org-link-set-parameters "zotero"
+                             :follow (lambda (zpath)
+                                       (browse-url
+                                        (format "zotero:%s" zpath))))
+    ;; Set the icons of the citar elements
+    ;; This needs to be here as the functions defined before rely on citar-indicator-create being defined
+    (setq citar-indicators
+          (list citar-indicator-files-icons
+                citar-indicator-notes-icons
+                citar-indicator-links-icons)))
+#+end_src
+
+*** citar-org-roam
+The [[https://github.com/emacs-citar/citar-org-roam][citar-org-roam]] package provides tighter Citar and Org-Roam integration, by creating org-roam notes for references.
 
 #+begin_src elisp
   (use-package citar-org-roam
