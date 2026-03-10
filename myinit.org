@@ -57,7 +57,7 @@ This is my =.emacsd= folder to load my preferred Emacs configuration. Although i
   - [[#git][Git]]
   - [[#dap-mode][dap-mode]]
   - [[#eglot][eglot]]
-  - [[#waiting-corfu][WAITING Corfu]]
+  - [[#corfu][Corfu]]
   - [[#tree-sitter][Tree-sitter]]
   - [[#indent-bars][indent-bars]]
   - [[#parenthesis][Parenthesis]]
@@ -145,6 +145,8 @@ These are instructions you may need for a fresh install of Emacs using this init
 - For =dap-mode= a one-time step is required to download the extension and set it up automatically  =M-x dap-cpptools-setup= then you are good start debugging.
 
 - For =tree-sitter= if you don't already have the grammars installed you will need to run ~M-x tree-sitter-langs-install-grammars~.
+
+- On =COSMIC DE= I was finding issues with child frames with packages such as [[*Corfu][Corfu]], in order to solve this I had to build Emacs from source with the option ~--with-pgtk~ to build Emacs for "Pure GTK" which is needed for Wayland, now the default on Ubuntu. I got this solution from [[https://beamjourney.com/emacs-30-ubuntu-24-04/][here]].
 
 * Custom changes
 This section contains my elisp code and some small keybinding changes that I use frequently in my workflow. Note, I change package specific keybindings when I install that package.
@@ -1218,43 +1220,29 @@ I have also added a =before-save-hook= that will run ~eglot-format-buffer~ only 
                                                                        "--clang-tidy"))))
 #+end_src
 
-** WAITING Corfu
+** Corfu
 [[https://github.com/minad/corfu][Corfu]] enhances in-buffer completion by displaying a compact popup with current candidates, positioned either below or above the point. Candidates can be selected by navigating up or down. Corfu is also built into Emacs.
 
 #+begin_src emacs-lisp
   (use-package corfu
-    :disabled
     :commands (corfu-mode global-corfu-mode)
+
     :custom
     (corfu-auto t)
     (corfu-auto-prefix 2)
-    (corfu-auto-delay 0.25)
+    ;; (corfu-auto-delay 0.25)
+    ;; (corfu-min-width 80)
+    (corfu-max-width corfu-min-width) ; Always have the same width
+
     :init
     (global-corfu-mode)
-    (corfu-history-mode))
-    ;; (corfu-popupinfo-mode))
+    (corfu-history-mode)
+    (corfu-popupinfo-mode))
 
-    (use-package kind-icon
+  (use-package kind-icon
     :after corfu
     :config
     (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
-#+end_src
-
-Corfu uses child frames to display candidate which, because of the current Pop OS (COSMIC DE) autotiling, makes Corfu unusable for me. I am using [[https://company-mode.github.io/][company]] to replace the child frames with popups. Hopefully I can find a fix for this later.
-
-#+begin_src elisp
-  (use-package company
-    :hook
-    (after-init . global-company-mode)
-    :bind (:map company-active-map
-                ("<tab>" . company-complete-selection))
-    :custom
-    (company-idle-delay 0.2)              ;; Delay before suggestions popup
-    (company-minimum-prefix-length 1)     ;; Show suggestions after 1 char
-    (company-tooltip-align-annotations t) ;; Align annotations (e.g., function signatures)
-    (company-preview-frontend t)          ;; Show first completion candidate inline
-    (company-show-doc-buffer nil)
-    (company-show-numbers nil))
 #+end_src
 
 ** Tree-sitter
