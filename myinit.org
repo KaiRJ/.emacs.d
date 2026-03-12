@@ -277,15 +277,37 @@ And the [[https://github.com/seagle0128/doom-modeline][doom-modeline]]:
   (use-package doom-modeline
     :hook
     (after-init . doom-modeline-mode)
+
     :custom
     (doom-modeline-icon (display-graphic-p))
     (doom-modeline-mu4e nil)
     (doom-modeline-buffer-modification-icon nil)
-    (doom-modeline-buffer-file-name-style 'file-name-with-project)
+    (doom-modeline-buffer-file-name-style 'relative-from-project)
     (doom-modeline-position-column-line-format '("L%l"))
     (doom-modeline-checker-simple-format nil)
     (doom-modeline-buffer-encoding nil)
     (doom-modeline-vcs-max-length 12))
+#+end_src
+
+I'm taking advantage of the built-in [[https://www.masteringemacs.org/article/which-function-mode][which-func-mode]] in order to put breadcrumbs in the modeline. Here I also define the layout of my modeline. Note, to set the position of the breadcrumbs use the ~misc-info~ segment. In the future I'd like to create a segment specifically for the breadcrumbs and just add it to the modeline instead of defining the entire thing here.
+
+  #+begin_src emacs-lisp
+    (use-package which-func
+      :ensure nil
+      :after doom-modeline
+      :hook (after-init . which-function-mode)
+
+      :custom
+      (which-func-format '(" › " which-func-current))
+      (which-func-update-delay 0.1)
+      :config
+      (doom-modeline-def-modeline 'main
+        '(eldoc bar window-state workspace-name window-number modals matches follow
+                buffer-info remote-host misc-info buffer-position word-count parrot
+                selection-info)
+        ' (compilation objed-state project-name persp-name battery grip irc
+                       mu4e gnus github debug repl lsp minor-modes input-method
+                       indent-info buffer-encoding major-mode process vcs check time)))
 #+end_src
 
 ** Dashboard
@@ -1240,7 +1262,7 @@ I have also added a =before-save-hook= that will run ~eglot-format-buffer~ only 
     (corfu-auto-prefix 2)
     ;; (corfu-auto-delay 0.25)
     ;; (corfu-min-width 80)
-    (corfu-max-width corfu-min-width) ; Always have the same width
+    ;; (corfu-max-width corfu-min-width) ; Always have the same width
 
     :init
     (global-corfu-mode)
