@@ -28,12 +28,12 @@ This is my =.emacsd= folder to load my preferred Emacs configuration. Although i
   - [[#try][Try]]
   - [[#helpful][Helpful]]
   - [[#auto-update-packages][Auto update packages]]
-- [[#org-packages][Org packages]]
+- [[#org][Org]]
   - [[#org-mode][org-mode]]
   - [[#org-roam][org-roam]]
   - [[#org-agenda][org-agenda]]
   - [[#org-super-agenda][org-super-agenda]]
-- [[#minibuffer-packages][Minibuffer packages]]
+- [[#minibuffer][Minibuffer]]
   - [[#vertico][Vertico]]
   - [[#orderless][Orderless]]
   - [[#marginalia][Marginalia]]
@@ -41,26 +41,21 @@ This is my =.emacsd= folder to load my preferred Emacs configuration. Although i
   - [[#embark][Embark]]
   - [[#which-key][which key]]
   - [[#hydra][Hydra]]
-- [[#buffer-packages][Buffer packages]]
+- [[#buffer][Buffer]]
   - [[#ibuffer][ibuffer]]
   - [[#ace-window][ace window]]
   - [[#avy][Avy]]
   - [[#ultra-scroll][ultra-scroll]]
-- [[#editing-packages][Editing packages]]
+- [[#editing][Editing]]
   - [[#drag-stuff][drag-stuff]]
   - [[#yasnippet][YASnippet]]
   - [[#iedit][iedit]]
   - [[#undo-tree][undo-tree]]
   - [[#multiple-cursors][multiple-cursors]]
   - [[#expand-region][expand-region]]
-- [[#programming-packages][Programming packages]]
-  - [[#git][Git]]
-  - [[#dap-mode][dap-mode]]
-  - [[#eglot][eglot]]
-  - [[#corfu][Corfu]]
-  - [[#tree-sitter][Tree-sitter]]
-  - [[#indent-bars][indent-bars]]
-  - [[#parenthesis][Parenthesis]]
+- [[#programming][Programming]]
+  - [[#languages][Languages]]
+  - [[#packages][Packages]]
 - [[#waiting-writing-packages][WAITING Writing packages]]
   - [[#defaults][Defaults]]
   - [[#flyspell][Flyspell]]
@@ -410,7 +405,7 @@ The [[https://github.com/rranelli/auto-package-update.el][auto-package-update]] 
   (auto-package-update-maybe))
 #+end_src
 
-* Org packages
+* Org
 This section sets up all my =Org-mode= based packages.
 
 ** org-mode
@@ -784,7 +779,7 @@ A lot of these changes are based of [[https://doc.norang.ca/org-mode.html#HowToU
     )
 #+end_src
 
-* TODO Minibuffer packages
+* TODO Minibuffer
 These packages make everything in the minibuffer nicer and easier.
 
 ** Vertico
@@ -987,10 +982,10 @@ This hydra command lets me quickly sync repos to the correct server
         (message "Error: Not inside a Git repository!"))))
 
   ;; Bind the hydra to a keyboard shortcut
-  (global-set-key (kbd "C-x s") 'hydra-sync-git/body)
+  (global-set-key (kbd "C-c s") 'hydra-sync-git/body)
 #+end_src
 
-* Buffer packages
+* Buffer
 This section contains some packages that make navigating between and around buffers and files easier.
 
 ** ibuffer
@@ -1065,7 +1060,7 @@ The [[https://github.com/abo-abo/ace-window][ace-window]] package makes switchin
     (ultra-scroll-mode 1))
 #+end_src
 
-* Editing packages
+* Editing
 These packages are specifically used for editing text inside a buffer. There are used in all major modes.
 
 ** drag-stuff
@@ -1145,11 +1140,69 @@ Expand the marked region in semantic increments (=C-- C-= to reduce region).
     ("C-=" . er/expand-region))
 #+end_src
 
-* TODO Programming packages
+* Programming
+** Languages
+This section installs any additional programming modes that I use and configures them to my likely - mainly setting them up to use [[https://www.gnu.org/software/emacs/manual/html_mono/eglot.html][Eglot]] as my LSP client. I am using eglot as it is built into Emacs and is light weight. The main benefit of using Language Server Protocol (LSP) to configure the management of your programming languages is that LSP servers are also used by other text editors, increasing contributions to these packages.
+
+Note that since Eglot is built into Emacs I just need to configure it for each language (hence the ~:ensure nil~).
+
+*** C/C++
+I have also added a =before-save-hook= that will run ~eglot-format-buffer~ only if there is a ~.clang-format~ file present in the =project-root= directory (this code is based on [[https://eklitzke.org/smarter-emacs-clang-format][blog]]).
+
+#+begin_src elisp
+  (defun my/eglot-format-buffer-if-clang-format ()
+    "Format buffer with Eglot only if a .clang-format file exists in the project root."
+    (interactive)
+    (when (and (eglot-managed-p)
+               (project-current)
+               (file-exists-p
+                (expand-file-name ".clang-format"
+                                  (project-root (project-current)))))
+      (eglot-format-buffer)))
+
+  (defun my/clang-format-buffer-smart-on-save ()
+    "Add auto-save hook for my/eglot-format-buffer-if-clang-format."
+    (add-hook 'before-save-hook #'my/eglot-format-buffer-if-clang-format nil t))
+
+  (use-package eglot
+    :ensure nil
+    :hook
+    (c-ts-mode . eglot-ensure)
+    (c-ts-mode . my/clang-format-buffer-smart-on-save)
+    (c++-ts-mode . eglot-ensure)
+    (c++-ts-mode . my/clang-format-buffer-smart-on-save)
+
+    :commands (eglot-ensure
+               eglot-rename
+               eglot-format-buffer)
+    :config
+    (add-to-list 'eglot-server-programs '((c++-ts-mode c-ts-mode) . ("clangd-20"
+                                                                     "--clang-tidy"))))
+#+end_src
+
+*** GDScript
+Here I am adding the [[https://github.com/godotengine/emacs-gdscript-mode][emacs-gdscript-mode]] and configuring it to be able to see my Godot executable and point at my local build of the Godot documentation.
+
+#+begin_src emacs-lisp
+  (use-package gdscript-mode
+    :ensure t
+    :vc (:url "git@github.com:godotengine/emacs-gdscript-mode.git")
+
+    :hook
+    (gdscript-ts-mode . eglot-ensure)
+
+    :custom
+    (gdscript-godot-executable "flatpak run org.godotengine.Godot")
+    (gdscript-docs-local-path "/home/kairj/git/docs/godot-docs")
+    (gdscript-gdformat-save-and-format t))  ;; Save all buffers and format them with gdformat anytime Godot executable is run.
+#+end_src
+
+
+** TODO Packages
 This section contains all the packages I am using for programming.
 
-** Git
-*** magit
+*** Git
+**** magit
 [[https://magit.vc/][Magit]] makes working with git in Emacs, very very easy.
 
 #+begin_src emacs-lisp
@@ -1157,7 +1210,7 @@ This section contains all the packages I am using for programming.
     :commands magit-status-mode)
 #+end_src
 
-*** git-gutter
+**** git-gutter
 [[https://github.com/emacsorphanage/git-gutter][git-gutter]] is a simple package that shows the git difs to the side of each line that there is a change.
 
 #+begin_src emacs-lisp
@@ -1166,7 +1219,7 @@ This section contains all the packages I am using for programming.
              (git-gutter:update-interval 0.2 "If too small causes lagging")))
   #+end_src
 
-*** git-gutter-fringe
+**** git-gutter-fringe
 I'm also using the [[https://github.com/emacsorphanage/git-gutter-fringe][git-gutter-fringe]] package to make this look similar to VScode (as per [[https://ianyepan.github.io/posts/emacs-git-gutter/][this]] demo).
 
   #+begin_src elisp
@@ -1184,7 +1237,7 @@ I'm also using the [[https://github.com/emacsorphanage/git-gutter-fringe][git-gu
     (define-fringe-bitmap 'git-gutter-fr:deleted [128 192 224 240] nil nil 'bottom))
 #+end_src
 
-** TODO dap-mode
+*** TODO dap-mode
 learn how to use this properly
 
 [[https://github.com/emacs-lsp/dap-mode][dap-mode]] uses the Debug Adapter Protocol wire protocol for communication between client and Debug Server. You won't find a better debugger.
@@ -1215,42 +1268,7 @@ learn how to use this properly
            :cwd "${workspaceFolder}"
            :externalConsole t)))
 #+end_src
-** eglot
-The main benefit of using Language Server Protocol (LSP) to configure the management of your programming languages is that LSP servers are also used by other text editors, increasing contributions to these packages. I am using [[https://www.gnu.org/software/emacs/manual/html_mono/eglot.html][eglot]] as it is built into Emacs and is light weight.
-
-I have also added a =before-save-hook= that will run ~eglot-format-buffer~ only if there is a ~.clang-format~ file present in the =project-root= directory (this code is based on [[https://eklitzke.org/smarter-emacs-clang-format][blog]]).
-
-#+begin_src elisp
-    (defun my/eglot-format-buffer-if-clang-format ()
-      "Format buffer with Eglot only if a .clang-format file exists in the project root."
-      (interactive)
-      (when (and (eglot-managed-p)
-                 (project-current)
-                 (file-exists-p
-                  (expand-file-name ".clang-format"
-                                    (project-root (project-current)))))
-        (eglot-format-buffer)))
-
-    (defun my/clang-format-buffer-smart-on-save ()
-      "Add auto-save hook for my/eglot-format-buffer-if-clang-format."
-      (add-hook 'before-save-hook #'my/eglot-format-buffer-if-clang-format nil t))
-
-    (use-package eglot
-      :ensure nil
-      :hook
-      (c-ts-mode . eglot-ensure)
-      (c-ts-mode . my/clang-format-buffer-smart-on-save)
-      (c++-ts-mode . eglot-ensure)
-      (c++-ts-mode . my/clang-format-buffer-smart-on-save)
-      :commands (eglot-ensure
-                 eglot-rename
-                 eglot-format-buffer)
-      :config
-      (add-to-list 'eglot-server-programs '((c++-ts-mode c-ts-mode) . ("clangd-20"
-                                                                       "--clang-tidy"))))
-#+end_src
-
-** Corfu
+*** Corfu
 [[https://github.com/minad/corfu][Corfu]] enhances in-buffer completion by displaying a compact popup with current candidates, positioned either below or above the point. Candidates can be selected by navigating up or down. Corfu is also built into Emacs.
 
 #+begin_src emacs-lisp
@@ -1275,24 +1293,30 @@ I have also added a =before-save-hook= that will run ~eglot-format-buffer~ only 
     (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
 #+end_src
 
-** Tree-sitter
+*** Tree-sitter
 [[https://tree-sitter.github.io/tree-sitter/][Tree-sitter]] is a fast, incremental parsing library that gives Emacs (and other editors) rich, real-time syntax trees of your code. It lets your editor understand code like a compiler does - with actual structure, not just regex-y color rules. As of Emacs 29 it is built in. I am currently using [[https://github.com/renzmann/treesit-auto][treesit-auto]] to make the setup easier.
 
 #+begin_src emacs-lisp
-    (use-package treesit-auto
-      :custom
-      (treesit-auto-install 'prompt)
-      :config
-      (treesit-auto-add-to-auto-mode-alist 'all)
-      (global-treesit-auto-mode))
+  (use-package treesit-auto
+    :ensure t
 
-    ;; Override
-    (setq treesit-language-source-alist
-          '((c . ("https://github.com/tree-sitter/tree-sitter-c.git" "v0.23.6"))
-            (bash . ("https://github.com/tree-sitter/tree-sitter-bash.git" "v0.23.3"))))
+    :custom
+    (treesit-auto-install 'prompt)
+
+    (treesit-language-source-alist
+     ((c . ("https://github.com/tree-sitter/tree-sitter-c.git"))
+      (bash . ("https://github.com/tree-sitter/tree-sitter-bash.git"))
+      (gdscript "https://github.com/prestonknopp/tree-sitter-gdscript")))
+
+    :config
+    (add-to-list 'major-mode-remap-alist
+                 '(gdscript-mode . gdscript-ts-mode))
+
+    (treesit-auto-add-to-auto-mode-alist 'all)
+    (global-treesit-auto-mode))
 #+end_src
 
-** indent-bars
+*** indent-bars
 Currently using [[https://github.com/jdtsmith/indent-bars][indent-bars]] for my indentation highlight as its easy to use and supports treesitter and showing bars on blank lines:
 
 #+begin_src emacs-lisp
@@ -1304,7 +1328,7 @@ Currently using [[https://github.com/jdtsmith/indent-bars][indent-bars]] for my 
     (indent-bars-treesit-wrap '((c argument_list parameter_list init_declarator parenthesized_expression))))
 #+end_src
 
-** TODO Parenthesis
+*** TODO Parenthesis
 *** rainbow-delimiters
 [[https://github.com/Fanael/rainbow-delimiters][rainbow-delimiters]] is a small package that highlights delimiters according to their depth to make it easier to see what matches what.
 
