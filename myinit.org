@@ -10,19 +10,19 @@ This is my =.emacsd= folder to load my preferred Emacs configuration. Although i
   - [[#minimal-emacs][Minimal-Emacs]]
   - [[#use-package][use-package]]
   - [[#auto-save][auto-save]]
-  - [[#shell-environment][Shell environment]]
   - [[#misc-requirements][Misc requirements]]
 - [[#custom-changes][Custom changes]]
   - [[#my-defaults][My defaults]]
   - [[#duplicate-line][Duplicate line]]
   - [[#kill-buff][Kill buff]]
-  - [[#comment-line][Comment line]]
   - [[#focus-on-new-split-window][Focus on new split window]]
 - [[#ui][UI]]
   - [[#theme][Theme]]
   - [[#modeline][Modeline]]
   - [[#dashboard][Dashboard]]
   - [[#all-the-icons][all-the-icons]]
+- [[#shell-environment][Shell environment]]
+  - [[#eat][Eat]]
 - [[#general-packages][General packages]]
   - [[#from-mimimal-emacs][From mimimal emacs]]
   - [[#try][Try]]
@@ -54,10 +54,12 @@ This is my =.emacsd= folder to load my preferred Emacs configuration. Although i
   - [[#multiple-cursors][multiple-cursors]]
   - [[#expand-region][expand-region]]
 - [[#programming][Programming]]
+  - [[#defaults][Defaults]]
+  - [[#eglot][Eglot]]
   - [[#languages][Languages]]
   - [[#packages][Packages]]
 - [[#waiting-writing-packages][WAITING Writing packages]]
-  - [[#defaults][Defaults]]
+  - [[#defaults-1][Defaults]]
   - [[#flyspell][Flyspell]]
   - [[#ispell][Ispell]]
   - [[#languagetools][LanguageTools]]
@@ -111,16 +113,6 @@ When auto-save-visited-mode is enabled, Emacs will auto-save file-visiting buffe
   (auto-save-visited-mode 1)
 #+end_src
 
-** Shell environment
-I'm using the [[https://github.com/purcell/exec-path-from-shell][exec-path-from-shell]] package so that my terminal and Emacs enviroments are the same:
-
-#+begin_src emacs-lisp
-  (use-package exec-path-from-shell
-    :commands (shell eshell)
-    :config
-    (exec-path-from-shell-initialize))
-#+end_src
-
 ** Misc requirements
 These are instructions you may need for a fresh install of Emacs using this init file:
 
@@ -154,14 +146,10 @@ On top of the [[https://github.com/KaiRJ/minimal-emacs.d?tab=readme-ov-file#cust
     :ensure nil
 
     :hook
-    ((before-save-hook . whitespace-cleanup) ;; Clean up white space when file is saved
-     (prog-mode . display-line-numbers-mode) ;; Add line numbers to progam modes
-     (prog-mode . display-fill-column-indicator-mode) ;; Add column fill indicator
-     (prog-mode . (lambda () (setq truncate-lines t)))) ;; Line Wrappings
+    (before-save-hook . whitespace-cleanup) ;; Clean up white space when file is saved
 
     :bind
     (("M-r" . quary-repace)
-     ("C-;" . comment-line) ;; Bind comment-line to C-; instead of C-x C-;
      ("M-n" . scroll-up-line) ;; So I can scroll with one chord easily
      ("M-p" . scroll-down-line)
      ("C-z" . nil) ;; Don't like this suspend window keybinding
@@ -173,7 +161,6 @@ On top of the [[https://github.com/KaiRJ/minimal-emacs.d?tab=readme-ov-file#cust
      (next-line-add-newlines t) ;; `C-n' adds new line if reaches end of buffer
      (delete-selection-mode 1) ;; Delete highlighted text by typing
      (inhibit-compacting-font-caches t) ;; Don't compact font caches during GC
-     (global-subword-mode 1) ;; Treat CamelCase as distinct words
      (package-install-upgrade-built-in t) ;; Allow Emacs to upgrade built-in packages
      (read-extended-command-predicate #'command-completion-default-include-p) ;; Hide commands in `M-x' which do not apply to the current mode
      (tab-always-indent t)) ;; I just want tab to indent
@@ -213,21 +200,6 @@ Kill the current buffer instead of having to pick it.
       "Kill the current buffer."
       (interactive)
       (kill-buffer (current-buffer))))
-#+end_src
-
-** Comment line
-I prefer the point to stay in place when I comment a line.
-
-#+begin_src emacs-lisp
-  (use-package comment-line-stay
-    :ensure nil
-    :bind ("C-;" . my/comment-line-stay)
-    :preface
-    (defun my/comment-line-stay ()
-      "Toggle comment on current line without moving point."
-      (interactive)
-      (save-excursion
-        (comment-line nil))))  ;; nil = behave normally (toggle)
 #+end_src
 
 ** Focus on new split window
@@ -331,6 +303,30 @@ This provides icons for files, directories, etc. Might need to also run =M-x all
   (use-package all-the-icons)
 #+end_src
 
+* Shell environment
+I'm using the [[https://github.com/purcell/exec-path-from-shell][exec-path-from-shell]] package so that my terminal and Emacs enviroments are the same:
+
+#+begin_src emacs-lisp
+  (use-package exec-path-from-shell
+    :commands (shell eshell)
+    :config
+    (exec-path-from-shell-initialize))
+#+end_src
+
+** Eat
+[[https://codeberg.org/akib/emacs-eat#headline-2][Emulate A Terminal]] (Eat) is a terminal emulator that can run most (if not all) full-screen terminal programs, including Emacs.
+
+Note, I've had to use a work around to allow =M-o= while in the default =semi-char= mode, as per [[https://codeberg.org/akib/emacs-eat/issues/233][this issue]].
+
+#+begin_src emacs-lisp
+  (use-package eat
+    :hook (eat--semi-char-mode . my-eat--semi-char-mode-fn)
+    :config
+    (eat-eshell-mode)
+    (defun my-eat--semi-char-mode-fn ()
+      "Function to get around Eat's `eat-semi-char-non-bound-keys' not working correctly"
+      (define-key eat-semi-char-mode-map (kbd "M-o") nil)))
+#+end_src
 * General packages
 These are the packages that aren't really tied to a specific mode, and more general to all of Emacs.
 
@@ -394,15 +390,16 @@ To have a more user-friendly documentation I use the [[https://github.com/Wilfre
 The [[https://github.com/rranelli/auto-package-update.el][auto-package-update]] package automates the process of updating installed packages managed by package.el. Instead of requiring users to manually invoke =package-list-packages= and update each package.
 
 #+begin_src elisp
-(use-package auto-package-update
-  :custom
-  (auto-package-update-interval 7) ;; days
-  (auto-package-update-hide-results t)
-  (auto-package-update-delete-old-versions t)
-  :config
-  ;; Run package updates automatically at startup, but only if the configured
-  ;; interval has elapsed.
-  (auto-package-update-maybe))
+  (use-package auto-package-update
+    :config
+    ;; Run package updates automatically at startup, but only if the configured
+    ;; interval has elapsed.
+    (auto-package-update-maybe)
+    :custom
+    (auto-package-update-interval 7) ;; days
+    (auto-package-update-hide-results t)
+    (auto-package-update-delete-old-versions t)
+    )
 #+end_src
 
 * Org
@@ -422,9 +419,12 @@ These are the settings for a general Org file.
 
     :hook
     (org-mode . org-indent-mode)
+    (org-mode . prettify-symbols-mode)
     (before-save . time-stamp)
 
     :custom
+    (org-log-repeat nil)
+
     ;; theme source-blocks as they would in their native mode
     (org-src-fontify-natively t)
     (org-src-tab-acts-natively t)
@@ -434,7 +434,7 @@ These are the settings for a general Org file.
 
     ;; inline latex settings
     (org-preview-latex-default-process 'dvisvgm)
-    (org-format-latex-options (plist-put org-format-latex-options :scale 1.6))
+    (org-format-latex-options (plist-put org-format-latex-options :scale 1))
 
     ;; indent with tabs for better readability
     ;; (setq org-indent-indentation-per-level 4)
@@ -664,7 +664,6 @@ The [[https://github.com/emacs-citar/citar-org-roam][citar-org-roam]] package pr
 #+end_src
 
 ** org-agenda
-
 A lot of these changes are based of [[https://doc.norang.ca/org-mode.html#HowToUseThisDocument][this]].
 
 #+begin_src emacs-lisp
@@ -706,7 +705,6 @@ A lot of these changes are based of [[https://doc.norang.ca/org-mode.html#HowToU
 #+end_src
 
 ** org-super-agenda
-
 [[https://github.com/alphapapa/org-super-agenda?tab=readme-ov-file#org-super-agenda][org-super-agenda]] lets me see all my TODOs alongside my agenda, I find this very useful for planning out my week.
 
 #+begin_src emacs-lisp
@@ -741,6 +739,9 @@ A lot of these changes are based of [[https://doc.norang.ca/org-mode.html#HowToU
                       (:name "Pulse Prominence"
                              :order 30
                              :and (:tag "prominence" :not (:todo "WAITING")))
+                      (:name "Reverse BiPo"
+                             :order 35
+                             :and (:tag "bipo" :not (:todo "WAITING")))
                       (:name "Shells Simulation"
                              :order 40
                              :and (:tag "shells" :not (:todo "WAITING")))
@@ -1082,9 +1083,12 @@ It is useful to be able to move a line or a region up and down without having to
 
 #+begin_src emacs-lisp
   (use-package yasnippet
-    :config (yas-global-mode))
+    :ensure t
+    :config
+    (yas-global-mode))
 
   (use-package yasnippet-snippets
+    :ensure t
     :after yasnippet
     :config
     (yasnippet-snippets-initialize))
@@ -1141,10 +1145,47 @@ Expand the marked region in semantic increments (=C-- C-= to reduce region).
 #+end_src
 
 * Programming
-** Languages
-This section installs any additional programming modes that I use and configures them to my likely - mainly setting them up to use [[https://www.gnu.org/software/emacs/manual/html_mono/eglot.html][Eglot]] as my LSP client. I am using eglot as it is built into Emacs and is light weight. The main benefit of using Language Server Protocol (LSP) to configure the management of your programming languages is that LSP servers are also used by other text editors, increasing contributions to these packages.
+I've collected here all my changes related to programming, including changes to defaults, installing specific language modes, and any additional packages.
 
-Note that since Eglot is built into Emacs I just need to configure it for each language (hence the ~:ensure nil~).
+** Defaults
+
+#+begin_src emacs-lisp
+  (use-package programming
+    :ensure nil
+
+    :hook
+    (prog-mode . display-line-numbers-mode) ;; Add line numbers to progam modes
+    (prog-mode . display-fill-column-indicator-mode) ;; Add column fill indicator
+    (prog-mode . (lambda () (setq truncate-lines t))) ;; Line Wrappings
+
+    :custom
+    (global-subword-mode 1) ;; Treat CamelCase as distinct words
+    (gdb-many-windows 1)) ;; Set the default of gdb to open with more windows
+#+end_src
+** Eglot
+Here I setup [[https://www.gnu.org/software/emacs/manual/html_mono/eglot.html][Eglot]] as my LSP client. I am using eglot as it is built into Emacs and is light weight. Note that since Eglot is built into Emacs I just need to configure it for each language (hence the ~:ensure nil~).
+
+#+begin_src emacs-lisp
+     (use-package eglot
+       :ensure nil
+
+       :hook
+       (c-ts-mode . eglot-ensure)
+       (c++-ts-mode . eglot-ensure)
+
+       :commands
+       (eglot-ensure
+        eglot-rename
+        eglot-format-buffer)
+
+       :config
+       (add-to-list 'eglot-server-programs '((c++-ts-mode c-ts-mode) . ("clangd-20"
+                                                                        "--clang-tidy")))
+       (add-to-list 'eglot-server-programs '((glsl-mode) . ("glsl_analyzer"))))
+#+end_src
+
+** Languages
+This section installs any additional programming modes that I use and configures them to my likely
 
 *** C/C++
 I have also added a =before-save-hook= that will run ~eglot-format-buffer~ only if there is a ~.clang-format~ file present in the =project-root= directory (this code is based on [[https://eklitzke.org/smarter-emacs-clang-format][blog]]).
@@ -1164,20 +1205,46 @@ I have also added a =before-save-hook= that will run ~eglot-format-buffer~ only 
     "Add auto-save hook for my/eglot-format-buffer-if-clang-format."
     (add-hook 'before-save-hook #'my/eglot-format-buffer-if-clang-format nil t))
 
-  (use-package eglot
+  (defun my/indentation-setup ()
+    "Set some indentation ar."
+    (add-hook 'before-save-hook #'my/eglot-format-buffer-if-clang-format nil t))
+
+  (use-package c++
     :ensure nil
     :hook
-    (c-ts-mode . eglot-ensure)
     (c-ts-mode . my/clang-format-buffer-smart-on-save)
-    (c++-ts-mode . eglot-ensure)
     (c++-ts-mode . my/clang-format-buffer-smart-on-save)
 
-    :commands (eglot-ensure
-               eglot-rename
-               eglot-format-buffer)
-    :config
-    (add-to-list 'eglot-server-programs '((c++-ts-mode c-ts-mode) . ("clangd-20"
-                                                                     "--clang-tidy"))))
+    :custom
+    ;; My default c++ coding style
+    (c-default-style "bsd")     ; For get {} below instead of attached
+    (c-basic-offset 4)          ; Indentation level (normal modes)
+    (c-ts-mode-indent-offset 4) ; Indentation level (treesitter modes)
+    (indent-bars--offset 4)     ; Indentation for indent bars
+    (tab-width 4)               ; Width of tab characters
+    (indent-tabs-mode nil)      ; Use spaces, not tabs
+    )
+#+end_src
+
+*** CUDA
+#+begin_src emacs-lisp
+  (add-to-list 'auto-mode-alist '("\\.cu\\'" . c++-ts-mode))
+  (add-to-list 'auto-mode-alist '("\\.cuh\\'" . c++-ts-mode))
+#+end_src
+
+*** GLSL
+#+begin_src emacs-lisp
+  (use-package glsl-mode
+    :hook
+    (glsl-mode . eglot-ensure)
+    ;; (glsl-mode . my/clang-format-buffer-smart-on-save)
+
+    :mode
+    ("\\.vert\\'" . glsl-mode)
+    ("\\.frag\\'" . glsl-mode)
+    ("\\.geom\\'" . glsl-mode)
+    ("\\.comp\\'" . glsl-mode)
+    ("\\.glsl\\'" . glsl-mode))
 #+end_src
 
 *** GDScript
@@ -1196,7 +1263,6 @@ Here I am adding the [[https://github.com/godotengine/emacs-gdscript-mode][emacs
     (gdscript-docs-local-path "/home/kairj/git/docs/godot-docs")
     (gdscript-gdformat-save-and-format t))  ;; Save all buffers and format them with gdformat anytime Godot executable is run.
 #+end_src
-
 
 ** TODO Packages
 This section contains all the packages I am using for programming.
@@ -1237,37 +1303,6 @@ I'm also using the [[https://github.com/emacsorphanage/git-gutter-fringe][git-gu
     (define-fringe-bitmap 'git-gutter-fr:deleted [128 192 224 240] nil nil 'bottom))
 #+end_src
 
-*** TODO dap-mode
-learn how to use this properly
-
-[[https://github.com/emacs-lsp/dap-mode][dap-mode]] uses the Debug Adapter Protocol wire protocol for communication between client and Debug Server. You won't find a better debugger.
-
-#+begin_src emacs-lisp
-  (use-package dap-mode
-    :disabled
-    :hook (dap-stopped . (lambda (arg) (call-interactively #'dap-hydra)))
-    :config
-    (dap-auto-configure-mode)  ;; Automatically configures dap-mode
-    (require 'dap-cpptools)
-
-    (dap-register-debug-template
-     "cpptools::main"
-     (list :type "cppdbg"
-           :request "launch"
-           :MIMode "lldb"
-           :program "${workspaceFolder}/build/main"
-           :cwd "${workspaceFolder}"))
-
-    (dap-register-debug-template
-     "cpptools::main-input"
-     (list :name "cpptools::main-input"
-           :type "cppdbg"
-           :request "launch"
-           :MIMode "lldb"
-           :program "${workspaceFolder}/build/main"
-           :cwd "${workspaceFolder}"
-           :externalConsole t)))
-#+end_src
 *** Corfu
 [[https://github.com/minad/corfu][Corfu]] enhances in-buffer completion by displaying a compact popup with current candidates, positioned either below or above the point. Candidates can be selected by navigating up or down. Corfu is also built into Emacs.
 
@@ -1298,15 +1333,13 @@ learn how to use this properly
 
 #+begin_src emacs-lisp
   (use-package treesit-auto
-    :ensure t
-
     :custom
     (treesit-auto-install 'prompt)
 
     (treesit-language-source-alist
-     ((c . ("https://github.com/tree-sitter/tree-sitter-c.git"))
-      (bash . ("https://github.com/tree-sitter/tree-sitter-bash.git"))
-      (gdscript "https://github.com/prestonknopp/tree-sitter-gdscript")))
+     ((c "https://github.com/tree-sitter/tree-sitter-c.git"))
+      (bash "https://github.com/tree-sitter/tree-sitter-bash.git")
+      (gdscript "https://github.com/prestonknopp/tree-sitter-gdscript"))
 
     :config
     (add-to-list 'major-mode-remap-alist
@@ -1321,11 +1354,19 @@ Currently using [[https://github.com/jdtsmith/indent-bars][indent-bars]] for my 
 
 #+begin_src emacs-lisp
   (use-package indent-bars
-    :hook ((prog-mode) . indent-bars-mode)
+    :hook
+    (prog-mode . indent-bars-mode)
+    ;; ensure right indentation even when changed in dir.locals
+    (hack-local-variables . (indent-bars-update))
+
     :custom
     (indent-bars-starting-column 0)
     (indent-bars-treesit-support t)
-    (indent-bars-treesit-wrap '((c argument_list parameter_list init_declarator parenthesized_expression))))
+    (indent-bars-treesit-wrap '((c argument_list parameter_list init_declarator parenthesized_expression)))
+
+    :config
+    ;; flag variable as safe so don't get prompted in projects with a  dir.locals using it
+    (put 'indent-bars--offset 'safe-local-variable #'integerp))
 #+end_src
 
 *** TODO Parenthesis
@@ -1359,6 +1400,21 @@ Need to learn how to use this. Might only be good to use strict mode with emacs 
     ("M-<down>" . sp-backward-down-sexp)
     ("M-[" . sp-backward-unwrap-sexp)
     ("M-]" . sp-unwrap-sexp))
+#+end_src
+
+*** Comment line
+I prefer the point to stay in place when I comment a line.
+
+#+begin_src emacs-lisp
+  (use-package comment-line-stay
+    :ensure nil
+    :bind ("C-;" . my/comment-line-stay)
+    :preface
+    (defun my/comment-line-stay ()
+      "Toggle comment on current line without moving point."
+      (interactive)
+      (save-excursion
+        (comment-line nil))))  ;; nil = behave normally (toggle)
 #+end_src
 
 * WAITING Writing packages
