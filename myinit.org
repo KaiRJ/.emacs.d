@@ -23,6 +23,8 @@ This is my =.emacsd= folder to load my preferred Emacs configuration. Although i
   - [[#all-the-icons][all-the-icons]]
 - [[#shell-environment][Shell environment]]
   - [[#eat][Eat]]
+  - [[#vterm][vterm]]
+  - [[#tramp][Tramp]]
 - [[#general-packages][General packages]]
   - [[#from-mimimal-emacs][From mimimal emacs]]
   - [[#try][Try]]
@@ -163,7 +165,9 @@ On top of the [[https://github.com/KaiRJ/minimal-emacs.d?tab=readme-ov-file#cust
      (inhibit-compacting-font-caches t) ;; Don't compact font caches during GC
      (package-install-upgrade-built-in t) ;; Allow Emacs to upgrade built-in packages
      (read-extended-command-predicate #'command-completion-default-include-p) ;; Hide commands in `M-x' which do not apply to the current mode
-     (tab-always-indent t)) ;; I just want tab to indent
+     (tab-always-indent t) ;; I just want tab to indent
+     (compilation-scroll-output t) ;; Show full output when using M-x compile
+     )
 
     :custom-face
     (default ((t (:height 130))))) ;; Font size
@@ -308,7 +312,7 @@ I'm using the [[https://github.com/purcell/exec-path-from-shell][exec-path-from-
 
 #+begin_src emacs-lisp
   (use-package exec-path-from-shell
-    :commands (shell eshell)
+    :commands (shell eshell eat vterm)
     :config
     (exec-path-from-shell-initialize))
 #+end_src
@@ -326,6 +330,29 @@ Note, I've had to use a work around to allow =M-o= while in the default =semi-ch
     (defun my-eat--semi-char-mode-fn ()
       "Function to get around Eat's `eat-semi-char-non-bound-keys' not working correctly"
       (define-key eat-semi-char-mode-map (kbd "M-o") nil)))
+#+end_src
+
+** vterm
+#+begin_src emacs-lisp
+  (setenv "LANG" "en_IE.UTF-8")
+  (setenv "LC_CTYPE" "en_IE.UTF-8")
+
+  (use-package vterm
+    :ensure t
+    :commands vterm
+    :bind (("C-c v" . vterm)))
+#+end_src
+
+** Tramp
+[[https://coredumped.dev/2025/06/18/making-tramp-go-brrrr./][Core Dumped]]
+#+begin_src emacs-lisp
+  (use-package tramp
+    :ensure nil
+    :config
+    (setq tramp-default-method "ssh"
+          tramp-verbose 1
+          tramp-completion-reread-directory-timeout 60
+          tramp-use-ssh-controlmaster-options t))
 #+end_src
 * General packages
 These are the packages that aren't really tied to a specific mode, and more general to all of Emacs.
@@ -962,10 +989,12 @@ This hydra command lets me quickly sync repos to the correct server
   Sync to which server?
   _n_ NERSC
   _d_ Deucalion
+  _v_ Navigator
   _q_ Quit
   "
     ("n" (run-sync-git-tracked-script "nersc"))
     ("d" (run-sync-git-tracked-script "deucalion"))
+    ("v" (run-sync-git-tracked-script "navigator"))
     ("q" nil "quit"))
 
   ;; Function to run the sync script with an argument
@@ -1166,22 +1195,29 @@ I've collected here all my changes related to programming, including changes to 
 Here I setup [[https://www.gnu.org/software/emacs/manual/html_mono/eglot.html][Eglot]] as my LSP client. I am using eglot as it is built into Emacs and is light weight. Note that since Eglot is built into Emacs I just need to configure it for each language (hence the ~:ensure nil~).
 
 #+begin_src emacs-lisp
-     (use-package eglot
-       :ensure nil
+  (use-package eglot
+    :ensure nil
 
-       :hook
-       (c-ts-mode . eglot-ensure)
-       (c++-ts-mode . eglot-ensure)
+    :hook
+    (c-ts-mode . eglot-ensure)
+    (c++-ts-mode . eglot-ensure)
 
-       :commands
-       (eglot-ensure
-        eglot-rename
-        eglot-format-buffer)
+    :commands
+    (eglot-ensure
+     eglot-rename
+     eglot-format-buffer)
 
-       :config
-       (add-to-list 'eglot-server-programs '((c++-ts-mode c-ts-mode) . ("clangd-20"
-                                                                        "--clang-tidy")))
-       (add-to-list 'eglot-server-programs '((glsl-mode) . ("glsl_analyzer"))))
+    :config
+    (add-to-list 'eglot-server-programs
+                 '((c++-ts-mode c-ts-mode) . ("clangd-20" "--clang-tidy")))
+
+    (add-to-list 'eglot-server-programs
+                 '((glsl-mode) . ("glsl_analyzer")))
+
+    ;; Remote
+    ;; (add-to-list 'eglot-server-programs
+    ;; '((c-mode c++-mode) . ("/home/kjenkins/clangd-eglot")))
+    )
 #+end_src
 
 ** Languages
