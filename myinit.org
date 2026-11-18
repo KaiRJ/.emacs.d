@@ -24,6 +24,7 @@ This is my =.emacsd= folder to load my preferred Emacs configuration. Although i
 - [[#shell-environment][Shell environment]]
   - [[#eat][Eat]]
   - [[#vterm][vterm]]
+  - [[#ghostel][Ghostel]]
   - [[#tramp][Tramp]]
 - [[#general-packages][General packages]]
   - [[#from-mimimal-emacs][From mimimal emacs]]
@@ -60,12 +61,11 @@ This is my =.emacsd= folder to load my preferred Emacs configuration. Although i
   - [[#eglot][Eglot]]
   - [[#languages][Languages]]
   - [[#packages][Packages]]
-- [[#waiting-writing-packages][WAITING Writing packages]]
-  - [[#defaults-1][Defaults]]
-  - [[#flyspell][Flyspell]]
+- [[#writing][Writing]]
   - [[#ispell][Ispell]]
-  - [[#languagetools][LanguageTools]]
+  - [[#flyspell][Flyspell]]
   - [[#writegood-mode][writegood-mode]]
+  - [[#languagetools][LanguageTools]]
   - [[#latex][LaTeX]]
 
 * Initialisation
@@ -324,6 +324,7 @@ Note, I've had to use a work around to allow =M-o= while in the default =semi-ch
 
 #+begin_src emacs-lisp
   (use-package eat
+    :disabled
     :hook (eat--semi-char-mode . my-eat--semi-char-mode-fn)
     :config
     (eat-eshell-mode)
@@ -338,9 +339,35 @@ Note, I've had to use a work around to allow =M-o= while in the default =semi-ch
   (setenv "LC_CTYPE" "en_IE.UTF-8")
 
   (use-package vterm
-    :ensure t
+    :disabled
     :commands vterm
     :bind (("C-c v" . vterm)))
+#+end_src
+
+** Ghostel
+#+begin_src emacs-lisp
+  (use-package ghostel
+    :commands (ghostel ghostel-project ghostel-project-list-buffers)
+    ;; :hook (after-init . ghostel-status-indicator-mode)
+
+    :bind
+    (("C-x m" . ghostel)
+     :map ghostel-semi-char-mode-map
+     ("C-k"  . my/ghostel-send-C-k-and-kill)
+     :map project-prefix-map
+     ("m" . ghostel-project)
+     ("M" . ghostel-project-list-buffers))
+
+    :config
+    (add-to-list 'project-switch-commands '(ghostel-project "Ghostel") t)
+    (add-to-list 'project-switch-commands '(ghostel-project-list-buffers "Ghostel buffers") t)
+    (add-to-list 'ghostel-eval-cmds '("magit-status-setup-buffer" magit-status-setup-buffer))
+
+    (defun my/ghostel-send-C-k-and-kill ()
+      "Send `C-k' to ghostel. Like normal Emacs `C-k'.  Kill to end of line and put content in kill-ring."
+      (interactive)
+      (kill-ring-save (point) (line-end-position))
+      (ghostel-send-key "k" "ctrl")))
 #+end_src
 
 ** Tramp
@@ -354,6 +381,7 @@ Note, I've had to use a work around to allow =M-o= while in the default =semi-ch
           tramp-completion-reread-directory-timeout 60
           tramp-use-ssh-controlmaster-options t))
 #+end_src
+
 * General packages
 These are the packages that aren't really tied to a specific mode, and more general to all of Emacs.
 
@@ -614,12 +642,6 @@ Finally set up citar:
                              :follow (lambda (zpath)
                                        (browse-url
                                         (format "zotero:%s" zpath))))
-    ;; Set the icons of the citar elements
-    ;; This needs to be here as the functions defined before rely on citar-indicator-create being defined
-    (setq citar-indicators
-          (list citar-indicator-files-icons
-                citar-indicator-notes-icons
-                citar-indicator-links-icons))
 
     ;; Defining a couple of variables used to set the icons in the citar references buffer:
     (defvar citar-indicator-notes-icons
@@ -651,6 +673,13 @@ Finally set up citar:
        :function #'citar-has-files
        :padding "  "
        :tag "has:files"))
+
+    ;; Set the icons of the citar elements
+    ;; This needs to be here as the functions defined before rely on citar-indicator-create being defined
+    (setq citar-indicators
+          (list citar-indicator-files-icons
+                citar-indicator-notes-icons
+                citar-indicator-links-icons))
     )
 #+end_src
 
@@ -890,7 +919,7 @@ Vertico leverages [[https://github.com/oantolin/orderless][Orderless]]' flexible
      ("M-s g" . consult-grep)
      ("M-s G" . consult-git-grep)
      ("M-s r" . consult-ripgrep)
-     ("M-s l" . consult-line)
+     ("C-s" . consult-line)
      ("M-s L" . consult-line-multi)
      ("M-s k" . consult-keep-lines)
      ("M-s u" . consult-focus-lines)
@@ -899,12 +928,11 @@ Vertico leverages [[https://github.com/oantolin/orderless][Orderless]]' flexible
      :map isearch-mode-map
      ("M-e" . consult-isearch-history)
      ("M-s e" . consult-isearch-history)
-     ("M-s l" . consult-line)
-     ("M-s L" . consult-line-multi)
+     ("C-s" . consult-line)
+     ("C-S" . consult-line-multi)
      ;; Minibuffer history
      :map minibuffer-local-map
-     ("M-s" . consult-history)
-     ("M-r" . consult-history))
+     ("C-s" . consult-history))
 
     ;; Enable automatic preview at point in the *Completions* buffer.
     :hook (completion-list-mode . consult-preview-at-point-mode)
@@ -1187,7 +1215,19 @@ I've collected here all my changes related to programming, including changes to 
 
     :custom
     (global-subword-mode 1) ;; Treat CamelCase as distinct words
-    (gdb-many-windows 1)) ;; Set the default of gdb to open with more windows
+    (gdb-many-windows 1) ;; Set the default of gdb to open with more windows
+    (gdb-debuginfod-enable-setting nil)
+
+    :preface
+    (defun my/project-gdb ()
+      "Start GDB from the current project root."
+      (interactive)
+      (let ((default-directory (project-root (project-current t))))
+        (call-interactively #'gdb)))
+
+    :bind
+    (:map project-prefix-map
+          ("d" . my/project-gdb)))
 #+end_src
 ** Eglot
 Here I setup [[https://www.gnu.org/software/emacs/manual/html_mono/eglot.html][Eglot]] as my LSP client. I am using eglot as it is built into Emacs and is light weight. Note that since Eglot is built into Emacs I just need to configure it for each language (hence the ~:ensure nil~).
@@ -1195,7 +1235,6 @@ Here I setup [[https://www.gnu.org/software/emacs/manual/html_mono/eglot.html][E
 #+begin_src emacs-lisp
   (use-package eglot
     :ensure nil
-
     :hook
     (c-ts-mode . eglot-ensure)
     (c++-ts-mode . eglot-ensure)
@@ -1222,6 +1261,7 @@ Here I setup [[https://www.gnu.org/software/emacs/manual/html_mono/eglot.html][E
 This section installs any additional programming modes that I use and configures them to my likely
 
 *** C/C++
+
 I have also added a =before-save-hook= that will run ~eglot-format-buffer~ only if there is a ~.clang-format~ file present in the =project-root= directory (this code is based on [[https://eklitzke.org/smarter-emacs-clang-format][blog]]).
 
 #+begin_src elisp
@@ -1282,11 +1322,11 @@ I have also added a =before-save-hook= that will run ~eglot-format-buffer~ only 
 #+end_src
 
 *** GDScript
+
 Here I am adding the [[https://github.com/godotengine/emacs-gdscript-mode][emacs-gdscript-mode]] and configuring it to be able to see my Godot executable and point at my local build of the Godot documentation.
 
 #+begin_src emacs-lisp
   (use-package gdscript-mode
-    :ensure t
     :vc (:url "git@github.com:godotengine/emacs-gdscript-mode.git")
 
     :hook
@@ -1295,10 +1335,11 @@ Here I am adding the [[https://github.com/godotengine/emacs-gdscript-mode][emacs
     :custom
     (gdscript-godot-executable "flatpak run org.godotengine.Godot")
     (gdscript-docs-local-path "/home/kairj/git/docs/godot-docs")
-    (gdscript-gdformat-save-and-format t))  ;; Save all buffers and format them with gdformat anytime Godot executable is run.
+    (gdscript-gdformat-save-and-format t)) ;; save all buffers and format them with gdformat anytime Godot executable is run.
 #+end_src
 
 ** TODO Packages
+
 This section contains all the packages I am using for programming.
 
 *** Git
@@ -1451,141 +1492,108 @@ I prefer the point to stay in place when I comment a line.
         (comment-line nil))))  ;; nil = behave normally (toggle)
 #+end_src
 
-* WAITING Writing packages
-Update most of these when writing thesis.
+* Writing
 
-This packages are to improve all things writing.
-
-** TODO Defaults
-TODO maybe update name, and add intro summary
+This section contains all the settings and packages I use to improve my writing experience in Emacs. I've kept a lot of my spellchecking basic for now. For a more complete setup see [[https://www.jamescherti.com/emacs-spell-checker-flyspell-ispell-aspell/][this article]] that configures Flyspell, Ispell, and Aspell to minimise false positives in source code and prose.
 
 #+begin_src emacs-lisp
   (use-package writing
     :ensure nil
     :hook
-    ;; Line Wrappings
-    (text-mode . turn-on-visual-line-mode))
+    (text-mode . turn-on-visual-line-mode)) ;; line Wrappings
 #+end_src
+
+** Ispell
+
+Ispell is the built in library for interfacing with an external spell-checking engine (not to be confused with the old [[https://en.wikipedia.org/wiki/Ispell][Ispell]] spell checker). I have set my Emacs up to use [[http://aspell.net/][Aspell]] but another good option is [[https://hunspell.github.io/][Hunspell]]. I need to eventually look into replacing Aspell as I don't think it is maintained anymore.
+
+#+begin_src emacs-lisp
+(use-package ispell
+  :ensure nil
+  :custom
+  (ispell-program-name "aspell")
+  (ispell-dictionary "en_GB")
+  (ispell-extra-args '("--sug-mode=fast"))
+  (ispell-silently-savep t)
+  (ispell-quietly t)
+  (text-mode-ispell-word-completion nil)
+
+  :config
+  ;; Org mode exclusions.
+  (dolist (entry
+           '(("#\\+begin_src" . "#\\+end_src")
+             ("#\\+begin_example" . "#\\+end_example")
+             ("\\$" . "\\$")
+             (org-property-drawer-re)
+             (":\\(PROPERTIES\\|LOGBOOK\\):" . ":END:")))
+    (add-to-list 'ispell-skip-region-alist entry)))
+#+end_src
+
 ** Flyspell
 
-Flyspell is an on-the-fly spell checker in Emacs. It works in the background while you're typing to highlight misspelled words in your buffer. Flyspell integrates with Emacs and uses a spell-checking engine like Ispell or Aspell to detect misspellings as you type.
+The built-in [[https://wikemacs.org/wiki/Flyspell-mode][Flyspell]] package provides on-the-fly spell checking in Emacs. It runs in the background, highlighting misspelled words as you type and offering interactive corrections. Flyspell uses Emacs's Ispell interface to communicate with a spell-checking engine such as Aspell or Hunspell.
 
 #+begin_src emacs-lisp
   (use-package flyspell
     :ensure nil
-    :delight
-    :hook ((text-mode . flyspell-mode)
-           (prog-mode . flyspell-prog-mode))
+    :hook
+    ((text-mode . flyspell-mode)
+     (prog-mode . flyspell-prog-mode))
+
     :config
     (define-key flyspell-mode-map (kbd "C-;") nil) ;; unbind as used for commend-line
+
     :custom
-    ;; Add correction to abbreviation table.
-    (flyspell-abbrev-p t)
+    (flyspell-abbrev-p t) ;; add correction to abbreviation table.
     (flyspell-default-dictionary "en_GB")
     (flyspell-issue-message-flag nil)
     (flyspell-issue-welcome-flag nil))
-
-  ;; recommended to speed up flycheck
-  ;; (setq flyspell-issue-message-flag nil)
-
-  ;; easy spell check
-  ;; (global-set-key (kbd "<f8>") 'ispell-word)
-  ;; (global-set-key (kbd "C-S-<f8>") 'flyspell-mode)
-  ;; (global-set-key (kbd "C-M-<f8>") 'flyspell-buffer)
-
-  ;; (defun flyspell-check-next-highlighted-word ()
-  ;;   "Custom function to spell check next highlighted word"
-  ;;   (interactive)
-  ;;   (flyspell-goto-next-error)
-  ;;   (ispell-word)
-  ;;   )
-  ;; (global-set-key (kbd "C-<f8>") 'flyspell-check-next-highlighted-word)
-  ;; (global-set-key (kbd "M-<f8>") 'flyspell-check-previous-highlighted-word)
-
-#+end_src
-** Ispell
-
-Ispell is a spell-checking program that was one of the early tools for spell-checking in Unix-like systems. It's often used in Emacs and other text editors to detect and correct spelling errors. Aspell is a more modern and improved spell-checking program compared to Ispell. It has better support for multiple languages, better handling of compound words, and is more actively maintained.
-
-#+begin_src emacs-lisp
-  (use-package ispell
-    ;; :custom
-    ;; (ispell-hunspell-dict-paths-alist
-    ;;  '(("en_US" "/usr/share/hunspell/en_US.aff")
-    ;;    ("fr_BE" "/usr/share/hunspell/fr_BE.aff")))
-    ;; Save words in the personal dictionary without asking.
-    :custom
-    (ispell-silently-savep t)
-    (text-mode-ispell-word-completion nil) ;; Disable Ispell completion function
-    :config
-    (setenv "LANG" "en_GB")
-    (cond ((executable-find "hunspell")
-           (setq ispell-program-name "hunspell"))
-          ((executable-find "aspell")
-           (setq ispell-program-name "aspell")
-           (setq ispell-extra-args '("--sug-mode=ultra"))))
-    ;; Ignore file sections for spell checking.
-    (add-to-list 'ispell-skip-region-alist '("#\\+begin_align" . "#\\+end_align"))
-    (add-to-list 'ispell-skip-region-alist '("#\\+begin_align*" . "#\\+end_align*"))
-    (add-to-list 'ispell-skip-region-alist '("#\\+begin_equation" . "#\\+end_equation"))
-    (add-to-list 'ispell-skip-region-alist '("#\\+begin_equation*" . "#\\+end_equation*"))
-    (add-to-list 'ispell-skip-region-alist '("#\\+begin_example" . "#\\+end_example"))
-    (add-to-list 'ispell-skip-region-alist '("#\\+begin_labeling" . "#\\+end_labeling"))
-    (add-to-list 'ispell-skip-region-alist '("#\\+begin_src" . "#\\+end_src"))
-    (add-to-list 'ispell-skip-region-alist '("\\$" . "\\$"))
-    (add-to-list 'ispell-skip-region-alist '(org-property-drawer-re))
-    (add-to-list 'ispell-skip-region-alist '(":\\(PROPERTIES\\|LOGBOOK\\):" . ":END:")))
-#+end_src
-
-** TODO LanguageTools
-[[https://languagetool.org/][LanguageTool]] is great for correcting your grammar while you are writing or saving your buffer. To use LanguageTool with LSP mode, the [[https://github.com/emacs-languagetool/lsp-ltex][lsp-ltex]] package is what you need. The first time you use it, it will download the [[https://github.com/valentjn/ltex-ls][LTEX Language Server]] LSP server for you.
-
-*NOTE:* I don't hook =lsp-ltex= to =text-mode= since it would process the =config.org= file which has too many errors to be processed properly.
-
-#+begin_src emacs-lisp
-  (use-package lsp-ltex
-    :disabled
-    :after lsp-mode
-    :hook ((latex-mode) . (lambda ()
-                            (require 'lsp-ltex)
-                            (lsp)))
-    :init
-    (setq lsp-ltex-version "16.0.0"))
 #+end_src
 
 ** writegood-mode
+
+[[https://github.com/bnbeckwith/writegood-mode][writegood-mode]] is a minor mode to aid in finding common writing problems.
+
 #+begin_src emacs-lisp
   (use-package writegood-mode
-    :ensure t)
-
-  (add-hook 'TeX-mode-hook 'writegood-mode)
+    :hook
+    (TeX-mode .writegood-mode))
 #+end_src
 
-** TODO LaTeX
+** LanguageTools
 
-TODO - need to add a better language server, and in general look over these packages and see what i want/ if there are alternatives.
+[[https://github.com/ltex-plus/emacs-ltex-plus#emacs-ltex][LTeX+]] is a grammar and spell checker for Emacs that uses the [[https://languagetool.org/][LanguageTools]] engine to identify grammatical errors, spelling mistakes, punctuation issues and stylistic problems. It integrates with Emacs through Flymake, providing on-the-fly diagnostics in writing modes such as LaTeX, Org, and Markdown.
 
-I use the =tex-mode= built-in package and [[https://github.com/latex-lsp/texlab][texlab]] as LSP server. To use it, make sure you install it with your package manager and to configure the LSP package.
+The language server ([[https://github.com/ltex-plus/ltex-ls-plus#ltex-ls--ltex-language-server][ltex-ls-plus]]) is installed locally in ~~/.emacs.d/lsp/~, with a symlink in ~~/.local/bin/~ to make it accessible to Emacs. More details of this installation can be found [[https://github.com/ltex-plus/emacs-ltex-plus#server-installation][here]].
 
-With =tex-mode= we need to ensure to install AUCTeX, which is a built-in package for writing and formatting TeX files in GNU Emacs. With =AUCTeX= you can for example use the =TeX-command-master= (=C-c C-c=) command to compile your TeX files
-and the =LaTeX-environment= (=C-c C-e=) command to insert a LaTeX environment.
+#+begin_src emacs-lisp
+  (use-package lsp-ltex-plus
+    :custom
+    (lsp-ltex-plus-language "en-GB")
+    (lsp-ltex-plus-ls-plus-executable "ltex-ls-plus")
+    (lsp-ltex-plus-idle-delay 0.3)
+
+    :init
+    (lsp-ltex-plus-enable-for-modes));; enable for all modes
+    #+end_src
+
+** LaTeX
+
+For writing LaTeX documents, I use this selection of packages to create an extensive editing environment for TeX and LaTeX built on top of Emacs.
+
+*** AUCTeX
+
+With =tex-mode= we need to ensure to install [[https://www.gnu.org/software/auctex/][AUCTeX]], which is a built-in package for writing and formatting TeX files in GNU Emacs.
 
 #+begin_src emacs-lisp
   (use-package tex
     :ensure auctex
     :hook
     (TeX-mode . display-line-numbers-mode)
-    :preface
-    (defun my/switch-to-help-window (&optional ARG REPARSE)
-      "Switches to the *TeX Help* buffer after compilation."
-      (other-window 1))
-    :hook ((LaTeX-mode . reftex-mode)
-           (LaTeX-mode . prettify-symbols-mode))
-    :bind (:map TeX-mode-map
-                ("C-c C-o" . TeX-recenter-output-buffer)
-                ("C-c C-l" . TeX-next-error)
-                ("M-[" . outline-previous-heading)
-                ("M-]" . outline-next-heading))
+    (LaTeX-mode . prettify-symbols-mode)
+    (LaTeX-mode . reftex-mode)
+    (LaTeX-mode . prettify-symbols-mode)
+
     :custom
     (TeX-auto-save t)
     (TeX-byte-compile t)
@@ -1594,43 +1602,52 @@ and the =LaTeX-environment= (=C-c C-e=) command to insert a LaTeX environment.
     (TeX-parse-self t)
     (TeX-PDF-mode t)
     (TeX-source-correlate-mode t)
-    (TeX-view-program-selection '((output-pdf "PDF Tools")))
-    :config
-    (advice-add 'TeX-next-error :after #'my/switch-to-help-window)
-    (advice-add 'TeX-recenter-output-buffer :after #'my/switch-to-help-window)
-    ;; the ":hook" doesn't work for this one... don't ask me why.
-    (add-hook 'TeX-after-compilation-finished-functions 'TeX-revert-document-buffer))
+    (TeX-view-program-selection '((output-pdf "PDF Tools"))))
 #+end_src
 
-Also, I like to use a TeX engine that can handle Unicode and use the font of my choice.
+I prefer using XeLaTeX as my default engine because it supports Unicode natively and allows me to use system fonts of my choice.
 
 #+begin_src emacs-lisp
   (setq-default TeX-engine 'xetex)
 #+end_src
 
-By default, LSP mode uses =lsp-tex= as the LSP client for LaTeX. However, I prefer to use [[https://github.com/ROCKTAKEY/lsp-latex][lsp-latex]] which fully supports =texlab= (cf. https://github.com/ROCKTAKEY/lsp-latex/issues/26)
+*** Texlab
+
+[[https://github.com/latex-lsp/texlab][Texlab]] is a feature-rich language server for LaTeX, providing completion, diagnostics, references, symbol navigation and build integration. I use Eglot to manage the connection to Texlab, keeping the same LSP client across my programming and writing environments. Note, Texlab is installed separately and must be available in my =PATH=.
 
 #+begin_src emacs-lisp
-  (use-package lsp-latex
-    :if (executable-find "texlab")
-    ;; To properly load `lsp-latex', the `require' instruction is important.
-    :hook (LaTeX-mode . (lambda ()
-                          (require 'lsp-latex)
-                          (lsp-deferred)))
-    :custom (lsp-latex-build-on-save t))
+  (use-package eglot
+    :ensure nil
+    :hook
+    ((LaTeX-mode . eglot-ensure)
+     (bibtex-mode . eglot-ensure))
+    :config
+    ;; Use Texlab for LaTeX and BibTeX buffers.
+    (add-to-list 'eglot-server-programs
+                 '((latex-mode bibtex-mode) . ("texlab"))))
 #+end_src
 
-To easier deal with =\label=, =\ref=, and =\cite= commands in LaTeX, I use the =reftex= built-in package.
+I leave compilation to AUCTeX rather than enabling Texlab's build-on-save functionality, avoiding two separate systems managing document compilation.
+
+*** RefTex
+
+To make it easier to work with =\\label=, =\\ref= and =\\cite= commands, I use the built-in [[https://www.gnu.org/software/emacs/manual/html_node/reftex/][RefTeX]] package. It provides commands for navigating document sections, inserting references and managing citations. It also integrates with AUCTeX.
 
 #+begin_src emacs-lisp
   (use-package reftex
     :ensure nil
+    :hook
+    (LaTeX-mode . reftex-mode)
+
     :custom
     (reftex-save-parse-info t)
-    (reftex-use-multiple-selection-buffers t))
+    (reftex-use-multiple-selection-buffers t)
+    (reftex-plug-into-AUCTeX t))
 #+end_src
 
-Finally, it is often useful to put our hands in a bibliography in LaTeX. The built-in package =bibtex= improves the visual and provides several commands.
+*** BibTeX
+
+For working with bibliographies, I use Emacs's built-in =bibtex= package. It provides syntax highlighting and commands for creating, editing and managing bibliography entries. I also use a wider fill column to make longer bibliography entries easier to read.
 
 #+begin_src emacs-lisp
   (use-package bibtex
@@ -1639,6 +1656,7 @@ Finally, it is often useful to put our hands in a bibliography in LaTeX. The bui
     (defun my/bibtex-fill-column ()
       "Ensure that each entry does not exceed 120 characters."
       (setq fill-column 120))
-    :hook ((bibtex-mode . lsp-deferred)
-           (bibtex-mode . my/bibtex-fill-column)))
+
+    :hook
+    (bibtex-mode . my/bibtex-fill-column))
 #+end_src
